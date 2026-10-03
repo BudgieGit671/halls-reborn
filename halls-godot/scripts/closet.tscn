@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://bcxsj7j0umitc"]
+
+[ext_resource type="Script" uid="uid://dlehsdqk3u5l5" path="res://scripts/closet.gd" id="1_nyief"]
+[ext_resource type="Texture2D" uid="uid://bcgptbnuk0nrv" path="res://raw_assets/textures/environment/props/Closet.png" id="2_kkt3y"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
+size = Vector2(20, 17.021278)
+
+[sub_resource type="LabelSettings" id="LabelSettings_fkdx4"]
+outline_size = 3
+outline_color = Color(0.75, 0.75, 0.75, 1)
+
+[node name="Closet" type="Node2D" unique_id=1920532332]
+script = ExtResource("1_nyief")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=822476244]
+scale = Vector2(0.17823112, 0.17823112)
+texture = ExtResource("2_kkt3y")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=469220678]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=487724458]
+position = Vector2(0, 5.9999995)
+scale = Vector2(2.5600002, 5.639999)
+shape = SubResource("RectangleShape2D_fkdx4")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=780758939]
+
+[node name="Prompt" type="Label" parent="CanvasLayer" unique_id=1680525767]
+visible = false
+offset_left = -4.0
+offset_top = -76.0
+offset_right = 36.0
+offset_bottom = -53.0
+scale = Vector2(0.9797097, 1.0338706)
+text = "E"
+label_settings = SubResource("LabelSettings_fkdx4")

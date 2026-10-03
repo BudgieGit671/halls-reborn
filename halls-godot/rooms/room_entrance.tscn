@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://er558qr0gt0j"]
+
+[ext_resource type="Texture2D" uid="uid://ckwmlgynktl1p" path="res://raw_assets/textures/environment/special rooms/Entrance.png" id="1_14k31"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
+size = Vector2(90, 139.5)
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_fkdx4"]
+normal = Vector2(1, 0)
+distance = -2.0
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_rr1h5"]
+
+[node name="Room Entrance" type="Node2D" unique_id=1865269991]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=823277888]
+texture = ExtResource("1_14k31")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=1033354491]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=562171002]
+position = Vector2(1577, 274.25)
+shape = SubResource("RectangleShape2D_fkdx4")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1388457249]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=1814078151]
+position = Vector2(0, 344)
+rotation = 4.712389
+shape = SubResource("WorldBoundaryShape2D_fkdx4")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="StaticBody2D" unique_id=43934143]
+position = Vector2(-1638, 179)
+shape = SubResource("WorldBoundaryShape2D_fkdx4")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="StaticBody2D" unique_id=1072655172]
+position = Vector2(1640, 147)
+rotation = 4.712389
+shape = SubResource("WorldBoundaryShape2D_rr1h5")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=621748863]
+offset_left = -1640.0
+offset_top = -540.0
+offset_right = 1640.0
+offset_bottom = 540.0
+color = Color(1, 1, 1, 0)

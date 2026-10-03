@@ -1,9 +1,12 @@
 [gd_scene format=3 uid="uid://7q7hylsdq1va"]
 
 [ext_resource type="Texture2D" uid="uid://cuj0kk1uuadtk" path="res://raw_assets/textures/sprites/entities/whisk/Idle.png" id="1_mlvkd"]
+[ext_resource type="AudioStream" uid="uid://ctpf6kwlc7dj6" path="res://raw_assets/audio/sfx/entities/whisk/WHISK-1.wav" id="2_rd5v3"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_fkdx4"]
 radius = 54.00926
+
+[sub_resource type="Curve2D" id="Curve2D_l01os"]
 
 [node name="whisk" type="CharacterBody2D" unique_id=365163997]
 
@@ -17,3 +20,9 @@ shape = SubResource("CircleShape2D_fkdx4")
 
 [node name="RayCast2D" type="RayCast2D" parent="." unique_id=1634481798]
 z_index = 4
+
+[node name="Path2D" type="Path2D" parent="." unique_id=1669594942]
+curve = SubResource("Curve2D_l01os")
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=348777058]
+stream = ExtResource("2_rd5v3")

@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://bm2vylofarnwt"]
+
+[ext_resource type="Script" uid="uid://dlehsdqk3u5l5" path="res://scripts/closet.gd" id="1_l4o33"]
+[ext_resource type="Texture2D" uid="uid://bcgptbnuk0nrv" path="res://raw_assets/textures/environment/props/Closet.png" id="2_uj11n"]
+[ext_resource type="Texture2D" uid="uid://tmxy8m3a54t" path="res://raw_assets/textures/gui/buttons/E.png" id="3_uj11n"]
+[ext_resource type="AudioStream" uid="uid://b832lp10plj7n" path="res://raw_assets/audio/sfx/interactions/ClosetIn.wav" id="4_71km3"]
+[ext_resource type="AudioStream" uid="uid://cmltfuvq0c8mk" path="res://raw_assets/audio/sfx/interactions/ClosetOut.wav" id="5_cgwhh"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
+size = Vector2(20, 17.021278)
+
+[node name="Closet" type="Node2D" unique_id=1920532332]
+script = ExtResource("1_l4o33")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=822476244]
+scale = Vector2(0.17823112, 0.17823112)
+texture = ExtResource("2_uj11n")
+
+[node name="InteractZone" type="Area2D" parent="." unique_id=469220678]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractZone" unique_id=487724458]
+position = Vector2(0, 5.9999995)
+scale = Vector2(2.5600002, 5.639999)
+shape = SubResource("RectangleShape2D_fkdx4")
+
+[node name="Prompt" type="Sprite2D" parent="." unique_id=351685144]
+position = Vector2(0, -63)
+scale = Vector2(0.2002343, 0.2002343)
+texture = ExtResource("3_uj11n")
+
+[node name="ClosetIn" type="AudioStreamPlayer" parent="." unique_id=1223100392]
+stream = ExtResource("4_71km3")
+volume_db = -16.0
+
+[node name="ClosetOut" type="AudioStreamPlayer" parent="." unique_id=1764660668]
+stream = ExtResource("5_cgwhh")
+volume_db = -16.0
+
+[connection signal="body_entered" from="InteractZone" to="." method="_on_interact_zone_body_entered"]
+[connection signal="body_exited" from="InteractZone" to="." method="_on_interact_zone_body_exited"]

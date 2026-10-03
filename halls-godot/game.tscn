@@ -1,109 +1,41 @@
 [gd_scene format=3 uid="uid://m7mg0svinqx6"]
 
 [ext_resource type="PackedScene" uid="uid://conw3tuy85t5o" path="res://player.tscn" id="1_80nbo"]
-[ext_resource type="Texture2D" uid="uid://d27fv16kvo23l" path="res://raw_assets/textures/environment/floors/MAIN.png" id="2_feb5d"]
-[ext_resource type="Texture2D" uid="uid://cpeqwpa76xcdu" path="res://raw_assets/textures/environment/backgrounds/MAIN-DARK(1).png" id="3_fc0e3"]
+[ext_resource type="Script" uid="uid://bbn00yoer6d5o" path="res://world.gd" id="1_ryrav"]
 [ext_resource type="Script" uid="uid://3lavu1k6jqv3" path="res://room.gd" id="3_ryrav"]
+[ext_resource type="PackedScene" uid="uid://er558qr0gt0j" path="res://rooms/room_entrance.tscn" id="4_7jktm"]
 [ext_resource type="PackedScene" uid="uid://7q7hylsdq1va" path="res://whisk.tscn" id="5_7jktm"]
-[ext_resource type="PackedScene" uid="uid://dknpbbxygrocx" path="res://rooms/room_5.tscn" id="5_ryrav"]
-
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_ot6xa"]
-
-[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_rr1h5"]
-
-[sub_resource type="Animation" id="Animation_ryrav"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector2(-718, 155)]
-}
-
-[sub_resource type="Animation" id="Animation_eow3j"]
-resource_name = "room1"
-length = 4.0
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 1, 1.25, 2.1, 2.35, 3.35, 3.75, 4),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
-"update": 0,
-"values": [Vector2(-718, 155), Vector2(281, 155), Vector2(281, -6), Vector2(-458, -6), Vector2(-458, -173), Vector2(496, -173), Vector2(496, 155), Vector2(660, 155)]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_j5wjh"]
-_data = {
-&"RESET": SubResource("Animation_ryrav"),
-&"room1": SubResource("Animation_eow3j")
-}
+[ext_resource type="PackedScene" uid="uid://bm2vylofarnwt" path="res://scenes/closet.tscn" id="6_eow3j"]
 
 [node name="Game" type="Node2D" unique_id=1637409726]
+script = ExtResource("1_ryrav")
 
-[node name="Player" parent="." unique_id=1038246796 instance=ExtResource("1_80nbo")]
-position = Vector2(-528, 153)
+[node name="player" parent="." unique_id=1038246796 instance=ExtResource("1_80nbo")]
+position = Vector2(-0.99998474, 167)
 
-[node name="Floor" type="StaticBody2D" parent="." unique_id=401609838]
-z_index = 1
-physics_material_override = SubResource("PhysicsMaterial_ot6xa")
+[node name="Camera2D" type="Camera2D" parent="player" unique_id=122415848]
+position = Vector2(1, 0)
+scale = Vector2(6.8946247, 76.95614)
+zoom = Vector2(1.5, 1.5)
+process_callback = 0
+limit_left = -983
+limit_right = 983
+limit_bottom = 324
+limit_smoothed = true
+position_smoothing_enabled = true
+position_smoothing_speed = 10.0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor" unique_id=1187998548]
-position = Vector2(0, 218)
-shape = SubResource("WorldBoundaryShape2D_rr1h5")
-
-[node name="Sprite2D" type="Sprite2D" parent="Floor" unique_id=1140709580]
-z_index = 1
-position = Vector2(0, -39.000046)
-scale = Vector2(-1.2533413, 1.3794366)
-texture = ExtResource("2_feb5d")
-
-[node name="Background" type="Sprite2D" parent="." unique_id=1737893278]
-z_index = -4096
-scale = Vector2(1.3518089, 1.6535286)
-texture = ExtResource("3_fc0e3")
-
-[node name="Room" type="Node2D" parent="Background" unique_id=808137005]
-scale = Vector2(0.7397495, 0.60476726)
+[node name="Room" type="Node2D" parent="." unique_id=808137005]
+scale = Vector2(0.99999994, 0.99999994)
 script = ExtResource("3_ryrav")
 
-[node name="Room 1" parent="Background/Room" unique_id=2107939545 instance=ExtResource("5_ryrav")]
-
-[node name="Room 2" type="Node2D" parent="Background/Room" unique_id=1666004561]
-
-[node name="Room 3" type="Node2D" parent="Background/Room" unique_id=1371560346]
-
-[node name="Room 4" type="Node2D" parent="Background/Room" unique_id=1074252925]
-
-[node name="Room 5" type="Node2D" parent="Background/Room" unique_id=402068232]
-
-[node name="Room 6" type="Node2D" parent="Background/Room" unique_id=1289222540]
-
-[node name="Room 7" type="Node2D" parent="Background/Room" unique_id=1980731279]
-
-[node name="Room 8" type="Node2D" parent="Background/Room" unique_id=1331217431]
-
-[node name="Room 9" type="Node2D" parent="Background/Room" unique_id=971366181]
-
-[node name="Room 10" type="Node2D" parent="Background/Room" unique_id=609494341]
-
-[node name="Camera2D" type="Camera2D" parent="." unique_id=122415848]
-position = Vector2(2, 0)
-scale = Vector2(6.8946247, 76.95614)
-
 [node name="whisk" parent="." unique_id=365163997 instance=ExtResource("5_7jktm")]
-position = Vector2(-718, 155)
+position = Vector2(-1171, 151)
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="whisk" unique_id=1433542205]
-libraries/ = SubResource("AnimationLibrary_j5wjh")
-autoplay = &"room1"
-speed_scale = 1.5
+[node name="Room Entrance" parent="." unique_id=1865269991 instance=ExtResource("4_7jktm")]
+position = Vector2(-0.99999976, 2)
+scale = Vector2(0.6, 0.6)
+
+[node name="Closet" parent="Room Entrance" unique_id=1920532332 instance=ExtResource("6_eow3j")]
+position = Vector2(406.66666, 250)
+scale = Vector2(1.6666666, 1.6666666)

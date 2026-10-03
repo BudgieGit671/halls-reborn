@@ -1,9 +1,18 @@
 extends CharacterBody2D
-
-
-const SPEED = 300.0
+@onready var sprite = $AnimatedSprite2D
+const SPEED = 350.0
 const JUMP_VELOCITY = -600.0
 
+# Hiding
+	
+var is_hiding = false
+
+func set_hidden(value: bool):
+	is_hiding = value
+	$AnimatedSprite2D.visible = !value
+	$CollisionShape2D.disabled = value
+	set_physics_process(!value)
+# Movement
 
 func _physics_process(delta: float) -> void:
 	# Add the gravity.
@@ -18,8 +27,12 @@ func _physics_process(delta: float) -> void:
 	# As good practice, you should replace UI actions with custom gameplay actions.
 	var direction := Input.get_axis("left", "right")
 	if direction:
+		sprite.play("walk")
+		sprite.flip_h = direction < 0
 		velocity.x = direction * SPEED
 	else:
+		sprite.play("idle")
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 
 	move_and_slide()
+	

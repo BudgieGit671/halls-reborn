@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b8sogobhi3u7i"
-path="res://.godot/imported/left5.svg-cb2eccb2c9f3380cddb19a4fd7c1fb3b.ctex"
+uid="uid://8wm2rh5df4qk"
+path="res://.godot/imported/idle.png-f1f65c4128a2927274273846f6a03d58.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/sprites/player/left5.svg"
-dest_files=["res://.godot/imported/left5.svg-cb2eccb2c9f3380cddb19a4fd7c1fb3b.ctex"]
+source_file="res://raw_assets/textures/sprites/player/player frames/idle.png"
+dest_files=["res://.godot/imported/idle.png-f1f65c4128a2927274273846f6a03d58.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=1.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false
