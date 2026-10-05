@@ -3,24 +3,25 @@
 [ext_resource type="PackedScene" uid="uid://conw3tuy85t5o" path="res://player.tscn" id="1_80nbo"]
 [ext_resource type="Script" uid="uid://bbn00yoer6d5o" path="res://world.gd" id="1_ryrav"]
 [ext_resource type="Script" uid="uid://3lavu1k6jqv3" path="res://room.gd" id="3_ryrav"]
-[ext_resource type="PackedScene" uid="uid://er558qr0gt0j" path="res://rooms/room_entrance.tscn" id="4_7jktm"]
-[ext_resource type="PackedScene" uid="uid://7q7hylsdq1va" path="res://whisk.tscn" id="5_7jktm"]
-[ext_resource type="PackedScene" uid="uid://bm2vylofarnwt" path="res://scenes/closet.tscn" id="6_eow3j"]
+[ext_resource type="Texture2D" uid="uid://5bkhncij3oog" path="res://raw_assets/textures/sprites/entities/whisk/jums.png" id="5_ryrav"]
+[ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="6_eow3j"]
+[ext_resource type="AudioStream" uid="uid://dns7wij1rv2gp" path="res://raw_assets/audio/sfx/entities/whisk/whiskIdleLoop2.wav" id="6_ryrav"]
 
 [node name="Game" type="Node2D" unique_id=1637409726]
 script = ExtResource("1_ryrav")
 
-[node name="player" parent="." unique_id=1038246796 instance=ExtResource("1_80nbo")]
+[node name="Player" parent="." unique_id=1038246796 instance=ExtResource("1_80nbo")]
 position = Vector2(-0.99998474, 167)
 
-[node name="Camera2D" type="Camera2D" parent="player" unique_id=122415848]
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=122415848]
 position = Vector2(1, 0)
 scale = Vector2(6.8946247, 76.95614)
 zoom = Vector2(1.5, 1.5)
 process_callback = 0
-limit_left = -983
-limit_right = 983
-limit_bottom = 324
+limit_left = -100000
+limit_top = 100000
+limit_right = 100000
+limit_bottom = -100000
 limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 10.0
@@ -29,13 +30,31 @@ position_smoothing_speed = 10.0
 scale = Vector2(0.99999994, 0.99999994)
 script = ExtResource("3_ryrav")
 
-[node name="whisk" parent="." unique_id=365163997 instance=ExtResource("5_7jktm")]
-position = Vector2(-1171, 151)
+[node name="FadeOverlay" type="CanvasLayer" parent="." unique_id=1214652247]
 
-[node name="Room Entrance" parent="." unique_id=1865269991 instance=ExtResource("4_7jktm")]
-position = Vector2(-0.99999976, 2)
-scale = Vector2(0.6, 0.6)
+[node name="FadeRect" type="ColorRect" parent="FadeOverlay" unique_id=851356703]
+offset_left = -8334.0
+offset_top = -7748.0005
+offset_right = -8012.7217
+offset_bottom = -6984.7217
+scale = Vector2(51.91451, 20.288782)
+color = Color(0, 0, 0, 1)
 
-[node name="Closet" parent="Room Entrance" unique_id=1920532332 instance=ExtResource("6_eow3j")]
-position = Vector2(406.66666, 250)
-scale = Vector2(1.6666666, 1.6666666)
+[node name="JumpscareOverlay" type="CanvasLayer" parent="." unique_id=252133862]
+visible = false
+
+[node name="TextureRect" type="TextureRect" parent="JumpscareOverlay" unique_id=1823377716]
+offset_left = -56.0
+offset_top = -56.0
+offset_right = 56.0
+offset_bottom = 58.0
+texture = ExtResource("5_ryrav")
+
+[node name="JumpscareSound" type="AudioStreamPlayer" parent="JumpscareOverlay" unique_id=1835354072]
+stream = ExtResource("6_eow3j")
+volume_db = 15.71
+
+[node name="Sounds" type="Node2D" parent="." unique_id=44040735]
+
+[node name="WhiskIdleLoop2" type="AudioStreamPlayer" parent="Sounds" unique_id=506378432]
+stream = ExtResource("6_ryrav")

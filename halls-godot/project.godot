@@ -17,7 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Global="*uid://ckxmssdqqay81"
+gameManager="*uid://ckxmssdqqay81"
 
 [display]
 

@@ -39,6 +39,13 @@ offset_right = -83.0
 offset_bottom = 403.0
 text = "Quit"
 
+[node name="Invincible" type="CheckButton" parent="Button Manager" unique_id=974093120]
+layout_mode = 0
+offset_left = -11.0
+offset_top = 370.0
+offset_right = 33.0
+offset_bottom = 394.0
+
 [node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=174204308]
 stream = ExtResource("2_7vrkn")
 autoplay = true
@@ -46,3 +53,5 @@ autoplay = true
 [connection signal="pressed" from="Button Manager/Play" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="Button Manager/Credits" to="." method="_on_credits_pressed"]
 [connection signal="pressed" from="Button Manager/Quit" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="Button Manager/Invincible" to="." method="_on_invincible_pressed"]
+[connection signal="toggled" from="Button Manager/Invincible" to="." method="_on_invincible_toggled"]

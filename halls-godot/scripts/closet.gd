@@ -17,21 +17,21 @@ func _on_interact_zone_body_exited(body):
 
 func _input(event):
 	var player = get_tree().get_first_node_in_group("player")
-	if event.is_action_pressed("interact"):
+	if event.is_action_pressed("interact") and not player.velocity.y:
 		if player_inside and not is_player_hidden() and not hiding_cooldown:
 			hiding_cooldown = true
 			print("entering closet!")
 			$ClosetIn.play()
 			player.set_hidden(true)
-			await get_tree().create_timer(1).timeout
+			await get_tree().create_timer(0.5).timeout
 			print("hiding cooldown over!")
 			hiding_cooldown = false
-		elif is_player_hidden() and not hiding_cooldown:
+		elif is_player_hidden() and not hiding_cooldown :
 			hiding_cooldown = true
 			print("exiting closet!")
 			$ClosetOut.play()
 			player.set_hidden(false)
-			await get_tree().create_timer(1).timeout
+			await get_tree().create_timer(0.5).timeout
 			print("hiding cooldown over!")
 			hiding_cooldown = false
 		

@@ -1,36 +1,56 @@
-[gd_scene format=3 uid="uid://bm2vylofarnwt"]
+[gd_scene format=3 uid="uid://co0yfrlg2sncx"]
 
-[ext_resource type="Script" uid="uid://dlehsdqk3u5l5" path="res://scripts/closet.gd" id="1_l4o33"]
-[ext_resource type="Texture2D" uid="uid://bcgptbnuk0nrv" path="res://raw_assets/textures/environment/props/Closet.png" id="2_uj11n"]
+[ext_resource type="Script" uid="uid://c73ljrblvo2sl" path="res://scripts/door.gd" id="1_18pbm"]
+[ext_resource type="Texture2D" uid="uid://dk6sw3wqtgdes" path="res://raw_assets/textures/environment/props/Next Door.png" id="2_18pbm"]
 [ext_resource type="Texture2D" uid="uid://tmxy8m3a54t" path="res://raw_assets/textures/gui/buttons/E.png" id="3_uj11n"]
 [ext_resource type="AudioStream" uid="uid://b832lp10plj7n" path="res://raw_assets/audio/sfx/interactions/ClosetIn.wav" id="4_71km3"]
 [ext_resource type="AudioStream" uid="uid://cmltfuvq0c8mk" path="res://raw_assets/audio/sfx/interactions/ClosetOut.wav" id="5_cgwhh"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
-size = Vector2(20, 17.021278)
+size = Vector2(18.984375, 15.676094)
 
-[node name="Closet" type="Node2D" unique_id=1920532332]
-position = Vector2(0, -89)
-scale = Vector2(1.611, 1.575)
-script = ExtResource("1_l4o33")
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_rr1h5"]
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=822476244]
-scale = Vector2(0.17823112, 0.17823112)
-texture = ExtResource("2_uj11n")
+[node name="Door" type="Node2D" unique_id=1920532332]
+scale = Vector2(1.587, 1.587)
+script = ExtResource("1_18pbm")
 
 [node name="InteractZone" type="Area2D" parent="." unique_id=469220678]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractZone" unique_id=487724458]
-position = Vector2(0, 5.9999995)
-scale = Vector2(2.5600002, 5.639999)
+position = Vector2(0, -44)
+scale = Vector2(2.4380643, 5.613643)
 shape = SubResource("RectangleShape2D_fkdx4")
+
+[node name="Door" type="Sprite2D" parent="." unique_id=822476244]
+position = Vector2(0, -46.000004)
+scale = Vector2(0.15355767, 0.15333107)
+texture = ExtResource("2_18pbm")
+flip_h = true
 
 [node name="Prompt" type="Sprite2D" parent="." unique_id=351685144]
 light_mask = 2
 z_index = 1000
-position = Vector2(0, -63)
+position = Vector2(0, -110)
 scale = Vector2(0.2002343, 0.2002343)
 texture = ExtResource("3_uj11n")
+
+[node name="Label" type="RichTextLabel" parent="." unique_id=368397221]
+modulate = Color(0.83, 0.7082667, 0.64739996, 1)
+material = SubResource("CanvasItemMaterial_rr1h5")
+offset_left = -19.533712
+offset_top = -86.3264
+offset_right = 20.793947
+offset_bottom = -61.751724
+scale = Vector2(0.76103854, 0.76103854)
+pivot_offset = Vector2(19.297756, 12.827194)
+focus_mode = 2
+text = "000"
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+selection_enabled = true
+visible_characters = 4
 
 [node name="ClosetIn" type="AudioStreamPlayer" parent="." unique_id=1223100392]
 stream = ExtResource("4_71km3")

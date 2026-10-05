@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://er558qr0gt0j"]
 
-[ext_resource type="Texture2D" uid="uid://ckwmlgynktl1p" path="res://raw_assets/textures/environment/special rooms/Entrance.png" id="1_14k31"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
-size = Vector2(90, 139.5)
+[ext_resource type="Texture2D" uid="uid://dv73ujca5cmr6" path="res://raw_assets/textures/environment/special rooms/Entrance/greenbg.png" id="1_6s5rb"]
+[ext_resource type="Texture2D" uid="uid://cdwm4x8345bdf" path="res://raw_assets/textures/environment/special rooms/Entrance/nobg.png" id="2_3642o"]
+[ext_resource type="Texture2D" uid="uid://bexpo2fwsnvw3" path="res://raw_assets/textures/environment/lighting/2d_lights_and_shadows_neutral_point_light.webp" id="2_hy0bw"]
+[ext_resource type="Texture2D" uid="uid://cyf6yn4gynay8" path="res://raw_assets/textures/environment/props/On.png" id="3_0rud8"]
+[ext_resource type="PackedScene" uid="uid://co0yfrlg2sncx" path="res://scenes/door.tscn" id="5_3642o"]
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_fkdx4"]
 normal = Vector2(1, 0)
@@ -11,36 +12,180 @@ distance = -2.0
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_rr1h5"]
 
-[node name="Room Entrance" type="Node2D" unique_id=1865269991]
+[sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_0rud8")
+}],
+"loop": 1,
+"name": &"on",
+"speed": 5.0
+}]
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=823277888]
-texture = ExtResource("1_14k31")
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_rr1h5"]
+polygon = PackedVector2Array(-1640, 0, -700, 0, -700, -540, -1640, -540)
 
-[node name="Area2D" type="Area2D" parent="." unique_id=1033354491]
+[node name="Room" type="Node2D" unique_id=1865269991]
+scale = Vector2(0.6, 0.6)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=562171002]
-position = Vector2(1577, 274.25)
-shape = SubResource("RectangleShape2D_fkdx4")
+[node name="Level" type="Node2D" parent="." unique_id=1373882695]
+modulate = Color(0.86, 0.86, 0.86, 1)
 
-[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1388457249]
+[node name="BG" type="Sprite2D" parent="Level" unique_id=1977993705]
+modulate = Color(0.84000003, 1, 0.8693333, 1)
+position = Vector2(0, 274)
+texture = ExtResource("1_6s5rb")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=1814078151]
+[node name="NoBG" type="Sprite2D" parent="Level" unique_id=823277888]
+position = Vector2(-32, 25)
+texture = ExtResource("2_3642o")
+
+[node name="Next Door" parent="." unique_id=1920532332 instance=ExtResource("5_3642o")]
+position = Vector2(1579, 345.00003)
+scale = Vector2(1.5865091, 1.5865091)
+
+[node name="Boundaries" type="StaticBody2D" parent="." unique_id=1388457249]
+
+[node name="Bottom" type="CollisionShape2D" parent="Boundaries" unique_id=1814078151]
 position = Vector2(0, 344)
 rotation = 4.712389
 shape = SubResource("WorldBoundaryShape2D_fkdx4")
 
-[node name="CollisionShape2D2" type="CollisionShape2D" parent="StaticBody2D" unique_id=43934143]
+[node name="Left" type="CollisionShape2D" parent="Boundaries" unique_id=43934143]
 position = Vector2(-1638, 179)
 shape = SubResource("WorldBoundaryShape2D_fkdx4")
 
-[node name="CollisionShape2D3" type="CollisionShape2D" parent="StaticBody2D" unique_id=1072655172]
+[node name="Right" type="CollisionShape2D" parent="Boundaries" unique_id=1072655172]
 position = Vector2(1640, 147)
 rotation = 4.712389
 shape = SubResource("WorldBoundaryShape2D_rr1h5")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=621748863]
-offset_left = -1640.0
-offset_top = -540.0
-offset_right = 1640.0
-offset_bottom = 540.0
-color = Color(1, 1, 1, 0)
+[node name="Light 1" type="AnimatedSprite2D" parent="." unique_id=1588415689]
+position = Vector2(-1418, 113.99999)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.18447925
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 1" unique_id=834160622]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="Light 2" type="AnimatedSprite2D" parent="." unique_id=1366874379]
+position = Vector2(-1093.9999, 113.99999)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.6659875
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 2" unique_id=790771173]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="Light 3" type="AnimatedSprite2D" parent="." unique_id=153973337]
+position = Vector2(-767.99994, 113.99999)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.6659875
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 3" unique_id=1833515116]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="Light 4" type="AnimatedSprite2D" parent="." unique_id=1100297840]
+position = Vector2(-418.00003, 113.99999)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.6659875
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 4" unique_id=884098859]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="Light 5" type="AnimatedSprite2D" parent="." unique_id=1264372971]
+position = Vector2(405.00003, 113.99999)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.6659875
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 5" unique_id=1848476485]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="Light 6" type="AnimatedSprite2D" parent="." unique_id=2138601224]
+position = Vector2(818, 113.99999)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.76551056
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 6" unique_id=2138417125]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="Light 7" type="AnimatedSprite2D" parent="." unique_id=1096227553]
+position = Vector2(1360.0001, 113.99999)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.6659875
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 7" unique_id=1140287600]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="Light 8" type="AnimatedSprite2D" parent="." unique_id=1839875801]
+position = Vector2(132.00002, -47)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.6659875
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 8" unique_id=1295957538]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="Light 9" type="AnimatedSprite2D" parent="." unique_id=203815913]
+position = Vector2(-141, -47)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+frame_progress = 0.6659875
+
+[node name="PointLight2D" type="PointLight2D" parent="Light 9" unique_id=2146371181]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("2_hy0bw")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="." unique_id=1673795925]
+occluder = SubResource("OccluderPolygon2D_rr1h5")
+
+[node name="LightOccluder2D2" type="LightOccluder2D" parent="." unique_id=2079530916]
+position = Vector2(2334, 0)
+occluder = SubResource("OccluderPolygon2D_rr1h5")
+
+[node name="SpawnLeft" type="Marker2D" parent="." unique_id=191743277]
+position = Vector2(-3, 284)
+
+[node name="SpawnRight" type="Marker2D" parent="." unique_id=180232712]
+position = Vector2(1499, 284)
+
+[node name="CameraBounds" type="Node2D" parent="." unique_id=662582287]
+
+[node name="TopLeft" type="Marker2D" parent="CameraBounds" unique_id=1367723325]
+position = Vector2(-1640, -540)
+
+[node name="BotRight" type="Marker2D" parent="CameraBounds" unique_id=450228169]
+position = Vector2(1639.9999, 540)

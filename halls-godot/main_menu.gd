@@ -21,3 +21,9 @@ func _on_credits_pressed() -> void:
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
+
+
+
+
+func _on_invincible_toggled(toggled_on: bool) -> void:
+	gameManager.invincible = toggled_on

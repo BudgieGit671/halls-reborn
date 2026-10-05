@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 85 146" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:affinity="https://www.affinity.studio/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-3176.707861,-1077.154702)">
+        <g id="Next-Door" affinity:id="Next Door" transform="matrix(1.395045,0,0,1.666667,1664.676626,338)">
+            <g transform="matrix(1,0,0,0.896097,-4.774512,55.119895)">
+                <rect x="1088.633" y="433.405" width="60.876" height="97.091" style="fill:rgb(143,120,70);"/>
+                <path d="M1149.509,433.405L1149.509,530.496L1088.633,530.496L1088.633,433.405L1149.509,433.405ZM1145.029,437.59L1093.113,437.59L1093.113,526.311L1145.029,526.311L1145.029,437.59Z" style="fill:rgb(103,86,50);"/>
+            </g>
+            <g transform="matrix(0.776576,0,0,0.966265,249.203612,16.883908)">
+                <rect x="1091.999" y="450.856" width="43.97" height="31.001" style="fill:rgb(143,120,70);"/>
+                <path d="M1135.969,450.856L1135.969,481.857L1091.999,481.857L1091.999,450.856L1135.969,450.856ZM1132.764,453.012L1095.204,453.012L1095.204,479.701L1132.764,479.701L1132.764,453.012Z" style="fill:rgb(135,113,65);"/>
+            </g>
+            <g transform="matrix(0.776576,0,0,1.197922,249.203612,-55.247412)">
+                <rect x="1091.999" y="450.856" width="43.97" height="31.001" style="fill:rgb(143,120,70);"/>
+                <path d="M1135.969,450.856L1135.969,481.857L1091.999,481.857L1091.999,450.856L1135.969,450.856ZM1132.764,452.595L1095.204,452.595L1095.204,480.118L1132.764,480.118L1132.764,452.595Z" style="fill:rgb(135,113,65);"/>
+            </g>
+            <g transform="matrix(0.798959,0,0,0.794902,219.674686,99.063902)">
+                <g transform="matrix(0.897196,-0,-0,0.75481,1081.637298,433.297161)">
+                    <use xlink:href="#_Image1" x="7.743" y="61.85" width="13px" height="22px"/>
+                </g>
+            </g>
+        </g>
+    </g>
+    <defs>
+        <image id="_Image1" width="13px" height="22px" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAWCAYAAAAb+hYkAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABF0lEQVQ4jb2SsU7DQAyGv3McqSkDIzMjYkJizhaxMOUZeCwWnoEdiSyImZUJJlgjaFruYoY2UdpeWhjgH21/ts/3u6qqboFL4vLAVZ7nN8Og7AAAFLjYDMoOoJOLdcLMCCGsVzpHkiSj41ksFnjvt5KTySQKKkCSJNFJIvHtFUBVUdVoQUw/OcQfQGaG9x4z2wn1Dwkh0DTNspMIWZaNQq6qKgOYz+fd2d9ms9nhsOFA90DRJ7qVzOwTOBoZcgq4HlJVQgg4546n0+lHmqYvQNu27WNd19ersueyLNs1yDlHCAFVPRCRk1XqqSiKh+ghYOmMMb8N9Y+f2zTNlln3QiLye0hV3/c4/HUzoCJyDpyNAF/A3WbwG6bYXQQplkEkAAAAAElFTkSuQmCC"/>
+    </defs>
+</svg>

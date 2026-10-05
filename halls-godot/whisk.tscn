@@ -1,28 +1,157 @@
 [gd_scene format=3 uid="uid://7q7hylsdq1va"]
 
 [ext_resource type="Texture2D" uid="uid://cuj0kk1uuadtk" path="res://raw_assets/textures/sprites/entities/whisk/Idle.png" id="1_mlvkd"]
-[ext_resource type="AudioStream" uid="uid://ctpf6kwlc7dj6" path="res://raw_assets/audio/sfx/entities/whisk/WHISK-1.wav" id="2_rd5v3"]
+[ext_resource type="Script" uid="uid://d0abug2spgrxr" path="res://scripts/whisk.gd" id="1_rd5v3"]
+[ext_resource type="Texture2D" uid="uid://dk5gnats6gtbu" path="res://raw_assets/textures/sprites/entities/whisk/Effect1.png" id="3_nj6kr"]
+[ext_resource type="AudioStream" uid="uid://dns7wij1rv2gp" path="res://raw_assets/audio/sfx/entities/whisk/whiskIdleLoop2.wav" id="3_sdjm1"]
+[ext_resource type="AudioStream" uid="uid://bwqj2q8urn57e" path="res://raw_assets/audio/sfx/entities/whisk/whiskIdleClose1.wav" id="4_lsjor"]
+[ext_resource type="Texture2D" uid="uid://bvgjdqegeuse0" path="res://raw_assets/textures/sprites/entities/whisk/Effect2.png" id="4_mxcvj"]
+[ext_resource type="Texture2D" uid="uid://duv5sqcylhws5" path="res://raw_assets/textures/sprites/entities/whisk/Effect3.png" id="5_dchxn"]
+[ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="5_lsjor"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_fkdx4"]
-radius = 54.00926
+[sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_nj6kr")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_mxcvj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_dchxn")
+}],
+"loop": 1,
+"name": &"idle",
+"speed": 15.0
+}]
 
-[sub_resource type="Curve2D" id="Curve2D_l01os"]
+[node name="whisk" type="Node2D" unique_id=1684096209]
+script = ExtResource("1_rd5v3")
 
-[node name="whisk" type="CharacterBody2D" unique_id=365163997]
-
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1050512116]
+[node name="WhiskFace" type="Sprite2D" parent="." unique_id=1050512116]
+light_mask = 512
 z_index = 2
 texture = ExtResource("1_mlvkd")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1888047333]
-z_index = 3
-shape = SubResource("CircleShape2D_fkdx4")
+[node name="WhiskEffect1" type="AnimatedSprite2D" parent="." unique_id=522160264 groups=["effect"]]
+z_index = 1
+position = Vector2(31, -5)
+rotation = -2.8685403
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.09050453
+speed_scale = 0.9
+
+[node name="WhiskEffect2" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=268037567 groups=["effect"]]
+position = Vector2(69.36963, -52.657898)
+rotation = -1.2466875
+scale = Vector2(0.7120763, 0.7103415)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.856684
+speed_scale = 0.9
+
+[node name="WhiskEffect3" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=1691809307 groups=["effect"]]
+position = Vector2(-4.6248913, -61.0132)
+rotation = 2.2807095
+scale = Vector2(0.7120763, 0.7103415)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.20520547
+speed_scale = 0.9
+
+[node name="WhiskEffect4" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=835300169 groups=["effect"]]
+position = Vector2(-53.15678, -26.652521)
+rotation = -0.28116825
+scale = Vector2(0.71207637, 0.7103414)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.97714627
+speed_scale = 0.9
+
+[node name="WhiskEffect5" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=1034819245 groups=["effect"]]
+position = Vector2(105.11688, -6.5912676)
+rotation = 0.46781608
+scale = Vector2(0.6088002, 0.5838328)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.8345275
+speed_scale = 0.9
+
+[node name="WhiskEffect6" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=2100216794 groups=["effect"]]
+position = Vector2(102.92355, 44.90815)
+rotation = 1.9652003
+scale = Vector2(0.6088002, 0.5838328)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 7.4622534e-05
+speed_scale = 0.9
+
+[node name="WhiskEffect7" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=947928740 groups=["effect"]]
+position = Vector2(-12.476767, 74.11027)
+rotation = -3.0764909
+scale = Vector2(0.6088002, 0.5838329)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.30025563
+speed_scale = 0.9
+
+[node name="WhiskEffect8" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=434409844 groups=["effect"]]
+position = Vector2(123.37361, -30.39653)
+rotation = 1.275585
+scale = Vector2(0.6088002, 0.7324847)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.011626122
+speed_scale = 0.9
+
+[node name="WhiskEffect9" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=779741064 groups=["effect"]]
+position = Vector2(-41.406944, 11.595896)
+rotation = 1.4782599
+scale = Vector2(0.6121521, 0.58300894)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.52334005
+speed_scale = 0.9
+
+[node name="WhiskEffect10" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=1213788676 groups=["effect"]]
+position = Vector2(1.1214218, 100.41783)
+rotation = -2.2235413
+scale = Vector2(0.83164537, 0.7975389)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.42813137
+speed_scale = 0.9
+
+[node name="WhiskEffect11" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=565512400 groups=["effect"]]
+position = Vector2(127.19063, 53.68934)
+rotation = -0.36562836
+scale = Vector2(0.6088003, 0.58383274)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.7371088
+speed_scale = 0.9
+
+[node name="WhiskEffect12" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=1521019553 groups=["effect"]]
+position = Vector2(64.715614, 101.30099)
+rotation = -1.5286802
+scale = Vector2(0.60880023, 0.58383274)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"idle"
+frame_progress = 0.40155122
+speed_scale = 0.9
 
 [node name="RayCast2D" type="RayCast2D" parent="." unique_id=1634481798]
 z_index = 4
 
-[node name="Path2D" type="Path2D" parent="." unique_id=1669594942]
-curve = SubResource("Curve2D_l01os")
+[node name="IdleSoundFar" type="AudioStreamPlayer2D" parent="." unique_id=1807583090]
+stream = ExtResource("3_sdjm1")
 
-[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=348777058]
-stream = ExtResource("2_rd5v3")
+[node name="IdleSoundClose" type="AudioStreamPlayer2D" parent="." unique_id=1607924802]
+stream = ExtResource("4_lsjor")
+volume_db = 10.0
+
+[node name="JumpscareSound" type="AudioStreamPlayer2D" parent="." unique_id=65492604]
+stream = ExtResource("5_lsjor")
+volume_db = 10.0
