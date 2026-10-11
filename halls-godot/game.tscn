@@ -2,13 +2,30 @@
 
 [ext_resource type="PackedScene" uid="uid://conw3tuy85t5o" path="res://player.tscn" id="1_80nbo"]
 [ext_resource type="Script" uid="uid://bbn00yoer6d5o" path="res://world.gd" id="1_ryrav"]
-[ext_resource type="Script" uid="uid://3lavu1k6jqv3" path="res://room.gd" id="3_ryrav"]
+[ext_resource type="PackedScene" uid="uid://er558qr0gt0j" path="res://rooms/room_entrance.tscn" id="2_j5wjh"]
+[ext_resource type="PackedScene" uid="uid://ccqg4yf7tc765" path="res://rooms/room_waiting.tscn" id="3_vef74"]
 [ext_resource type="Texture2D" uid="uid://5bkhncij3oog" path="res://raw_assets/textures/sprites/entities/whisk/jums.png" id="5_ryrav"]
 [ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="6_eow3j"]
+[ext_resource type="Texture2D" uid="uid://cuj0kk1uuadtk" path="res://raw_assets/textures/sprites/entities/whisk/Idle.png" id="6_j5wjh"]
 [ext_resource type="AudioStream" uid="uid://dns7wij1rv2gp" path="res://raw_assets/audio/sfx/entities/whisk/whiskIdleLoop2.wav" id="6_ryrav"]
+
+[sub_resource type="GDScript" id="GDScript_eow3j"]
+script/source = "extends Node2D
+
+# Called when the node enters the scene tree for the first time.
+func _ready() -> void:
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+	pass
+"
 
 [node name="Game" type="Node2D" unique_id=1637409726]
 script = ExtResource("1_ryrav")
+start_room = ExtResource("2_j5wjh")
+room_scenes = Array[PackedScene]([ExtResource("3_vef74")])
 
 [node name="Player" parent="." unique_id=1038246796 instance=ExtResource("1_80nbo")]
 position = Vector2(-0.99998474, 167)
@@ -26,9 +43,62 @@ limit_smoothed = true
 position_smoothing_enabled = true
 position_smoothing_speed = 10.0
 
+[node name="JumpscareOverlay" type="CanvasLayer" parent="Player/Camera2D" unique_id=252133862]
+layer = 99
+
+[node name="JumpscareBackground" type="ColorRect" parent="Player/Camera2D/JumpscareOverlay" unique_id=873111046]
+visible = false
+modulate = Color(0, 0, 0, 1)
+top_level = true
+z_index = 98
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(28.859043, 16.203077)
+color = Color(0, 0, 0, 1)
+
+[node name="WhiskScare" type="TextureRect" parent="Player/Camera2D/JumpscareOverlay" unique_id=1823377716]
+visible = false
+top_level = true
+z_index = 99
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -56.0
+offset_top = -57.0
+offset_right = 56.0
+offset_bottom = 57.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(56, 57)
+texture = ExtResource("5_ryrav")
+
+[node name="WhiskIdle" type="TextureRect" parent="Player/Camera2D/JumpscareOverlay" unique_id=1465057596]
+visible = false
+top_level = true
+z_index = 99
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -56.0
+offset_top = -57.0
+offset_right = 56.0
+offset_bottom = 57.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(56, 57)
+texture = ExtResource("6_j5wjh")
+
+[node name="JumpscareSound" type="AudioStreamPlayer" parent="Player/Camera2D/JumpscareOverlay" unique_id=1835354072]
+stream = ExtResource("6_eow3j")
+volume_db = 15.71
+
 [node name="Room" type="Node2D" parent="." unique_id=808137005]
 scale = Vector2(0.99999994, 0.99999994)
-script = ExtResource("3_ryrav")
+script = SubResource("GDScript_eow3j")
 
 [node name="FadeOverlay" type="CanvasLayer" parent="." unique_id=1214652247]
 
@@ -39,20 +109,6 @@ offset_right = -8012.7217
 offset_bottom = -6984.7217
 scale = Vector2(51.91451, 20.288782)
 color = Color(0, 0, 0, 1)
-
-[node name="JumpscareOverlay" type="CanvasLayer" parent="." unique_id=252133862]
-visible = false
-
-[node name="TextureRect" type="TextureRect" parent="JumpscareOverlay" unique_id=1823377716]
-offset_left = -56.0
-offset_top = -56.0
-offset_right = 56.0
-offset_bottom = 58.0
-texture = ExtResource("5_ryrav")
-
-[node name="JumpscareSound" type="AudioStreamPlayer" parent="JumpscareOverlay" unique_id=1835354072]
-stream = ExtResource("6_eow3j")
-volume_db = 15.71
 
 [node name="Sounds" type="Node2D" parent="." unique_id=44040735]
 

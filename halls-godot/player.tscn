@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://cpadl6e51f837" path="res://raw_assets/textures/sprites/player/player frames/right5.png" id="7_urp6f"]
 [ext_resource type="Texture2D" uid="uid://c6vholnkwjj04" path="res://raw_assets/textures/sprites/player/player frames/right6.png" id="8_bwjto"]
 [ext_resource type="Texture2D" uid="uid://caacp3wwcr3ne" path="res://raw_assets/textures/sprites/player/player frames/right7.png" id="9_606se"]
+[ext_resource type="AudioStream" uid="uid://cc7hrlxg7ln7n" path="res://raw_assets/audio/sfx/interactions/mixkit-old-church-door-open-193.wav" id="10_n7ghd"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
 animations = [{
@@ -55,9 +56,10 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
 size = Vector2(27.500008, 87.500015)
 
-[node name="player" type="CharacterBody2D" unique_id=1038246796 groups=["player"]]
+[node name="player" type="CharacterBody2D" unique_id=1038246796 node_paths=PackedStringArray("sfx_door_open") groups=["player"]]
 scale = Vector2(0.8, 0.8)
 script = ExtResource("1_onrkg")
+sfx_door_open = NodePath("DoorOpen")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=950459241]
 z_index = 1
@@ -69,3 +71,6 @@ animation = &"idle"
 position = Vector2(7.4505795e-07, 3.8743015e-06)
 scale = Vector2(0.9999995, 0.9999995)
 shape = SubResource("RectangleShape2D_fkdx4")
+
+[node name="DoorOpen" type="AudioStreamPlayer" parent="." unique_id=2087053406]
+stream = ExtResource("10_n7ghd")

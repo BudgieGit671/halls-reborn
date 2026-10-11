@@ -2,7 +2,7 @@ extends CharacterBody2D
 @onready var sprite = $AnimatedSprite2D
 const SPEED = 250
 const JUMP_VELOCITY = -500.0
-
+@export var sfx_door_open: AudioStreamPlayer
 # Hiding
 	
 var is_hiding = false
@@ -33,6 +33,5 @@ func _physics_process(delta: float) -> void:
 	else:
 		sprite.play("idle")
 		velocity.x = move_toward(velocity.x, 0, SPEED)
-
 	move_and_slide()
 	

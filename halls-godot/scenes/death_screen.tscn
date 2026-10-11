@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://c7c23ahfpyvfw"]
+
+[ext_resource type="Script" uid="uid://b6f7l47knhfrw" path="res://scripts/death_screen.gd" id="1_dwo6e"]
+[ext_resource type="AudioStream" uid="uid://cesliksrr2ce0" path="res://raw_assets/audio/music/YouDiedNew.mp3" id="1_uyutr"]
+
+[node name="DeathScreen" type="CanvasLayer" unique_id=1136117485]
+layer = 100
+script = ExtResource("1_dwo6e")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1027791483]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HintLabel" type="Label" parent="." unique_id=601426444]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="ClickPrompt" type="Label" parent="." unique_id=133894637]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="StatsCenter" type="CenterContainer" parent="." unique_id=651009068]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="StatsBox" type="VBoxContainer" parent="StatsCenter" unique_id=506470097]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="StatsCenter/StatsBox" unique_id=1527975931]
+layout_mode = 2
+
+[node name="RoomReached" type="Label" parent="StatsCenter/StatsBox" unique_id=496068896]
+layout_mode = 2
+
+[node name="KilledBy" type="Label" parent="StatsCenter/StatsBox" unique_id=2099447362]
+layout_mode = 2
+
+[node name="PlayAgain" type="Button" parent="StatsCenter/StatsBox" unique_id=988034036]
+layout_mode = 2
+
+[node name="MainMenu" type="Button" parent="StatsCenter/StatsBox" unique_id=929218130]
+layout_mode = 2
+
+[node name="Quit" type="Button" parent="StatsCenter/StatsBox" unique_id=94427861]
+layout_mode = 2
+
+[node name="DeathMusic" type="AudioStreamPlayer" parent="." unique_id=1094545727]
+stream = ExtResource("1_uyutr")

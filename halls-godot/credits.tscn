@@ -1,10 +1,7 @@
 [gd_scene format=3 uid="uid://bjbjcovjxs1rb"]
 
-[ext_resource type="Texture2D" uid="uid://pbutsbyt1cfe" path="res://raw_assets/textures/gui/menus/fasfgasf.jpg" id="1_wtcfe"]
-
 [node name="Credits" type="Node2D" unique_id=886912802]
 
 [node name="TextureRect" type="TextureRect" parent="." unique_id=1412417417]
 offset_right = 1148.0
 offset_bottom = 694.0
-texture = ExtResource("1_wtcfe")

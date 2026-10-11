@@ -2,6 +2,7 @@ extends Node2D
 
 var player_inside = false
 var hiding_cooldown = false
+var tween: Tween
 func _ready():
 	$Prompt.visible = false
 	
@@ -9,11 +10,13 @@ func _on_interact_zone_body_entered(body):
 	if body.is_in_group("player"):
 		player_inside = true
 		$Prompt.visible = true
+		start_pulse()
 		
 func _on_interact_zone_body_exited(body):
 	if body.is_in_group("player"):
 		player_inside = false
 		$Prompt.visible = false
+		stop_pulse()
 
 func _input(event):
 	var player = get_tree().get_first_node_in_group("player")
@@ -41,3 +44,16 @@ func is_player_hidden() -> bool:
 	if not player:
 		return false
 	return player.is_hiding
+	
+func start_pulse():
+	if tween:
+		tween.kill()
+	tween = create_tween()
+	tween.set_loops()
+	tween.tween_property($Prompt, "modulate:a", 0.0, 0.6)
+	tween.tween_property($Prompt, "modulate:a", 1.0, 0.6)
+
+func stop_pulse():
+	if tween:
+		tween.kill()
+	$Prompt.modulate.a = 1.0

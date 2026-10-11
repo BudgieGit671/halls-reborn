@@ -46,7 +46,7 @@ offset_top = 370.0
 offset_right = 33.0
 offset_bottom = 394.0
 
-[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="." unique_id=174204308]
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer" parent="." unique_id=1327624581]
 stream = ExtResource("2_7vrkn")
 autoplay = true
 

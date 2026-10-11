@@ -1,5 +1,4 @@
 extends Node2D
-
 # which direction this door goes
 @export var direction: String = "right"  # set to "left" or "right" in Inspector
 
@@ -19,10 +18,7 @@ func update_room_label():
 		next_room = gameManager.current_room_index - 1
 	# display it on the door label
 	# add 1 so it shows human-readable numbers starting from 1, not 0
-	if next_room < 10:
-		$Label.text = str("00",next_room)
-	else:
-		$Label.text = str("0",next_room)
+	$Label.text = "%03d" % next_room
 
 func _on_interact_zone_body_entered(body):
 	if body.is_in_group("player"):
@@ -39,7 +35,7 @@ func _on_interact_zone_body_exited(body):
 func _input(event):
 	if player_nearby and event.is_action_pressed("interact"):
 		# tell the world to load the next room
-		get_parent().get_parent().on_door_opened(direction)
+		gameManager.door_opened.emit(direction)
 
 func start_pulse():
 	if tween:

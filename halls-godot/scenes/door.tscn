@@ -3,8 +3,6 @@
 [ext_resource type="Script" uid="uid://c73ljrblvo2sl" path="res://scripts/door.gd" id="1_18pbm"]
 [ext_resource type="Texture2D" uid="uid://dk6sw3wqtgdes" path="res://raw_assets/textures/environment/props/Next Door.png" id="2_18pbm"]
 [ext_resource type="Texture2D" uid="uid://tmxy8m3a54t" path="res://raw_assets/textures/gui/buttons/E.png" id="3_uj11n"]
-[ext_resource type="AudioStream" uid="uid://b832lp10plj7n" path="res://raw_assets/audio/sfx/interactions/ClosetIn.wav" id="4_71km3"]
-[ext_resource type="AudioStream" uid="uid://cmltfuvq0c8mk" path="res://raw_assets/audio/sfx/interactions/ClosetOut.wav" id="5_cgwhh"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
 size = Vector2(18.984375, 15.676094)
@@ -51,14 +49,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 selection_enabled = true
 visible_characters = 4
-
-[node name="ClosetIn" type="AudioStreamPlayer" parent="." unique_id=1223100392]
-stream = ExtResource("4_71km3")
-volume_db = -16.0
-
-[node name="ClosetOut" type="AudioStreamPlayer" parent="." unique_id=1764660668]
-stream = ExtResource("5_cgwhh")
-volume_db = -16.0
+visible_ratio = 1.3333334
 
 [connection signal="body_entered" from="InteractZone" to="." method="_on_interact_zone_body_entered"]
 [connection signal="body_exited" from="InteractZone" to="." method="_on_interact_zone_body_exited"]
