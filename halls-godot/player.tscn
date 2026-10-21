@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://c6vholnkwjj04" path="res://raw_assets/textures/sprites/player/player frames/right6.png" id="8_bwjto"]
 [ext_resource type="Texture2D" uid="uid://caacp3wwcr3ne" path="res://raw_assets/textures/sprites/player/player frames/right7.png" id="9_606se"]
 [ext_resource type="AudioStream" uid="uid://cc7hrlxg7ln7n" path="res://raw_assets/audio/sfx/interactions/mixkit-old-church-door-open-193.wav" id="10_n7ghd"]
+[ext_resource type="Texture2D" uid="uid://bexpo2fwsnvw3" path="res://raw_assets/textures/environment/lighting/2d_lights_and_shadows_neutral_point_light.webp" id="11_nvl01"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
 animations = [{
@@ -74,3 +75,8 @@ shape = SubResource("RectangleShape2D_fkdx4")
 
 [node name="DoorOpen" type="AudioStreamPlayer" parent="." unique_id=2087053406]
 stream = ExtResource("10_n7ghd")
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=1040319007]
+scale = Vector2(0.2867148, 0.5867153)
+energy = 0.35
+texture = ExtResource("11_nvl01")

@@ -5,7 +5,7 @@ signal caught_player
 @export var speed: float = 1000.0
 
 # How far each sound can be heard, in pixels
-@export var far_sound_range: float = 12000.0
+@export var far_sound_range: float = 6000.0
 @export var close_sound_range: float = 800.0
 
 # Low-pass filter: sounds above this frequency are cut. Lower = more muffled.
@@ -15,7 +15,8 @@ const MUFFLE_BUS := "WhiskMuffle"
 
 # The main scene fills this in: a function that takes a room number and returns its path points
 var path_provider: Callable
-
+@export var break_radius: float = 1000.0   # horizontal distance at which a lamp breaks
+var lamp_provider: Callable
 var path_points: PackedVector2Array = []
 var current_point: int = 0
 var is_jumpscaring: bool = false
@@ -65,6 +66,7 @@ func set_muffled(muffled: bool):
 
 # Called once by the main scene right after Whisk is created
 func begin():
+	await get_tree().create_timer(randi_range(2,5)).timeout
 	start_room_path()
 	refresh_visibility()
 
@@ -90,12 +92,25 @@ func _physics_process(delta):
 	var target = path_points[current_point]
 	var direction = (target - global_position).normalized()
 	global_position += direction * speed * delta
+	break_nearby_lights()
 	if global_position.distance_to(target) < 100.0:
 		current_point += 1
 
 	# only look for the player if they can actually see this room
 	if is_in_player_room and not gameManager.invincible:
 		check_for_player()
+
+# Breaks every lamp Whisk is passing, in whatever room it's in
+func break_nearby_lights():
+	if not lamp_provider.is_valid():
+		return
+	var room = gameManager.entity_room_index
+	var positions = lamp_provider.call(room)
+	for i in positions.size():
+		if gameManager.is_light_broken(room, i):
+			continue
+		if abs(global_position.x - positions[i].x) < break_radius:
+			gameManager.break_light(room, i)
 
 func finish_room():
 	# reached or passed the player's room -> the rush is over

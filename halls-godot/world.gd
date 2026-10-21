@@ -6,7 +6,11 @@ extends Node2D
 @onready var jumpscare_idle = $Player/Camera2D/JumpscareOverlay/WhiskIdle
 @onready var jumpscare_sound = $Player/Camera2D/JumpscareOverlay/JumpscareSound
 @onready var jumpscare_background = $Player/Camera2D/JumpscareOverlay/JumpscareBackground
+@onready var darkness = $Darkness   # the CanvasModulate
 
+@export var lit_color := Color(1, 1, 1)                  # room with all lamps working
+@export var broken_color := Color(0.04, 0.04, 0.07)      # every lamp destroyed
+@export var dark_room_color := Color(0.04, 0.04, 0.07)   # "Dark" event rooms
 # ---------- ROOM GENERATION ----------
 @export var start_room: PackedScene                 # room 000, always the same
 @export var room_scenes: Array[PackedScene] = []    # pool of random rooms
@@ -14,7 +18,7 @@ extends Node2D
 # Remembers which room scene belongs to which room number, e.g. { 1: room_a, 2: room_c }
 var room_layout := {}
 var path_cache := {}     # remembers each room scene's Whisk path points
-
+var lamp_cache := {}     # each room scene's lamp positions (relative to the room)
 var current_instance = null
 var is_transitioning = false
 var entity_instance = null      # null until Whisk's event starts
@@ -39,12 +43,18 @@ func _ready():
 	jumpscare_idle.visible = false
 	gameManager.door_opened.connect(on_door_opened)
 	gameManager.entity_started.connect(spawn_entity)
-
+	gameManager.light_broken.connect(_on_light_broken_dark)
 	if start_room == null or room_scenes.is_empty():
 		push_error("Fill in start_room and room_scenes in the Inspector!")
 		return
 
 	load_room(0, "SpawnLeft")
+
+func _process(delta):
+	pass
+
+func ambient_sound(index):
+	pass
 
 # ---------- ROOM GENERATION ALGORITHM ----------
 
@@ -55,6 +65,31 @@ func get_room_scene(index: int) -> PackedScene:
 	if not room_layout.has(index):
 		room_layout[index] = pick_new_room(index)
 	return room_layout[index]
+
+# Returns the world position of every lamp in ANY room, even one that isn't loaded
+func get_lamp_positions(index: int) -> PackedVector2Array:
+	var scene = get_room_scene(index)
+	if not lamp_cache.has(scene):
+		var points := PackedVector2Array()
+		var temp = scene.instantiate()   # temporary copy, never added to the game
+		var lights_node = temp.get_node_or_null("Lights")
+		if lights_node:
+			for light in lights_node.find_children("*", "PointLight2D", true, false):
+				# add up the positions of every parent between the light and the room root
+				var t: Transform2D = light.transform
+				var p = light.get_parent()
+				while p != null and p != temp:
+					t = p.transform * t
+					p = p.get_parent()
+				points.append(t.origin)
+		temp.free()
+		lamp_cache[scene] = points
+
+	var offset = get_room_offset(index)
+	var result := PackedVector2Array()
+	for p in lamp_cache[scene]:
+		result.append(p + offset)
+	return result
 
 # Random room, but never the same one twice in a row
 func pick_new_room(index: int) -> PackedScene:
@@ -70,7 +105,9 @@ func load_room(index: int, spawn_name: String):
 	if is_transitioning:
 		return
 	is_transitioning = true
-	await fade_out()
+	camera.position_smoothing_enabled = false
+	if not gameManager.current_room_index == 0:
+		await fade_out()
 
 	if is_instance_valid(entity_instance):
 		entity_instance.set_loaded_room(-1)
@@ -94,12 +131,13 @@ func load_room(index: int, spawn_name: String):
 
 	# may start Whisk's event (which creates Whisk through the signal)
 	gameManager.on_room_changed(gameManager.current_room_index)
-
+	update_darkness(gameManager.current_room_index, true)
 	# tell Whisk which room is on screen; it shows itself if it's in that room
 	if is_instance_valid(entity_instance):
 		entity_instance.set_loaded_room(gameManager.current_room_index)
 
 	await fade_in()
+	camera.position_smoothing_enabled = true
 	is_transitioning = false
 
 # Called by gameManager.door_opened (emitted from door.gd)
@@ -128,8 +166,9 @@ func spawn_entity():
 	if is_instance_valid(entity_instance):
 		return
 	entity_instance = ENTITY_SCENE.instantiate()
-	add_child(entity_instance)
+	$EntityLayer.add_child(entity_instance)
 	entity_instance.path_provider = get_entity_path
+	entity_instance.lamp_provider = get_lamp_positions
 	entity_instance.caught_player.connect(trigger_jumpscare)
 	entity_instance.begin()
 
@@ -209,11 +248,42 @@ func play_jumpscare():
 
 	var scare_tween = create_tween()
 	scare_tween.set_parallel(true)
-	scare_tween.tween_property($Player/Camera2D/JumpscareOverlay/WhiskScare, "scale", Vector2(100.0, 100.0), 0.4)
-	scare_tween.tween_property($Player/Camera2D/JumpscareOverlay/WhiskScare, "modulate", Color(16.917, 14.04, 14.04, 1.0), 0.6)
+	scare_tween.tween_property($Player/Camera2D/JumpscareOverlay/WhiskScare, "scale", Vector2(100.0, 100.0), 0.3)
 	await scare_tween.finished
+	$Player/Camera2D/JumpscareOverlay/WhiskScare.visible = false
+	while jumpscare_sound.playing:
+		var wait = randf_range(0.01,0.04)
+		$Player/Camera2D/JumpscareOverlay/JumpscareBackground.color = Color(0.703, 0.62, 0.62, 1.0)
+		await get_tree().create_timer(wait).timeout
+		$Player/Camera2D/JumpscareOverlay/JumpscareBackground.color = Color(0.0, 0.0, 0.0, 1.0)
+		await get_tree().create_timer(wait).timeout
 
-	await jumpscare_sound.finished
+# Works out how dark a room should be
+func get_darkness_color(index: int) -> Color:
+	if gameManager.get_event(index) == "Dark":
+		return dark_room_color
+
+	var total = get_lamp_positions(index).size()
+	if total == 0:
+		return lit_color
+
+	var broken = gameManager.broken_lights.get(index, {}).size()
+	var working = 1.0 - float(broken) / total      # 1.0 = all lamps fine, 0.0 = all broken
+	return broken_color.lerp(lit_color, working)
+
+# instant = true while the screen is black, false for a smooth change
+func update_darkness(index: int, instant: bool):
+	var target = get_darkness_color(index)
+	if instant:
+		darkness.color = target
+		return
+	var tween = create_tween()
+	tween.tween_property(darkness, "color", target, 0.2)
+
+# a lamp broke in the room you're standing in: get a bit darker
+func _on_light_broken_dark(room: int, _lamp_id: int):
+	if room == gameManager.current_room_index:
+		update_darkness(room, false)
 
 # ---------- FADES ----------
 

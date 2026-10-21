@@ -1,54 +1,112 @@
 [gd_scene format=3 uid="uid://damc1klcsdqrf"]
 
 [ext_resource type="Script" uid="uid://cwyh580ud1jkn" path="res://main_menu.gd" id="1_06t4h"]
+[ext_resource type="Texture2D" uid="uid://1dqhf5ccs7un" path="res://raw_assets/textures/gui/thumbnails/thumb_outside.png" id="2_0o4t1"]
 [ext_resource type="AudioStream" uid="uid://yxxm3o0iq8ot" path="res://raw_assets/audio/music/Remedy_of_a_Knocking_Door - Halls OST 001.wav" id="2_7vrkn"]
+[ext_resource type="AudioStream" uid="uid://dwxro5j84cy13" path="res://raw_assets/audio/sfx/ambient/thunderstorm-1.wav" id="2_cm266"]
+[ext_resource type="Texture2D" uid="uid://ok267lo3e284" path="res://raw_assets/textures/gui/buttons/Play Idle.png" id="2_fu7sn"]
+[ext_resource type="Texture2D" uid="uid://c587tq56njx3p" path="res://raw_assets/textures/gui/menus/Halls - Title.png" id="3_0k4wn"]
+[ext_resource type="AudioStream" uid="uid://c70ehdi1nva2t" path="res://raw_assets/audio/sfx/ambient/thunderstorm-2.wav" id="3_g8g3n"]
+[ext_resource type="Texture2D" uid="uid://dagvl1frkh8jj" path="res://raw_assets/textures/gui/buttons/credit Idle.png" id="3_jix8l"]
+[ext_resource type="Texture2D" uid="uid://c660khar2t5ui" path="res://raw_assets/textures/gui/buttons/Play Clicked.png" id="4_0k4wn"]
+[ext_resource type="AudioStream" uid="uid://dgp3eeiq6jwws" path="res://raw_assets/audio/sfx/ambient/thunderstorm-3.wav" id="4_8u0te"]
+[ext_resource type="AudioStream" uid="uid://bmk3dvuvfjr3x" path="res://raw_assets/audio/Button Click.wav" id="5_glbon"]
+[ext_resource type="Texture2D" uid="uid://b70cjtbx3qgyy" path="res://raw_assets/textures/gui/buttons/Play Hovered.png" id="5_j5v2v"]
+[ext_resource type="AudioStream" uid="uid://otd3mveidf0t" path="res://raw_assets/audio/sfx/ambient/thunderstorm-4.wav" id="5_oiatc"]
+[ext_resource type="Texture2D" uid="uid://by42mlqnvqaok" path="res://raw_assets/textures/gui/buttons/credit clicked3.png" id="7_iotk1"]
+[ext_resource type="Texture2D" uid="uid://bfnnsnkwnrkfv" path="res://raw_assets/textures/gui/buttons/credit Hovered.png" id="8_w44g7"]
 
 [node name="Main Menu" type="Node2D" unique_id=346284895]
 script = ExtResource("1_06t4h")
+thunder_sounds = Array[AudioStream]([ExtResource("2_cm266"), ExtResource("3_g8g3n"), ExtResource("4_8u0te"), ExtResource("5_oiatc")])
+menu_music = ExtResource("2_7vrkn")
+
+[node name="Background" type="TextureRect" parent="." unique_id=1985844697]
+modulate = Color(0.57202345, 0.57202345, 0.57202345, 0.78039217)
+offset_left = -576.0
+offset_top = -325.0
+offset_right = 62.0
+offset_bottom = 143.0
+scale = Vector2(1.8062844, 1.3880254)
+pivot_offset = Vector2(0.031373978, -0.02133751)
+texture = ExtResource("2_0o4t1")
+
+[node name="Flash" type="ColorRect" parent="." unique_id=2080142029]
+offset_left = -576.0
+offset_top = -325.0
+offset_right = -536.0
+offset_bottom = -285.0
+scale = Vector2(28.927095, 16.364107)
+color = Color(0.87166667, 0.86, 1, 1)
+
+[node name="Title" type="TextureRect" parent="." unique_id=1421448873]
+modulate = Color(0.78, 0.78, 0.78, 1)
+offset_left = -559.0
+offset_top = -231.0
+offset_right = 79.0
+offset_bottom = 237.0
+scale = Vector2(0.58079314, 0.446306)
+pivot_offset = Vector2(0.031373978, -0.02133751)
+texture = ExtResource("3_0k4wn")
 
 [node name="Button Manager" type="Control" parent="." unique_id=194262498]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 203.0
-offset_top = 54.0
-offset_right = 674.0
-offset_bottom = 423.0
+offset_left = -232.0
+offset_top = -200.0
+offset_right = 239.0
+offset_bottom = 169.0
 
-[node name="Play" type="Button" parent="Button Manager" unique_id=86049507]
+[node name="Play" type="TextureButton" parent="Button Manager" unique_id=1634548611]
 layout_mode = 0
-offset_left = -171.0
-offset_top = 266.0
-offset_right = -59.0
-offset_bottom = 306.0
-text = "Play"
+offset_left = -344.0
+offset_top = 217.68977
+offset_right = -72.0
+offset_bottom = 325.68976
+scale = Vector2(0.8739616, 0.8739616)
+pivot_offset = Vector2(137.0624, 58)
+texture_normal = ExtResource("2_fu7sn")
+texture_pressed = ExtResource("4_0k4wn")
+texture_hover = ExtResource("5_j5v2v")
 
-[node name="Credits" type="Button" parent="Button Manager" unique_id=808161665]
+[node name="Credits" type="TextureButton" parent="Button Manager" unique_id=175269045]
 layout_mode = 0
-offset_left = -171.0
-offset_top = 314.0
-offset_right = -64.262436
-offset_bottom = 362.37387
-scale = Vector2(1.0493026, 0.8268928)
-text = "Credits"
+offset_left = -376.00003
+offset_top = 297.68976
+offset_right = -114.00003
+offset_bottom = 396.68976
+scale = Vector2(0.78515, 0.6187299)
+pivot_offset = Vector2(149.66821, 59.51957)
+texture_normal = ExtResource("3_jix8l")
+texture_pressed = ExtResource("7_iotk1")
+texture_hover = ExtResource("8_w44g7")
 
 [node name="Quit" type="Button" parent="Button Manager" unique_id=989956900]
 layout_mode = 0
-offset_left = -171.0
-offset_top = 362.0
-offset_right = -83.0
-offset_bottom = 403.0
+offset_left = -327.0
+offset_top = 393.68976
+offset_right = -239.0
+offset_bottom = 434.68976
 text = "Quit"
 
 [node name="Invincible" type="CheckButton" parent="Button Manager" unique_id=974093120]
 layout_mode = 0
-offset_left = -11.0
-offset_top = 370.0
-offset_right = 33.0
-offset_bottom = 394.0
+offset_left = 550.0
+offset_top = -125.0
+offset_right = 687.0
+offset_bottom = -94.0
+scale = Vector2(1.848992, 1.848992)
+offset_transform_enabled = true
+text = "Invincibility"
+alignment = 1
 
-[node name="AudioStreamPlayer2D" type="AudioStreamPlayer" parent="." unique_id=1327624581]
-stream = ExtResource("2_7vrkn")
-autoplay = true
+[node name="ButtonPress" type="AudioStreamPlayer" parent="." unique_id=1004164391]
+stream = ExtResource("5_glbon")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=2068776622]
+scale = Vector2(33.844795, 8.284469)
+
+[node name="ThunderSounds" type="AudioStreamPlayer" parent="." unique_id=1140851517]
 
 [connection signal="pressed" from="Button Manager/Play" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="Button Manager/Credits" to="." method="_on_credits_pressed"]

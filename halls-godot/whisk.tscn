@@ -3,11 +3,11 @@
 [ext_resource type="Texture2D" uid="uid://cuj0kk1uuadtk" path="res://raw_assets/textures/sprites/entities/whisk/Idle.png" id="1_mlvkd"]
 [ext_resource type="Script" uid="uid://d0abug2spgrxr" path="res://scripts/whisk.gd" id="1_rd5v3"]
 [ext_resource type="Texture2D" uid="uid://dk5gnats6gtbu" path="res://raw_assets/textures/sprites/entities/whisk/Effect1.png" id="3_nj6kr"]
-[ext_resource type="AudioStream" uid="uid://dns7wij1rv2gp" path="res://raw_assets/audio/sfx/entities/whisk/whiskIdleLoop2.wav" id="3_sdjm1"]
 [ext_resource type="AudioStream" uid="uid://bwqj2q8urn57e" path="res://raw_assets/audio/sfx/entities/whisk/whiskIdleClose1.wav" id="4_lsjor"]
 [ext_resource type="Texture2D" uid="uid://bvgjdqegeuse0" path="res://raw_assets/textures/sprites/entities/whisk/Effect2.png" id="4_mxcvj"]
 [ext_resource type="Texture2D" uid="uid://duv5sqcylhws5" path="res://raw_assets/textures/sprites/entities/whisk/Effect3.png" id="5_dchxn"]
 [ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="5_lsjor"]
+[ext_resource type="AudioStream" uid="uid://u5rdg2btan26" path="res://raw_assets/audio/sfx/entities/whisk/WhiskIdleLoopREV.wav" id="6_mxcvj"]
 [ext_resource type="AudioStream" uid="uid://bqti70d1m6cdj" path="res://raw_assets/audio/sfx/entities/whisk/bad_to_the_bone_riff.wav" id="9_mxcvj"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
@@ -28,21 +28,23 @@ animations = [{
 }]
 
 [node name="whisk" type="Node2D" unique_id=1684096209]
+scale = Vector2(0.9, 0.9)
 script = ExtResource("1_rd5v3")
+far_sound_range = 5000.0
 
 [node name="WhiskFace" type="Sprite2D" parent="." unique_id=1050512116]
 light_mask = 512
-z_index = 2
+z_index = 100
 texture = ExtResource("1_mlvkd")
 
 [node name="WhiskEffect1" type="AnimatedSprite2D" parent="." unique_id=522160264 groups=["effect"]]
+modulate = Color(0.05, 0.05, 0.05, 1)
 z_index = 1
 position = Vector2(31, -5)
 rotation = -2.8685403
 sprite_frames = SubResource("SpriteFrames_fkdx4")
 animation = &"idle"
-frame = 1
-frame_progress = 0.10441326
+frame_progress = 0.6180545
 speed_scale = 0.9
 
 [node name="WhiskEffect2" type="AnimatedSprite2D" parent="WhiskEffect1" unique_id=268037567 groups=["effect"]]
@@ -148,7 +150,7 @@ speed_scale = 0.9
 z_index = 4
 
 [node name="IdleSoundFar" type="AudioStreamPlayer2D" parent="." unique_id=1807583090]
-stream = ExtResource("3_sdjm1")
+stream = ExtResource("6_mxcvj")
 volume_db = -5.0
 
 [node name="IdleSoundClose" type="AudioStreamPlayer2D" parent="." unique_id=1607924802]

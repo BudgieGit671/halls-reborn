@@ -7,7 +7,6 @@
 [ext_resource type="Texture2D" uid="uid://5bkhncij3oog" path="res://raw_assets/textures/sprites/entities/whisk/jums.png" id="5_ryrav"]
 [ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="6_eow3j"]
 [ext_resource type="Texture2D" uid="uid://cuj0kk1uuadtk" path="res://raw_assets/textures/sprites/entities/whisk/Idle.png" id="6_j5wjh"]
-[ext_resource type="AudioStream" uid="uid://dns7wij1rv2gp" path="res://raw_assets/audio/sfx/entities/whisk/whiskIdleLoop2.wav" id="6_ryrav"]
 
 [sub_resource type="GDScript" id="GDScript_eow3j"]
 script/source = "extends Node2D
@@ -26,6 +25,11 @@ func _process(delta: float) -> void:
 script = ExtResource("1_ryrav")
 start_room = ExtResource("2_j5wjh")
 room_scenes = Array[PackedScene]([ExtResource("3_vef74")])
+
+[node name="Darkness" type="CanvasModulate" parent="." unique_id=1293311830]
+
+[node name="EntityLayer" type="CanvasLayer" parent="." unique_id=1773218148]
+follow_viewport_enabled = true
 
 [node name="Player" parent="." unique_id=1038246796 instance=ExtResource("1_80nbo")]
 position = Vector2(-0.99998474, 167)
@@ -48,7 +52,6 @@ layer = 99
 
 [node name="JumpscareBackground" type="ColorRect" parent="Player/Camera2D/JumpscareOverlay" unique_id=873111046]
 visible = false
-modulate = Color(0, 0, 0, 1)
 top_level = true
 z_index = 98
 offset_right = 40.0
@@ -58,7 +61,7 @@ color = Color(0, 0, 0, 1)
 
 [node name="WhiskScare" type="TextureRect" parent="Player/Camera2D/JumpscareOverlay" unique_id=1823377716]
 visible = false
-top_level = true
+modulate = Color(18.892157, 13.50434, 13.50434, 1)
 z_index = 99
 anchors_preset = 8
 anchor_left = 0.5
@@ -111,6 +114,3 @@ scale = Vector2(51.91451, 20.288782)
 color = Color(0, 0, 0, 1)
 
 [node name="Sounds" type="Node2D" parent="." unique_id=44040735]
-
-[node name="WhiskIdleLoop2" type="AudioStreamPlayer" parent="Sounds" unique_id=506378432]
-stream = ExtResource("6_ryrav")
