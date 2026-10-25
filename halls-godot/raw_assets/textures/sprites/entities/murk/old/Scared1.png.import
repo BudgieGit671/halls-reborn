@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cxhdyt0esi6mk"
-path="res://.godot/imported/Attack Left.png-b447f31102ee843ad3d2b39652827d72.ctex"
+uid="uid://dat4tm2uu8bvd"
+path="res://.godot/imported/Scared1.png-a5d277c1011e44741b358ea7e748db99.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/sprites/entities/murk/Attack Left.png"
-dest_files=["res://.godot/imported/Attack Left.png-b447f31102ee843ad3d2b39652827d72.ctex"]
+source_file="res://raw_assets/textures/sprites/entities/murk/old/Scared1.png"
+dest_files=["res://.godot/imported/Scared1.png-a5d277c1011e44741b358ea7e748db99.ctex"]
 
 [params]
 

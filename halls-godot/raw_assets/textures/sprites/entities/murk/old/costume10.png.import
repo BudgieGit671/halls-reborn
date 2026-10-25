@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://clity40efausr"
-path="res://.godot/imported/Idle_1.png-53931b709be7d323cfd5a9e717ca0ecd.ctex"
+uid="uid://dljo7ke0rlvj8"
+path="res://.godot/imported/costume10.png-7dee52b15c4cbe90a3df07cbdfebdd34.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/sprites/entities/murk/Idle_1.png"
-dest_files=["res://.godot/imported/Idle_1.png-53931b709be7d323cfd5a9e717ca0ecd.ctex"]
+source_file="res://raw_assets/textures/sprites/entities/murk/old/costume10.png"
+dest_files=["res://.godot/imported/costume10.png-7dee52b15c4cbe90a3df07cbdfebdd34.ctex"]
 
 [params]
 

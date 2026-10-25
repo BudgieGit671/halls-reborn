@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bkano7uhhwauy"
-path="res://.godot/imported/costume11.png-c709f69798b4ddbeb26bd98dbd19c60b.ctex"
+uid="uid://cxhdyt0esi6mk"
+path="res://.godot/imported/Attack Left.png-d0d4f433e1f30446f7331e15923836aa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/sprites/entities/murk/costume11.png"
-dest_files=["res://.godot/imported/costume11.png-c709f69798b4ddbeb26bd98dbd19c60b.ctex"]
+source_file="res://raw_assets/textures/sprites/entities/murk/old/Attack Left.png"
+dest_files=["res://.godot/imported/Attack Left.png-d0d4f433e1f30446f7331e15923836aa.ctex"]
 
 [params]
 

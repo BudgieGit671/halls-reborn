@@ -17,6 +17,12 @@ const HINTS := {
 		"When you hear it coming, find a place to hide until it has passed.",
 		"Stay calm, listen, and try again...",
 	],
+	"Murk": [
+		"You died to who you call Murk...",
+		"Murk lurks in the dark, and only shows itself where the lights have failed.",
+		"You have only a few seconds. Watch it carefully, and scare it before time runs out.",
+		"Stay sharp, keep your eyes open, and try again...",
+	],
 }
 
 const DEFAULT_HINTS := [

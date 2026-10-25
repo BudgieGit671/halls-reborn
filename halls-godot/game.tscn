@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" uid="uid://5bkhncij3oog" path="res://raw_assets/textures/sprites/entities/whisk/jums.png" id="5_ryrav"]
 [ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="6_eow3j"]
 [ext_resource type="Texture2D" uid="uid://cuj0kk1uuadtk" path="res://raw_assets/textures/sprites/entities/whisk/Idle.png" id="6_j5wjh"]
+[ext_resource type="Texture2D" uid="uid://b54pbp7fd4333" path="res://raw_assets/textures/sprites/entities/murk/MurkScare.png" id="8_j5wjh"]
+[ext_resource type="AudioStream" uid="uid://ixa3dydgms88" path="res://raw_assets/audio/sfx/entities/murk/murk jumpscare.wav" id="9_vef74"]
 
 [sub_resource type="GDScript" id="GDScript_eow3j"]
 script/source = "extends Node2D
@@ -21,12 +23,14 @@ func _process(delta: float) -> void:
 	pass
 "
 
-[node name="Game" type="Node2D" unique_id=1637409726]
+[node name="Game" type="Node2D" unique_id=1637409726 node_paths=PackedStringArray("murk_jumpscare_sound")]
 script = ExtResource("1_ryrav")
+murk_jumpscare_sound = NodePath("Player/Camera2D/JumpscareOverlay/MurkJumpscareSound")
 start_room = ExtResource("2_j5wjh")
 room_scenes = Array[PackedScene]([ExtResource("3_vef74")])
 
 [node name="Darkness" type="CanvasModulate" parent="." unique_id=1293311830]
+z_index = 100
 
 [node name="EntityLayer" type="CanvasLayer" parent="." unique_id=1773218148]
 follow_viewport_enabled = true
@@ -95,15 +99,43 @@ grow_vertical = 2
 pivot_offset = Vector2(56, 57)
 texture = ExtResource("6_j5wjh")
 
-[node name="JumpscareSound" type="AudioStreamPlayer" parent="Player/Camera2D/JumpscareOverlay" unique_id=1835354072]
+[node name="WhiskJumpscareSound" type="AudioStreamPlayer" parent="Player/Camera2D/JumpscareOverlay" unique_id=1835354072]
 stream = ExtResource("6_eow3j")
 volume_db = 15.71
+
+[node name="MurkScare" type="TextureRect" parent="Player/Camera2D/JumpscareOverlay" unique_id=1106644437]
+visible = false
+z_index = 99
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.5
+offset_top = -250.0
+offset_right = 220.5
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.14610752, 0.14610752)
+pivot_offset = Vector2(231.5, 250)
+texture = ExtResource("8_j5wjh")
+
+[node name="MurkJumpscareSound" type="AudioStreamPlayer" parent="Player/Camera2D/JumpscareOverlay" unique_id=995562894]
+stream = ExtResource("9_vef74")
+volume_db = 15.71
+
+[node name="MurkLayer" type="CanvasLayer" parent="Player/Camera2D" unique_id=1003476958]
+
+[node name="MurkDarkness" type="CanvasModulate" parent="Player/Camera2D/MurkLayer" unique_id=76473234]
+z_index = 100
 
 [node name="Room" type="Node2D" parent="." unique_id=808137005]
 scale = Vector2(0.99999994, 0.99999994)
 script = SubResource("GDScript_eow3j")
 
 [node name="FadeOverlay" type="CanvasLayer" parent="." unique_id=1214652247]
+layer = 2
 
 [node name="FadeRect" type="ColorRect" parent="FadeOverlay" unique_id=851356703]
 offset_left = -8334.0

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dwdit54acgbau"
-path="res://.godot/imported/BAD.png-1f5c406fcc326a6784ec0ab877aaff78.ctex"
+uid="uid://b54pbp7fd4333"
+path="res://.godot/imported/MurkScare.png-22137d5adb753ef9b641c55fd9ca4656.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/sprites/entities/murk/BAD.png"
-dest_files=["res://.godot/imported/BAD.png-1f5c406fcc326a6784ec0ab877aaff78.ctex"]
+source_file="res://raw_assets/textures/sprites/entities/murk/MurkScare.png"
+dest_files=["res://.godot/imported/MurkScare.png-22137d5adb753ef9b641c55fd9ca4656.ctex"]
 
 [params]
 

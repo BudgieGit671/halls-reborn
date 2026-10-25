@@ -3,10 +3,29 @@ extends Node2D
 @onready var player = $Player
 @onready var camera = $Player/Camera2D
 @onready var fade_rect = $FadeOverlay/FadeRect
+@onready var jumpscare_overlay = $Player/Camera2D/JumpscareOverlay
 @onready var jumpscare_idle = $Player/Camera2D/JumpscareOverlay/WhiskIdle
-@onready var jumpscare_sound = $Player/Camera2D/JumpscareOverlay/JumpscareSound
+@onready var jumpscare_sound = $Player/Camera2D/JumpscareOverlay/WhiskJumpscareSound
 @onready var jumpscare_background = $Player/Camera2D/JumpscareOverlay/JumpscareBackground
 @onready var darkness = $Darkness   # the CanvasModulate
+@onready var murk_darkness = $Player/Camera2D/MurkLayer/MurkDarkness
+# MURK
+
+const MURK_SCENE = preload("res://murk.tscn")
+@export var murk_jumpscare_texture: Texture2D   # drag Murk's jumpscare image here
+@export var murk_jumpscare_sound: AudioStreamPlayer   # and its sound
+
+# seconds after a dark room loads before Murk can appear
+const MURK_FIRST_DELAY := Vector2(2.0, 7.0)
+# seconds before the next Murk after you click one
+const MURK_REPEAT_DELAY := Vector2(10.0, 20.0)
+@export_range(0.0, 1.0) var murk_chance := 0.9   # chance a dark room gets a Murk at all
+
+var murk_instance = null
+var murk_countdown := -1.0    # -1 = no Murk scheduled
+var is_dying := false         # true from the moment you're caught until you restart
+var whisk_jumpscare_texture: TextureRect
+var whisk_jumpscare_sound: AudioStreamPlayer
 
 @export var lit_color := Color(1, 1, 1)                  # room with all lamps working
 @export var broken_color := Color(0.04, 0.04, 0.07)      # every lamp destroyed
@@ -34,11 +53,13 @@ func get_room_offset(index: int) -> Vector2:
 	return Vector2(index * ROOM_SPACING, 0)
 
 func _ready():
+	whisk_jumpscare_texture = jumpscare_idle
+	whisk_jumpscare_sound = jumpscare_sound
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	$Player/Camera2D/JumpscareOverlay.process_mode = Node.PROCESS_MODE_ALWAYS
 	$Player/Camera2D/JumpscareOverlay/WhiskScare.process_mode = Node.PROCESS_MODE_ALWAYS
 	$Player/Camera2D/JumpscareOverlay/WhiskIdle.process_mode = Node.PROCESS_MODE_ALWAYS
-	$Player/Camera2D/JumpscareOverlay/JumpscareSound.process_mode = Node.PROCESS_MODE_ALWAYS
+	$Player/Camera2D/JumpscareOverlay/WhiskJumpscareSound.process_mode = Node.PROCESS_MODE_ALWAYS
 	fade_rect.modulate.a = 0.0
 	jumpscare_idle.visible = false
 	gameManager.door_opened.connect(on_door_opened)
@@ -49,9 +70,6 @@ func _ready():
 		return
 
 	load_room(0, "SpawnLeft")
-
-func _process(delta):
-	pass
 
 func ambient_sound(index):
 	pass
@@ -111,7 +129,8 @@ func load_room(index: int, spawn_name: String):
 
 	if is_instance_valid(entity_instance):
 		entity_instance.set_loaded_room(-1)
-
+		remove_murk()
+		murk_countdown = -1.0
 	if current_instance:
 		current_instance.queue_free()
 	current_instance = get_room_scene(index).instantiate()
@@ -132,6 +151,7 @@ func load_room(index: int, spawn_name: String):
 	# may start Whisk's event (which creates Whisk through the signal)
 	gameManager.on_room_changed(gameManager.current_room_index)
 	update_darkness(gameManager.current_room_index, true)
+	schedule_murk()
 	# tell Whisk which room is on screen; it shows itself if it's in that room
 	if is_instance_valid(entity_instance):
 		entity_instance.set_loaded_room(gameManager.current_room_index)
@@ -169,7 +189,7 @@ func spawn_entity():
 	$EntityLayer.add_child(entity_instance)
 	entity_instance.path_provider = get_entity_path
 	entity_instance.lamp_provider = get_lamp_positions
-	entity_instance.caught_player.connect(trigger_jumpscare)
+	entity_instance.caught_player.connect(func(): trigger_jumpscare("Whisk"))
 	entity_instance.begin()
 
 # Returns the path points of ANY room, even one that isn't loaded
@@ -195,27 +215,36 @@ func get_entity_path(index: int) -> PackedVector2Array:
 
 # ---------- JUMPSCARE ----------
 
-func trigger_jumpscare(killer: String = "Whisk"):
-	# block doors while the death screen is up
+func trigger_jumpscare(killer: String):
+	if is_dying:
+		return   # already caught by something else
+	is_dying = true
 	is_transitioning = true
+	murk_countdown = -1.0
+	remove_murk()
+	player.set_physics_process(false)
+
+	# use this entity's own jumpscare image and sound
+	if killer == "Murk":
+		#jumpscare_overlay.texture = murk_jumpscare_texture
+		jumpscare_sound = $Player/Camera2D/JumpscareOverlay/MurkJumpscareSound
+	else:
+		#jumpscare_overlay.texture = whisk_jumpscare_texture
+		jumpscare_sound = whisk_jumpscare_sound
 
 	get_tree().paused = true
-	await play_jumpscare()
+	await play_jumpscare(killer)
 	get_tree().paused = false
-	jumpscare_idle.visible = false
 
-	# the death screen fades in OVER the game, so there's no fade_out() here anymore
 	var screen = DEATH_SCREEN.instantiate()
 	add_child(screen)
-	screen.show_death(killer, gameManager.max_room_reached)   # read BEFORE reset_run()
-	var choice = await screen.choice_made                      # waits for a button press
+	screen.show_death(killer, gameManager.max_room_reached)
+	var choice = await screen.choice_made
 
-	# cover the screen with black so the reset isn't visible, then remove the death screen
 	fade_rect.visible = true
 	fade_rect.modulate.a = 1.0
 	screen.queue_free()
 
-	# clean up the old run
 	if is_instance_valid(entity_instance):
 		entity_instance.queue_free()
 		entity_instance = null
@@ -225,6 +254,7 @@ func trigger_jumpscare(killer: String = "Whisk"):
 	match choice:
 		"play_again":
 			player.set_physics_process(true)
+			is_dying = false          # NEW: you can die again
 			is_transitioning = false
 			load_room(0, "SpawnLeft")
 		"main_menu":
@@ -232,31 +262,46 @@ func trigger_jumpscare(killer: String = "Whisk"):
 		"quit":
 			get_tree().quit()
 
-func play_jumpscare():
-	jumpscare_background.visible = true
-	jumpscare_idle.scale = Vector2(0.5, 0.5)
-	jumpscare_background.visible = true
-	await get_tree().create_timer(1).timeout
-	$Player/Camera2D/JumpscareOverlay/WhiskIdle.visible = true
-	await get_tree().create_timer(2).timeout
-	jumpscare_idle.scale = Vector2(1.0, 1.0)
-	await get_tree().create_timer(2).timeout
-	$Player/Camera2D/JumpscareOverlay/WhiskIdle.visible = false
-	$Player/Camera2D/JumpscareOverlay/WhiskScare.visible = true
+func play_jumpscare(killer: String):
+	match killer:
+		"Whisk":
+			jumpscare_idle.scale = Vector2(0.5, 0.5)
+			jumpscare_background.visible = true
+			await get_tree().create_timer(1).timeout
+			$Player/Camera2D/JumpscareOverlay/WhiskIdle.visible = true
+			await get_tree().create_timer(2).timeout
+			jumpscare_idle.scale = Vector2(1.0, 1.0)
+			await get_tree().create_timer(2).timeout
+			$Player/Camera2D/JumpscareOverlay/WhiskIdle.visible = false
+			$Player/Camera2D/JumpscareOverlay/WhiskScare.visible = true
+			print(jumpscare_sound)
+			jumpscare_sound.play()
 
-	jumpscare_sound.play()
-
-	var scare_tween = create_tween()
-	scare_tween.set_parallel(true)
-	scare_tween.tween_property($Player/Camera2D/JumpscareOverlay/WhiskScare, "scale", Vector2(100.0, 100.0), 0.3)
-	await scare_tween.finished
-	$Player/Camera2D/JumpscareOverlay/WhiskScare.visible = false
-	while jumpscare_sound.playing:
-		var wait = randf_range(0.01,0.04)
-		$Player/Camera2D/JumpscareOverlay/JumpscareBackground.color = Color(0.703, 0.62, 0.62, 1.0)
-		await get_tree().create_timer(wait).timeout
-		$Player/Camera2D/JumpscareOverlay/JumpscareBackground.color = Color(0.0, 0.0, 0.0, 1.0)
-		await get_tree().create_timer(wait).timeout
+			var scare_tween = create_tween()
+			scare_tween.set_parallel(true)
+			scare_tween.tween_property($Player/Camera2D/JumpscareOverlay/WhiskScare, "scale", Vector2(100.0, 100.0), 0.3)
+			await scare_tween.finished
+			$Player/Camera2D/JumpscareOverlay/WhiskScare.visible = false
+			while jumpscare_sound.playing:
+				var wait = randf_range(0.01,0.04)
+				$Player/Camera2D/JumpscareOverlay/JumpscareBackground.color = Color(0.703, 0.62, 0.62, 1.0)
+				await get_tree().create_timer(wait).timeout
+				$Player/Camera2D/JumpscareOverlay/JumpscareBackground.color = Color(0.0, 0.0, 0.0, 1.0)
+				await get_tree().create_timer(wait).timeout
+		"Murk":
+			jumpscare_background.visible = true
+			var murk_scare_start_pos = $Player/Camera2D/JumpscareOverlay/MurkScare.position
+			jumpscare_sound.play()
+			$Player/Camera2D/JumpscareOverlay/MurkScare.visible = true
+			var grow = create_tween()
+			grow.tween_property($Player/Camera2D/JumpscareOverlay/MurkScare, "scale", Vector2(35.0,35.0), 0.5)
+			var shake = create_tween()
+			for i in 12:
+				var offset = Vector2(randf_range(-15, 15), randf_range(-15, 15))
+				shake.tween_property($Player/Camera2D/JumpscareOverlay/MurkScare, "position", murk_scare_start_pos + offset, 0.02)
+			shake.tween_property($Player/Camera2D/JumpscareOverlay/MurkScare, "position", murk_scare_start_pos, 0.02)
+			await grow.finished
+			$Player/Camera2D/JumpscareOverlay/MurkScare.visible = false
 
 # Works out how dark a room should be
 func get_darkness_color(index: int) -> Color:
@@ -276,14 +321,53 @@ func update_darkness(index: int, instant: bool):
 	var target = get_darkness_color(index)
 	if instant:
 		darkness.color = target
+		murk_darkness.color = target.lerp(Color.WHITE, 0.15)
 		return
 	var tween = create_tween()
 	tween.tween_property(darkness, "color", target, 0.2)
+	tween.parallel().tween_property(murk_darkness, "color", target, 0.2)
 
 # a lamp broke in the room you're standing in: get a bit darker
 func _on_light_broken_dark(room: int, _lamp_id: int):
 	if room == gameManager.current_room_index:
 		update_darkness(room, false)
+		
+# ---------- MURK ----------
+
+# Called when a room finishes loading: decides if a Murk will come
+func schedule_murk():
+	var is_dark = gameManager.get_event(gameManager.current_room_index) == "Dark"
+	if is_dark and randf() < murk_chance:
+		murk_countdown = randf_range(MURK_FIRST_DELAY.x, MURK_FIRST_DELAY.y)
+	else:
+		murk_countdown = -1.0
+
+func _process(delta):
+	if murk_countdown < 0.0 or is_transitioning or is_dying or get_tree().paused:
+		return
+	if is_instance_valid(murk_instance):
+		return   # one at a time
+	murk_countdown -= delta
+	if murk_countdown <= 0.0:
+		spawn_murk()
+
+func spawn_murk():
+	murk_countdown = -1.0
+	murk_instance = MURK_SCENE.instantiate()
+	$Player/Camera2D/MurkLayer.add_child(murk_instance)
+	murk_instance.attacked.connect(func(): trigger_jumpscare("Murk"))
+	murk_instance.killed.connect(_on_murk_killed)
+
+func _on_murk_killed():
+	murk_instance = null
+	# still in a dark room: another one will come eventually
+	if gameManager.get_event(gameManager.current_room_index) == "Dark":
+		murk_countdown = randf_range(MURK_REPEAT_DELAY.x, MURK_REPEAT_DELAY.y)
+
+func remove_murk():
+	if is_instance_valid(murk_instance):
+		murk_instance.queue_free()
+	murk_instance = null
 
 # ---------- FADES ----------
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c53pmrjvbcvar"
-path="res://.godot/imported/costume6.png-419145c519a7bebf6689dce13449f1e3.ctex"
+uid="uid://ddetvl7ijhrwn"
+path="res://.godot/imported/MurkIdle.png-c1bdebf007f03752c18691172d265799.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/sprites/entities/murk/costume6.png"
-dest_files=["res://.godot/imported/costume6.png-419145c519a7bebf6689dce13449f1e3.ctex"]
+source_file="res://raw_assets/textures/sprites/entities/murk/MurkIdle.png"
+dest_files=["res://.godot/imported/MurkIdle.png-c1bdebf007f03752c18691172d265799.ctex"]
 
 [params]
 

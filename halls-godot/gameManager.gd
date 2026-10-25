@@ -42,6 +42,7 @@ func generate_events():
 	place_events(3, 10)    # one Whisk somewhere in rooms 3-10
 	place_events(11, 17)   # one Whisk somewhere in rooms 11-17
 	events[3] = "Whisk"  # <- uncomment to test, then delete
+	events[2] = "Dark"
 
 func _process(delta):
 	if flicker_time_left > 0.0:

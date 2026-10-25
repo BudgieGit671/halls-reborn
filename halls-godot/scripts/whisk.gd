@@ -131,7 +131,7 @@ func check_for_player():
 	if raycast.is_colliding():
 		var hit = raycast.get_collider()
 		if hit and hit.is_in_group("player"):
-			if not hit.is_hiding:
+			if not hit.is_hiding and global_position.distance_to(raycast.get_collision_point()) < 800:
 				trigger_jumpscare(hit)
 
 # ---------- VISIBILITY ----------

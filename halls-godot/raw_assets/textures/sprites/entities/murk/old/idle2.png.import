@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://nd0p4w2mwgux"
-path="res://.godot/imported/Attack Right.png-b952f2d4245334eab333332fb7f1d824.ctex"
+uid="uid://cgei2b61befe8"
+path="res://.godot/imported/idle2.png-1ccc74c37e2ee5c5344451125cf2bad9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/sprites/entities/murk/Attack Right.png"
-dest_files=["res://.godot/imported/Attack Right.png-b952f2d4245334eab333332fb7f1d824.ctex"]
+source_file="res://raw_assets/textures/sprites/entities/murk/old/idle2.png"
+dest_files=["res://.godot/imported/idle2.png-1ccc74c37e2ee5c5344451125cf2bad9.ctex"]
 
 [params]
 

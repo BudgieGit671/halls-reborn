@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://ct3ua37kmr245"]
+
+[ext_resource type="Script" uid="uid://dsqmhjag6xpfx" path="res://scripts/murk.gd" id="1_p5pgh"]
+[ext_resource type="Texture2D" uid="uid://ddetvl7ijhrwn" path="res://raw_assets/textures/sprites/entities/murk/MurkIdle.png" id="2_7fghq"]
+[ext_resource type="AudioStream" uid="uid://dkfbpeox5okcq" path="res://raw_assets/audio/sfx/entities/murk/Murk Call2.wav" id="3_8sewl"]
+[ext_resource type="AudioStream" uid="uid://cl6kfqbeiapvm" path="res://raw_assets/audio/sfx/entities/murk/Screech.wav" id="4_0wt6u"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_wfxnr"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_7fghq")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="Murk" type="Node2D" unique_id=972685200]
+script = ExtResource("1_p5pgh")
+orbit_speed = 1.0
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=1537847362]
+scale = Vector2(0.22939914, 0.22939914)
+sprite_frames = SubResource("SpriteFrames_wfxnr")
+
+[node name="AppearSound" type="AudioStreamPlayer2D" parent="." unique_id=1532641628]
+stream = ExtResource("3_8sewl")
+
+[node name="DeathSound" type="AudioStreamPlayer2D" parent="." unique_id=390043060]
+stream = ExtResource("4_0wt6u")

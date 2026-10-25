@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dp0yd72bq2jl0"
-path="res://.godot/imported/Scared2.png-8a222b95bff351d353b1c61bbe0a78d1.ctex"
+uid="uid://35yfvohrgnv1"
+path="res://.godot/imported/Scared5.png-54dfd1332ec85889b17c983d0414ed4d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/sprites/entities/murk/Scared2.png"
-dest_files=["res://.godot/imported/Scared2.png-8a222b95bff351d353b1c61bbe0a78d1.ctex"]
+source_file="res://raw_assets/textures/sprites/entities/murk/old/Scared5.png"
+dest_files=["res://.godot/imported/Scared5.png-54dfd1332ec85889b17c983d0414ed4d.ctex"]
 
 [params]
 
