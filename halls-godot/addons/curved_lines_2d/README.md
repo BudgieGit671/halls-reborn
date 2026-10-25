@@ -1,0 +1,1268 @@
+# Scalable Vector Shapes 2D plugin for Godot 4
+
+Ask questions on [discord](https://discord.gg/CDdkVvT2Ff)
+
+Scalable Vector Shapes 2D lets you do 3 things:
+1. Draw seamless vector shapes using a Path Editor inspired by the awesome [Inkscape](https://inkscape.org/) with a new node type: [`ScalableVectorShape2D`](./scalable_vector_shape_2d.gd)[^1]
+2. Animate the shape of the curve using keyframes on a [property-track](https://docs.godotengine.org/en/stable/tutorials/animation/introduction.html#doc-introduction-animation)  in an [`AnimationPlayer`](https://docs.godotengine.org/en/stable/classes/class_animationplayer.html#class-animationplayer)
+3. Import [.svg](https://www.w3.org/TR/SVG/) files as seamless vector shapes in stead of as raster images[^2]
+
+[^2]: __Important sidenote__: _This plugin only supports a small - yet relevant - subset of the huge [SVG Specification](https://www.w3.org/TR/SVG/struct.html)_
+
+## Watch the A-Z explainer on Youtube
+
+In this 10 minute video I explain how to use all the features of Scalable Vector Shapes 2D in short succession:
+
+[![link to the explainer](./video_thumbnails/a_z_deep_dive.webp)](https://youtu.be/z8Y1e-TehoE)
+
+[^1]: Looking for EZ Curved Lines 2D? The renamed plugin deprecates the old [`DrawablePath2D`](./drawable_path_2d.gd) custom node in favor of `ScalableVectorShape2D`. A Conversion button is provided: [converter button](./screenshots/00-converter.png). The reason is that [`ScalableVectorShape2D`](./scalable_vector_shape_2d.gd) inherits directly from `Node2D` giving much more control to the plugin over how you can draw.
+
+## Don't miss the new features!
+
+Since the recording of the A-Z Explainer, a lot of new features have been added:
+
+[![Link to the new features video](./video_thumbnails/splash-new-features.webp)](https://youtu.be/Pj-g_WFQvHA?si=NhE-vRIJ1LSxGaiF)
+
+## And all the other explainers
+
+You can find the rest of the explainer videos on this playlist:
+
+[![To the explainer playlist](./video_thumbnails/rigoberto.webp)](https://www.youtube.com/playlist?list=PL5lf_BvgORcg1YndZOi9wR_GaAbxqsujh)
+
+# Table of Contents
+
+- [Scalable Vector Shapes 2D plugin for Godot 4](#scalable-vector-shapes-2d-plugin-for-godot-4)
+  - [Watch the A-Z explainer on Youtube](#watch-the-a-z-explainer-on-youtube)
+  - [Don't miss the new features!](#dont-miss-the-new-features)
+  - [And all the other explainers](#and-all-the-other-explainers)
+- [Table of Contents](#table-of-contents)
+- [Drawing Shapes in the Godot 2D Viewport](#drawing-shapes-in-the-godot-2d-viewport)
+  - [Basic Drawing Explainer on youtube](#basic-drawing-explainer-on-youtube)
+  - [Quick Start](#quick-start)
+- [The Create Tab](#the-create-tab)
+  - [Creation tools](#creation-tools)
+  - [Draw Settings](#draw-settings)
+- [The Import SVG File Dock](#the-import-svg-file-dock)
+  - [Watch an explainer on Youtube](#watch-an-explainer-on-youtube)
+  - [Using the Import SVG File Dock](#using-the-import-svg-file-dock)
+  - [`Line2D` Stroke versus `Polygon2D` Stroke](#line2d-stroke-versus-polygon2d-stroke)
+  - [The import log](#the-import-log)
+  - [Importing SVG as nodes at runtime via gdscript](#importing-svg-as-nodes-at-runtime-via-gdscript)
+  - [Synchronize with external SGV files automatically using `SyncedSVGRoot`](#synchronize-with-external-sgv-files-automatically-using-syncedsvgroot)
+- [The Project Settings Dock](#the-project-settings-dock)
+  - [Editor Settings (how the 2D Viewport should behave):](#editor-settings-how-the-2d-viewport-should-behave)
+  - [Curve Settings](#curve-settings)
+  - [Extra's: Line2D antialiasing for Compatibility Mode](#extras-line2d-antialiasing-for-compatibility-mode)
+- [The Advanced Tab](#the-advanced-tab)
+  - [Basic export options](#basic-export-options)
+  - [Bake Animations](#bake-animations)
+- [Creating Basic Shapes](#creating-basic-shapes)
+  - [The Create Ellipse Tool](#the-create-ellipse-tool)
+  - [The Create Rectangle Tool](#the-create-rectangle-tool)
+- [Moving, Rotating and Resizing the Points of a Shape](#moving-rotating-and-resizing-the-points-of-a-shape)
+  - [Moving (Translating) all the points](#moving-translating-all-the-points)
+    - [Translating Ellipses and Rectangles](#translating-ellipses-and-rectangles)
+    - [Translating Paths](#translating-paths)
+  - [Rotating all the Points](#rotating-all-the-points)
+    - [Rotating Ellipses and Rectangles](#rotating-ellipses-and-rectangles)
+    - [Rotating Paths](#rotating-paths)
+  - [Resizing all the Points](#resizing-all-the-points)
+    - [Resizing Ellipses and Rectangles](#resizing-ellipses-and-rectangles)
+    - [Resizing Paths](#resizing-paths)
+  - [Flipping your shapes](#flipping-your-shapes)
+    - [Flipping primitive shapes](#flipping-primitive-shapes)
+    - [Flipping paths](#flipping-paths)
+- [Manipulating shapes](#manipulating-shapes)
+  - [Adding a point to a shape](#adding-a-point-to-a-shape)
+  - [Subdividing a shape](#subdividing-a-shape)
+  - [Bending a curve](#bending-a-curve)
+  - [Creating, mirroring and dragging control point handles](#creating-mirroring-and-dragging-control-point-handles)
+  - [Closing the loop and breaking the loop](#closing-the-loop-and-breaking-the-loop)
+  - [Deleting points and control points](#deleting-points-and-control-points)
+  - [Setting the global position of a point / curve handle manually](#setting-the-global-position-of-a-point--curve-handle-manually)
+  - [Create a cutout/clip/merge shape (a hole, a clipped frame, ...)](#create-a-cutoutclipmerge-shape-a-hole-a-clipped-frame-)
+    - [Cutting out an empty shape](#cutting-out-an-empty-shape)
+  - [Converting a line segment into an arc-segment](#converting-a-line-segment-into-an-arc-segment)
+  - [Editing arc properties](#editing-arc-properties)
+  - [Changing the width curve of a Stroke (`Line2D`-Stroke only)](#changing-the-width-curve-of-a-stroke-line2d-stroke-only)
+  - [Setting the pivot of your shape](#setting-the-pivot-of-your-shape)
+  - [Sticking two or more shapes together by vertex merge](#sticking-two-or-more-shapes-together-by-vertex-merge)
+- [The select tool settings form](#the-select-tool-settings-form)
+  - [Shape Type Settings](#shape-type-settings)
+  - [Node2D properties](#node2d-properties)
+- [Free-hand Drawing](#free-hand-drawing)
+  - [Drawing strokes and outlines with the Pencil Tool](#drawing-strokes-and-outlines-with-the-pencil-tool)
+    - [Pencil tool settings](#pencil-tool-settings)
+  - [Drawing polygons using the Brush Tool](#drawing-polygons-using-the-brush-tool)
+    - [Brush tool settings](#brush-tool-settings)
+  - [Cutting shapes in half with the knife tool](#cutting-shapes-in-half-with-the-knife-tool)
+    - [Knife tool settings](#knife-tool-settings)
+- [Extracting a `ScalableVectorShape2D` from a `Polygon2D`, `Line2D`, or `CollisionPolygon2D`](#extracting-a-scalablevectorshape2d-from-a-polygon2d-line2d-or-collisionpolygon2d)
+- [Manipulating 2D Shapes in the 3D export](#manipulating-2d-shapes-in-the-3d-export)
+  - [Animating 3D curves](#animating-3d-curves)
+- [Manipulating gradients](#manipulating-gradients)
+  - [Changing the start- and endpoint of the gradient](#changing-the-start--and-endpoint-of-the-gradient)
+  - [Changing the color stop positions](#changing-the-color-stop-positions)
+  - [Add new color stops](#add-new-color-stops)
+- [Ways to prevent 'over-selecting' `ScalableVectorShape2D` nodes](#ways-to-prevent-over-selecting-scalablevectorshape2d-nodes)
+- [Using the Inspector Form for `ScalableVectorShape2D`](#using-the-inspector-form-for-scalablevectorshape2d)
+  - [Inspector Form](#inspector-form)
+    - [Convert to Path button](#convert-to-path-button)
+  - [The Fill inspector form](#the-fill-inspector-form)
+  - [The Stroke inspector form](#the-stroke-inspector-form)
+    - [Creating new Strokes](#creating-new-strokes)
+  - [The Collision inspector form](#the-collision-inspector-form)
+  - [The Path inspector form](#the-path-inspector-form)
+  - [The Navigation inspector form](#the-navigation-inspector-form)
+  - [The Curve settings inspector form](#the-curve-settings-inspector-form)
+    - [The Glue Map property](#the-glue-map-property)
+  - [The Masking Inspector form](#the-masking-inspector-form)
+  - [The Shape type inspector form](#the-shape-type-inspector-form)
+  - [The Skeleton inspector form](#the-skeleton-inspector-form)
+  - [The Editor settings inspector form](#the-editor-settings-inspector-form)
+  - [The Export Options inspector form](#the-export-options-inspector-form)
+    - [Export as PNG button](#export-as-png-button)
+    - [Export as 'baked' scene button](#export-as-baked-scene-button)
+      - [Caveats when 'Baking'](#caveats-when-baking)
+- [More about assigned `Line2D`, `Polygon2D` and `CollisionObject2D`](#more-about-assigned-line2d-polygon2d-and-collisionobject2d)
+  - [Watch the chapter about working with collisions, paint order and the node hierarchy on youtube](#watch-the-chapter-about-working-with-collisions-paint-order-and-the-node-hierarchy-on-youtube)
+- [Animating / Changing shapes at runtime](#animating--changing-shapes-at-runtime)
+  - [Animating using `Skeleton2D`](#animating-using-skeleton2d)
+    - [Important notice](#important-notice)
+    - [Using deformation of the curve points](#using-deformation-of-the-curve-points)
+    - [Using transformation of the entire shape's position and rotation](#using-transformation-of-the-entire-shapes-position-and-rotation)
+  - [Youtube explainer on animating curves](#youtube-explainer-on-animating-curves)
+  - [A note up front (this being said)](#a-note-up-front-this-being-said)
+  - [Animating the shape and gradients at Runtime](#animating-the-shape-and-gradients-at-runtime)
+  - [Add keyframes in an animation player](#add-keyframes-in-an-animation-player)
+  - [Don't duplicate `ScalableVectorShape2D`, use the `path_changed` signal in stead](#dont-duplicate-scalablevectorshape2d-use-the-path_changed-signal-in-stead)
+  - [Performance impact](#performance-impact)
+- [Create one Outline for Multiple Shapes with `DynamicOutline2D`](#create-one-outline-for-multiple-shapes-with-dynamicoutline2d)
+  - [Optimize for performance with the Bake Static Outlines Button](#optimize-for-performance-with-the-bake-static-outlines-button)
+    - [The Scene Tree Before Baking Outlines](#the-scene-tree-before-baking-outlines)
+    - [The Scene Tree After Baking Outlines](#the-scene-tree-after-baking-outlines)
+- [Autoscaling SVG Textures for GUI Controls](#autoscaling-svg-textures-for-gui-controls)
+  - [Adding Autoscaling SVG Textures via the Inspector](#adding-autoscaling-svg-textures-via-the-inspector)
+    - [Example of Autoscaling GUI](#example-of-autoscaling-gui)
+  - [Removing an Automatically Scaled Texture](#removing-an-automatically-scaled-texture)
+  - [Advanced use of `SVGTextureHelper`](#advanced-use-of-svgtexturehelper)
+- [FAQ's](#faqs)
+  - [The curve of my `ScalableVectorShape2D` won't animate at runtime, what do I do?](#the-curve-of-my-scalablevectorshape2d-wont-animate-at-runtime-what-do-i-do)
+  - [I want to change shapes while debugging my game. Is this even possible?](#i-want-to-change-shapes-while-debugging-my-game-is-this-even-possible)
+  - [When I animate the curve of an imported scene, it animates all the other curves as well](#when-i-animate-the-curve-of-an-imported-scene-it-animates-all-the-other-curves-as-well)
+  - [When I duplicate a `ScalableVectorShape2D` and change its shape, the original `ScalableVectorShape2D` shape also changes](#when-i-duplicate-a-scalablevectorshape2d-and-change-its-shape-the-original-scalablevectorshape2d-shape-also-changes)
+  - [Can I draw shapes programmatically?](#can-i-draw-shapes-programmatically)
+  - [Should I draw shapes programmatically?](#should-i-draw-shapes-programmatically)
+  - [When should I draw shapes programmatically?](#when-should-i-draw-shapes-programmatically)
+  - [Can I change shapes in the 2D editor while running the game?](#can-i-change-shapes-in-the-2d-editor-while-running-the-game)
+  - [Can I use the SVG Importer at runtime?](#can-i-use-the-svg-importer-at-runtime)
+- [Attributions](#attributions)
+  - [Lots of thanks go out to those who helped me out getting started:](#lots-of-thanks-go-out-to-those-who-helped-me-out-getting-started)
+  - [And a big thank you goes to to @MewPurPur](#and-a-big-thank-you-goes-to-to-mewpurpur)
+  - [Many thanks to @HannesParth/Permotion](#many-thanks-to-hannesparthpermotion)
+  - [And of course everyone who helped test and review the code thus far](#and-of-course-everyone-who-helped-test-and-review-the-code-thus-far)
+- [Reaching out / Contributing](#reaching-out--contributing)
+
+# Drawing Shapes in the Godot 2D Viewport
+
+## Basic Drawing Explainer on youtube
+
+[![Explainer basic drawing on youtube](./screenshots/basic-drawing-youtube-thumnail.png)](https://youtu.be/gaug5zv57IE)
+
+## Quick Start
+After activating this plugin a new bottom panel item appears, called "Scalable Vector Shapes 2D".
+
+There are 2 recommended ways to start drawing:
+
+1. [With the tools in the Create tab](#the-create-tab)
+2. [Using the `.svg` importer](#using-the-import-svg-file-dock)
+
+
+# The Create Tab
+
+The `Create` sports a number of tools to draw and edit shapes with. When first activating the plugin it looks like this:
+
+![the bottom panel](./screenshots/06-scalable-vector-shapes-panel.png)
+
+
+## Creation tools
+
+On the left side of the panel are a set of tool buttons, which are enabled the moment a node in an open scene is selected.
+
+![creation tools](./screenshots/create-rectangle-tool.png)
+
+In the next section all these tools are described in more detail:
+
+- [Create Ellipse](#the-create-ellipse-tool)
+- [Create Rectangle](#the-create-rectangle-tool)
+- [Selection Tool](#manipulating-shapes) (Q), used for manipulating shapes
+- [Unform Translate](#moving-translating-all-the-points) (Z), which moves the points of the shape without moving the entire godot node
+- [Uniform Rotate](#rotating-all-the-points) (X), which rotates only the points and not the node
+- [Uniform Scale](#resizing-all-the-points) (C), which resizes the points without scaling the node
+- [Set Pivot](#setting-the-pivot-of-your-shape) (A), to set the shape's pivot
+- [Flip Horizontal and Vertical](#flipping-paths)
+- [Brush tool](#drawing-polygons-using-the-brush-tool) (Shift+B), with which you can paint with an Ellipse/Rectangle shaped brush
+- [Pencil tool](#drawing-strokes-and-outlines-with-the-pencil-tool) (Shift+N) to draw strokes, or outlines
+- [Knife tool](#cutting-shapes-in-half-with-the-knife-tool) (K), to cut slices off of shapes
+- [Bone Paint](#animating-using-skeleton2d) tool, to assign points of a shape to bones in a Skeleton2D
+- Merge points tool (Shift+M)
+
+## Draw Settings
+
+On the right side of the create tab are general drawing settings. 
+
+![draw settings](./screenshots/draw-settings.png)
+
+They include:
+
+- Enable Fill, which creates a [Polygon2D](#the-fill-inspector-form) assigned to the ScalableVectorShape2D node
+- Fill Color
+- Enable Stroke, which creates a [Line2D or Polygon2D based outline](#the-stroke-inspector-form)
+- Stroke color
+- Thickness, which sets the stroke width
+- A [collision object](#the-collision-inspector-form) that holds CollisionPolygon2D
+- Begin and End cap modes for strokes (round, square or bud)
+- Join modes for strokes (sharp/mitre, round or beveled)
+- Align / Extrusion direction for strokes (middle, inside or outside)
+- Paint order, which determines which assigned node is drawn over what other assigned node by default
+
+Changing these settings while shapes are selected will also change these properties of the selected shapes.
+
+# The Import SVG File Dock
+
+## Watch an explainer on Youtube
+
+[![watch explainer on youtube](./video_thumbnails/importing-svg-files-splash.webp)](https://youtu.be/5PIVoQcm8QE)
+
+
+## Using the Import SVG File Dock
+
+![svg importer dock](./screenshots/svg_importer_dock.png)
+
+
+On the left side of this panel is a form with a couple of options:
+
+- Import as ScalableVectorShape2D: check this Off if you want to import the svg file with only built-in godot  nodes (`Polygon2D`, `Line2D`, `CollisionPolygon2D`), without being able to edit/animate the curves in the editor.
+- Lock imported shapes in editor: this simply flags on the lock so that the `Polygon2D`, `Line2D`, etc. are not selected on click
+- Mark groups in editor: Mark all the Node2D that come from SVG `<g>` tags a group in Godot as well. Do the same for `ScalableVectorShape2D`.
+- Automatic Synchronization with `SyncedSVGRoot`: surround the imported SVG nodes with a helper `@tool` node [`SyncedSVGRoot`](#synchronize-with-external-sgv-files-automatically-using-syncedsvgroot), which tracks changes to the source svg file and automatically triggers a reimport.
+- Flag on antialiased on Polygon2D and Line2D: flags on the `antialiased` property of either
+- Use Line2D for Strokes: when flagged Off a `Polygon2D` is used for strokes in stead of a Line2D
+- Pick a `CollisionObject2D` type to also generate collision polygons when importing the svg file
+
+## `Line2D` Stroke versus `Polygon2D` Stroke
+
+A tooltip highlights the costs and benefits when picking either of these to draw strokes with:
+- A `Polygon2D` stroke can be more neatly clipped than a `Line2D`
+- `CollisionPolygon2D`'s match `Polygon2D` Stroke better
+- A `Polygon2D` stroke can be textured with gradients like fills are textured
+- `Line2D` has sharper caps and line joints at high zoom
+- `Line2D` can be textured directionally in stead of like a Fill texture
+- `Line2D` can set different Begin and End Cap Modes where `Polygon2D` can only pick one
+
+## The import log
+
+On the right side is an import log, which will show warnings of known problems, usually unsupported stuff.
+
+The link it shows is to the issues list on the github repository hosting this plugin. Here you can report any encountered bugs while importing SVG files using this plugin.
+
+## Importing SVG as nodes at runtime via gdscript
+
+As of release 2.33 you can import SVG files as nodes in your gdscript runtime. 
+
+Please refer to the script in this example to accomplish that:
+
+[`res://addons/curved_lines_2d/examples/import_svg_at_runtime/`](./examples/import_svg_at_runtime/)
+
+## Synchronize with external SGV files automatically using `SyncedSVGRoot`
+
+As of release `2.34` the `SyncedSVGRoot` tool node helps keep your imported version of the SVG file synchronized with an external file by reimporting all the nodes. 
+
+This works in a similar way as with imported blender models, with a couple of differences (like all the nodes being editable)
+
+Automatic sync only works while the scene with `SyncedSVGRoot` is open _and_ the `SyncedSVGRoot` is not part of an external scene. In that case file changes are still detected but pushed as a warning. You can then open the scene with the `SyncedSVGRoot` in it and press the "Reimport" button in the inspector:
+
+![SyncedSVGRoot in the inspector](./screenshots/synced-svg-root-inspector.png)
+
+A copy of all the settings chosen in the original import is also kept track of in this node and changing any of those settings will also trigger a reimport.
+
+# The Project Settings Dock
+
+![Project settings dock](./screenshots/project-settings.png)
+
+## Editor Settings (how the 2D Viewport should behave):
+
+- Enable/Disable ScalableVectorShape2D Editing (when checked off, you can edit nodes the normal, built-in, godot-way. You _are_ going to need this)
+- Show/Hide Edit hints
+- Show Point Details (which are the exact _indices_ of each point on the `Curve2D` of this shape, what is it's global position)
+- The custom Snap to Pixel setting has been replaced by native godot grid snap since release 2.35, support for grid offset and guide snapping will follow in later releases 
+
+## Curve Settings
+
+These settings are applied to the `Curve Settings` of new shapes when added via the bottom panel docks (either SVG importer or via Create Shapes).
+
+For more information on these settings, please refer to the section on [The Curve settings inspector form](#the-curve-settings-inspector-form)
+
+## Extra's: Line2D antialiasing for Compatibility Mode
+
+As of release `2.18.0` a new flag was added which causes any `Line2D` that you add as stroke to be antialiased via a repeating texture.
+
+This approach follows exactly the [Antialiased Line2D plugin](https://github.com/godot-extended-libraries/godot-antialiased-line2d) by @Calinou. 
+
+To be more specific, I reused these bits:
+- The tool script code for the `Line2D` creation is here: [addons/antialiased_line2d/antialiased_line2d.gd](https://github.com/godot-extended-libraries/godot-antialiased-line2d/blob/v1.2.0/addons/antialiased_line2d/antialiased_line2d.gd)
+- And the [LumAlpha8.tex](./LumAlpha8.tex) texture resource it uses was generated by this script: [addons/antialiased_line2d/texture.gd](https://github.com/godot-extended-libraries/godot-antialiased-line2d/blob/v1.2.0/addons/antialiased_line2d/texture.gd)
+
+Of course, once you assign this to the `Line2D.texture`, you cannot use another texture on that `Line2D` anymore.
+
+# The Advanced Tab
+
+Since release `2.13.0` a tab named 'Advanced' is added to the bottom dock.
+
+![Advanced tab](./screenshots/advanced-tab.png)
+
+## Basic export options
+- PNG file (see [Export as PNG Button](#export-as-png-button) )
+- A 'Baked' scene (see [Export as 'baked' scene button](#export-as-baked-scene-button))
+- 3D scene: creates a new 3D scene, in which all the Fills and Strokes in the scene are turned into instances of `CSGPolygon3D`[^6]
+
+[^6]: Coming soon: a 3D Node with an editable outline using a `ScalableVectorShape2D` node
+
+## Bake Animations
+Since `2.14.0` you can export your animated scene as sprite frames in one PNG spritesheet or separate PNG files.
+
+# Creating Basic Shapes
+
+Using the 2 leftmost tools in the create tab you can create basic ellipses and rectangles. 
+
+They as a path based on Bézier curves:
+
+![create ellipse as path](./screenshots/create-ellipse-as-path.png)
+
+And as a so called 'primitive shape', which is easier to resize and, in the case of rectangles, give rounded corners.
+
+![create rect as rect](./screenshots/create-rect-as-rect.png)
+
+## The Create Ellipse Tool
+
+While this tool is active, you can create ellipses anywhere on top of a selected `Node2D` or `Control` node by clicking and dragging.
+
+You can also create the ellipse using the form fields and button in the bottom dock.
+
+![create ellipse tool](./screenshots/create-ellipse.png)
+
+For the ellipse you can set the horizontal and vertical radius.
+
+When `Center Offset` is checked the shape's pivot will be in the middle by default. If unchecked it will be top/left.
+
+When `As Path`, the ellipse is created as a bézier path in stead of as a primitive shape.
+
+When `Keep creating` is checked, you can continue adding more ellipses after adding one. If it is unchecked, your new ellipse will be autmatically selected in "select mode" after creation.
+
+## The Create Rectangle Tool
+
+
+While this tool is active, you can create rectangles anywhere on top of a selected `Node2D` or `Control` node by clicking and dragging.
+
+You can also create the rectangle using the form fields and button in the bottom dock.
+
+![create rectangle tool](./screenshots/create-rectangle-tool.png)
+
+For the rectangle you can pick the width, height and corder radius in the settings panel.
+
+When `Center Offset` is checked the shape's pivot will be in the middle by default. If unchecked it will be top/left.
+
+When `As Path`, the rectangle is created as a bézier path in stead of as a primitive shape.
+
+
+When `Keep creating` is checked, you can continue adding more rectangles after adding one. If it is unchecked, your new rectangle will be autmatically selected in "select mode" after creation.
+
+# Moving, Rotating and Resizing the Points of a Shape
+
+Release `2.16.0` adds the posibility to do uniform transforms on the points of a shape, as opposed to the entire node.
+
+When a `ScalableVectorShape2D` is selected in `Select Mode (Q)`, the following command buttons are made available:
+
+- `Move all the Points without moving the Node (Z)`
+- `Rotate all the Points without rotating the Node (X)`
+- `Resize all the Points without scaling the Node (C)`
+- `Go back to editing the points normally (Q)`
+
+There are also 2 buttons for horizontal and vertical flipping, which work instantly on click.
+
+![uniform transform buttons](./screenshots/uniform_transforms.png)
+
+
+## Moving (Translating) all the points
+
+When moving all the points of a shape, the `Node2D.position` property does not change.
+
+This operation responds can also snap to grid.
+
+### Translating Ellipses and Rectangles
+
+In the case of the 2 supported primitive shapes, the `offset` property is changed, to represent the translation.
+
+The `offset` property can be used to set keyframes in an `AnimationPlayer` and is so easier to use than the `Batch Update` button for an entire curve.
+
+### Translating Paths
+
+When the `Shape Type Settings > Shape Type` is `Path`, all the points are simply moved, relative to the node position (translating their individual local position).
+
+## Rotating all the Points
+
+When rotating all the points of a shape, the `Node2D.rotation` property does not change.
+
+Just like rotating `Node2D`, holding `Ctrl` allows you to rotate in steps of 5°.
+
+### Rotating Ellipses and Rectangles
+
+In the case of the 2 supported primitive shapes, the `spin` property is changed, to represent the rotation of all the points.
+
+The `spin` property can be used to set keyframes in an `AnimationPlayer` and is so easier to use than the `Batch Update` button for an entire cruve.
+
+### Rotating Paths
+
+When the `Shape Type Settings > Shape Type` is `Path`, all the points can be rotated in 2 ways:
+1. Around the `Node2D`'s pivot
+2. Around their natural center (by holding the `Shift` button - this is not perfect, but comes close enough)
+
+![Uniform Rotate a Path Hole](./screenshots/uniform_rotate_a_path_hole.png)
+
+## Resizing all the Points
+
+When resizing all the points of a shape, the `Node2D.scale` property does not change, this is especially useful when using strokes, because their width will remain the same this way.
+
+This operation can also snap to grid.
+
+### Resizing Ellipses and Rectangles
+
+In the case of the 2 supported primitive shapes, the `size` property is changed, to represent the 'distance' of all the points away from their origin.
+
+The `size` property can be used to set keyframes in an `AnimationPlayer` and is so easier to use than the `Batch Update` button for an entire cruve.
+
+### Resizing Paths
+
+When the `Shape Type Settings > Shape Type` is `Path`, all the points can be resized in 2 ways:
+1. Away from / towards the `Node2D`'s pivot
+2. Away from / towards their natural center (by holding Shift)
+
+
+
+## Flipping your shapes
+
+Release `2.17.0` adds vertical and horizontal flip buttons. This allows you to flip your shape without changing the `Node2D.scale` property of your `ScalableVectorShape2D`.
+
+### Flipping primitive shapes
+
+Flipping primitive shapes (shape type is ellipse, or rectangle) simply reverses the rotation of points around their pivot by negating the value of the `spin` property.
+
+### Flipping paths
+
+Flipping paths multiplies the position of each point by negative-x for horizontal flipping, or negative-y for vertical flipping. The in- and out- control points are also flipped, effectively flipping the bézier curves.
+
+Arcs are flipped by toggling negating the `sweep` flag of each listed arc.
+
+# Manipulating shapes
+
+The hints in the 2D viewport should have you covered, but this section lists all the operations available to you.
+
+This [section from the A-Z Explainer video](https://www.youtube.com/watch?v=z8Y1e-TehoE&t=710s) demonstrates most operations, but some things have changed since then. Especially the layout in the bottom dock since release 3.0.1. 
+
+The select tool now also hosts [its own settings form](#the-select-tool-settings-form), to make some common properties easier to find than hidden away in the inspector.
+
+## Adding a point to a shape
+
+Using `Ctrl`[^5] + `Left Click` you can add a point anywhere in the 2D viewport, while your shape is selected.
+
+[^5]: Use `Cmd` in stead of `Ctrl` on a mac
+
+By double clicking on a line segment you can add a point _inbetween_ 2 existing points:
+
+![add point to a line](./screenshots/18-add-point-to-line.png)
+
+By holding alt and left-clicking while hovering over a line segment you add a point at the halfway-mark of a curve:
+
+![add a point at the halfway mark of an edge](./screenshots/alt-click-subdivide.png)
+
+
+## Subdividing a shape
+
+Double click on a shape without hovering over an edge to subdivide all edges on the shape:
+
+![subdivide shape](./screenshots/subdivide.gif)
+
+
+
+## Bending a curve
+
+Holding the mouse over line segment you can start dragging it to turn it into a curve.
+
+![bend line](./screenshots/05-bend.png)
+
+## Creating, mirroring and dragging control point handles
+
+When you have new node you can drag out curve manipulation control points while holding the `Shift` button. The 2 control points will be mirrored for a symmetrical / round effect.
+
+Dragging control point handles while holding `Shift` will keep them mirrored / round:
+
+![mirrored handle manipulation](./screenshots/07-mirrored-handles.png)
+
+Dragging them without holding shift will allow for unmirrored / shap corners:
+
+![shar corner](./screenshots/08-sharp.png)
+
+## Closing the loop and breaking the loop
+
+Double clicking on the start node, or end node of an unclosed shape will close the loop.
+
+Double clicking on the start-/endpoint again will break the loop back up:
+
+![closed loop](./screenshots/09-loop.png)
+
+You can recognise the start-/endpoint(s) by the infinity symbol: ∞
+
+## Deleting points and control points
+
+You can delete points and control points by using right click.
+
+## Setting the global position of a point / curve handle manually
+
+Using `Alt+Click` you can now open a form to set the global position of a point manually:
+
+![global position popup dialog](./screenshots/global_position_popup.png)
+
+## Create a cutout/clip/merge shape (a hole, a clipped frame, ...)
+
+While holding `Ctrl+Shift`[^5] on a selected shape you can start adding cutouts to your selected shape:
+- Use `mousewheel` to change shapes (rectangle, ellipse, or empty path)
+- Use `right click` to change operation (cut out, clip, or merge)
+- Use `left click` __on__ your selected shape to create _and_ select the new `ScalableVectorShape2D` which acta as a cutout, a frame clipping, or merged shape:
+
+![add a hole](./screenshots/add_a_hole.png)
+
+### Cutting out an empty shape
+
+When cutting out an empty shapem, the created cutout will have only _one_ point, so to see the effect you'd need to add more points to using regular `Ctrl+Click`[^5]:
+
+![a hole was added](./screenshots/hole_added.png)
+
+## Converting a line segment into an arc-segment
+
+Use `Right click` on a line segment to convert it into an arc[^3] (a an ellipse-shaped bend with an x- and y-radius).
+
+![add an arc](./screenshots/add-arc.png)
+
+Use `Right click` on an arc again to convert it back into a normal line segment.
+
+![remove an arc](./screenshots/remove-arc.png)
+
+## Editing arc properties
+
+Using `Left click` on an arc segment opens a popup form to edit the properties of the arc:
+- radius (`rx` / `ry`)
+- rotation (rotates the arc around its elliptical center; is only noticable when radius is non-uniform)
+- large arc (when the arc's radius is greater than distance between its start- and endpoint it can be drawn the short and the long way 'round)
+- sweep (determines the direction the arc points are drawn: clockwise / counter-clockwise; this effectively flips the arc)
+
+![open arc settings](./screenshots/arc-settings.png)
+
+
+[^3]: Arcs are implemented the same way as specified by the [w3c for scalable vecor graphics](https://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands).
+
+
+## Changing the width curve of a Stroke (`Line2D`-Stroke only)
+
+Hold `Ctrl+Mousehweel` while hovering over a stroke to change the width. This changes the `ScalableVectorShape2D.line.width_curve` `property
+
+![width curve edit](./screenshots/width_curve_edit.gif)
+
+Press `Right click` while holding `Ctrl` to remove a width curve control point:
+
+![width curve point remove ](./screenshots/width_curve_pt_remove.gif)
+
+## Setting the pivot of your shape
+
+You can use the `Change pivot` mode to change the origin of your shape, just like you would a `Sprite2D`. 
+
+This same tool is also available from the bottom dock and via the Shortcut A.
+
+In this case, the 'pivot' will actually be the `position` property of you `ScalableVectorShape2D` node.
+
+This rat will want to rotate it's head elsewhere:
+
+![set origin](./screenshots/16-set-origin.png)
+
+Like this:
+
+![set origin 2](./screenshots/16a-set_origin.png)
+
+Note that child nodes of the shape will also move position, unless they're the assigned polygon and line nodes.
+
+
+## Sticking two or more shapes together by vertex merge
+
+Press 'M' while editing, or by pressing the chainlink button to 'Merge Vertices'.
+
+![merge mode button](./screenshots/merge_mode_button.png)
+
+This allows you to link one point of 2 or more shapes together, so they will now always have the same global position.
+
+![merge 2 points](./screenshots/merge_2_points.png)
+
+This action create a new instance of the `SVSVertexMerge2D` node. Delete this node to break the link between points.
+
+![merge 2 points](./screenshots/svs_vertex_merge_2d_node.png)
+
+
+# The select tool settings form
+
+When a `ScalableVectorShape2D` node is selected during select mode some of its most common properties can be altered in the bottom dock (besides the inspector).
+
+![Select Tool Form](./screenshots/select-tool-form.png)
+
+## Shape Type Settings
+
+The fields here are the same as the [shape type settings](#the-shape-type-inspector-form) in the inspector and only work on primitve rectangles and ellipses:
+
+- Offset: this represents the position of the pivot relative to the shape's natural center.
+- Size: the box size of the entire shape (stroke thickness excluded)
+- Radius: the radius of the shape in case of ellipses and radius of rounded corners in case of rectangles.
+- Spin: the shape's rotation relative to its natural center
+
+There is also a "convert to path" button which turns the shape into a Bézier curve. This operation cannot be properly undone.
+
+## Node2D properties
+
+- Node Pos: this is the [`Node2D.position`](https://docs.godotengine.org/en/stable/classes/class_node2d.html#class-node2d-property-position)
+- Node Scale: this is the [`Node2D.scale`](https://docs.godotengine.org/en/stable/classes/class_node2d.html#class-node2d-property-scale)
+- Rotate: this is the [`Node2D.rotation`](https://docs.godotengine.org/en/stable/classes/class_node2d.html#class-node2d-property-rotation)
+- Skew: this is the [`Node2D.skew`](https://docs.godotengine.org/en/stable/classes/class_node2d.html#class-node2d-property-skew)
+
+
+# Free-hand Drawing
+
+You can draw and cut shape using the following tools, which are activated by these listed shortcuts
+
+- `Brush tool (Shift+B)`
+- `Pencil tool (Shift+N)`
+- `Knife tool (K)`
+
+![freehand tools](./screenshots/freehand-tools.png)
+
+
+## Drawing strokes and outlines with the Pencil Tool
+
+Using this pencil tool toggle button, or by pressing `Shift+N` you start drawing strokes and outlines.
+
+Clicking and dragging the mouse draws a line with points of configurable granularity (i.e. distance between points):
+
+![pencil draw](./screenshots/pencil-drawing.gif)
+
+By holding shift and left-clicking, straight lines can be drawn: 
+
+![pencil draw straight](./screenshots/pencil-draw-straight.gif)
+
+When releasing shift, another confirming click is required to finish the shape, or simple continuing to drag to continue without making straight lines.
+
+This pencil tool can also snap to grid.
+
+### Pencil tool settings
+
+The pencil tool offers the following settings:
+
+![pencil tool settings](./screenshots/pencil-settins.png)
+
+- Granularity: this is the minimum distance between points while drawing
+- Extract curve: when checked, a bézier curve is [extracted](#extracting-a-scalablevectorshape2d-from-a-polygon2d-line2d-or-collisionpolygon2d) from the line you drew, this curve will not be perfect, but an approximation
+- Close path: when check the line you draw is closed so it becomes an outline (already visible while drawing)
+- Keep drawing: when checked, after drawing one line, you can immediately draw another on the same parent node. When checked off, the line you drew will be automatically selected with the "select tool" after drawing.
+
+## Drawing polygons using the Brush Tool
+
+Click and drag the mouse to draw polygons with the brush tool button, or by pressing `Shift+B`.
+
+![the brush tool](./screenshots/brush_tool.gif)
+
+Using the mousewheel you can change the brush shape while holding command keys:
+- `Ctrl/Cmd`: toggle between rect and ellipse
+- `Shift`: increase and decrease brush size
+- `Ctr+Shift`: rotate the brush
+
+This brush tool can also snap to grid.
+
+### Brush tool settings
+
+The brush tool offers the following settings:
+
+![brush tool settings](./screenshots/brush-tool-settings.png)
+
+- Brush shape: ellipse or rectangle
+- Size X / Y
+- Rotation
+- Granularity: the minimum distance between points while drawing 
+- Extract curve: when checked, a bézier curve is [extracted](#extracting-a-scalablevectorshape2d-from-a-polygon2d-line2d-or-collisionpolygon2d) from the polygon you drew, this curve will not be perfect, but an approximation
+- Keep drawing: when checked, after drawing one brush stroke, you can immediately draw another on the same parent node. When checked off, the shape you drew will be automatically selected with the "select tool" after drawing.
+- Fill in parent shape: when checked, if you use the brush on a selected shape, it will try to color between the lines. This works best with a low granularity and perfectly when "extract curve" is turned off (but you get a lot of points).
+When checked off, you're ignoring the parent shape and simply drawing anywhere.
+
+## Cutting shapes in half with the knife tool
+
+As of release 2.31 a new knife tool (K) was added. 
+
+![knife tool](./screenshots/knife.gif)
+
+With this tool you can cut a shape in half. The curve biggest half of the shape will be assigned to the existing `ScalableVectorShape2D`. 
+
+A new `ScalableVectorShape2D` will be created as a sibling of the existing shape.
+
+The knife tool does not support clipping using the `clip_paths` property, so any assigned shapes for this should be (re)assigned manually.
+
+### Knife tool settings
+
+The knife tool offers the following settings:
+
+![knife tool settings](./screenshots/knife-tool-settings.png)
+
+- Granularity: the minimum distance between points while cutting
+- Extract curve: when checked, a bézier curve is [extracted](#extracting-a-scalablevectorshape2d-from-a-polygon2d-line2d-or-collisionpolygon2d) from the cutting line you drew, this curve will not be perfect, but an approximation. The rest of the shape being cut is kept the same.
+
+
+
+# Extracting a `ScalableVectorShape2D` from a `Polygon2D`, `Line2D`, or `CollisionPolygon2D`
+
+As of release 2.30 a new button is available that generates a `ScalableVectorShape2D` with a curve based on the selected `Polygon2D`, `Line2D` and `CollisionPolygon2D`. 
+
+This new button is presented when the actively selected node in the scene tree is of one of these types. It supports creating shapes from multiple selections.
+
+![Extracting a `ScalableVectorShape2D` from a `Polygon2D`](./screenshots/extract_svs.gif)
+
+# Manipulating 2D Shapes in the 3D export
+
+Using the new `Export to 3D Scene` in the [Advanced Editing Tab](#the-advanced-tab) produces the new `AdaptableVectorShape3D` node, which holds instances of `CSGPolygon3D` with:
+
+![AdaptableVectorShape3D inspector](./screenshots/adaptable-vector-shape-3d.png)
+
+Pressing the button `Add 2D Shape Editor` will instantiate a new `ScalableVectorShape2D` that can be used to edit with. For now I will suffice with a screenshot. I'm hope to record a long explainer about this soon.
+
+This screenshot was made using the [DualEditor](https://github.com/Meta-Ben/DualEditor) plugin by @Meta-Ben, which is _very_ useful for this purpose:
+
+![editing 3d shapes](./screenshots/dualview-preview.png)
+
+## Animating 3D curves
+
+You can also use the `Batch insert` button for curve key frames to animate the 3D shape's curve. Of course the [performace impact](#performance-impact) for this is not negligable.
+
+# Manipulating gradients
+
+Once a gradient is assigned to the 'Fill' of your shape via the inspector, its properties can be changed using the same controls as will the other handles.
+
+## Changing the start- and endpoint of the gradient
+
+Drag the outer orbit of the start- and endpoint of a the gradient line using the left mouse button to move them:
+
+![drag gradient start- and end-position](./screenshots/drag_gradient_start.png)
+
+
+## Changing the color stop positions
+
+Drag the color stops along the gradient line to change their position.
+
+Right click to remove a color stop.
+
+![changing color stops](./screenshots/drag_remove_color_stops.png)
+
+## Add new color stops
+
+Double clicking on the gradient line will add a new color stop (the assigned color will be sampled from the existing color at that point)
+
+![adding a color stop](./screenshots/add_color_stop.png)
+
+
+
+
+
+# Ways to prevent 'over-selecting' `ScalableVectorShape2D` nodes
+
+This plugin can sometimes get in the way of the default 2D viewport behavior. Sometimes it is hard _not_ to select a `ScalableVectorShape2D`.
+
+There are 4 ways to get around this:
+1. Locking the `ScalableVectorShape2D` using the lock toggle ![lock toggle](./LockViewport.svg) button above the 2D viewport
+2. Hiding the `ScalableVectorShape2D` via the scene tree
+3. Saving the branch containing the `ScalableVectorShape2D` as a new scene via the scene tree and importing it will also prevent selection
+4. Toggling off Enable/Disable ScalableVectorShape2D Editing altogether in the bottom panel
+
+
+# Using the Inspector Form for `ScalableVectorShape2D`
+
+The following custom forms were added, with extensive tooltips to help explain the actual functions they provide:
+
+- [Fill](#the-fill-inspector-form) (actually the assigned `Polygon2D`)
+- [Stroke](#the-stroke-inspector-form) (actually the assigned `Line2D` or `Polygon2D`)
+- [Collision](#the-collision-inspector-form) (manages an assigned `CollisionObject2D`)
+- [Path](#the-path-inspector-form) (manages an assigned `Path2D`)
+- [Navigation](#the-navigation-inspector-form) (manages an assigned `NavigationRegion2D`)
+- [Curve Settings](#the-curve-settings-inspector-form)
+- [Masking](#the-masking-inspector-form)
+- [Shape Type Settings](#the-shape-type-inspector-form)
+- [Editor Settings](#the-editor-settings-inspector-form)
+- [Export Options](#the-export-options-inspector-form)
+
+![screenshot of the inspector](./screenshots/inspector-in-2.6.png)
+
+
+## Inspector Form
+
+### Convert to Path button
+
+When a primitive shape (basic rectangle or ellipse) is selected, a `Convert to Path`-button is available at the top of the inspector.
+
+## The Fill inspector form
+
+When the selected shape has no fill, an `Add Fill` button is provided. Clicking that will create and assign a new `Polygon2D` to the selected `ScalableVectorShape2D`:
+
+![screenshot of fill form without fill](./screenshots/fill-form-no-fill.png)
+
+Once assigned, the following options are available:
+- Fill color, changes the `color` property of the assigned `Polygon2D`
+- Gradient, will assign or remove a `GradientTexture2D` to the `Polygon2D`
+- Stop colors (if a gradient is set), one color button per color
+- A `Edit Polygon2D` button, which will make the editor select the assigned `Polygon2D`
+
+Below that, a standard godot `Assign ...`-field is also available to set the `polygon`-property directly with and to enable unassignment.
+
+## The Stroke inspector form
+
+![screenshot of stroke formm](./screenshots/stroke_inspector.png)
+
+With this form the following `ScalableVectorShape2D` properties can be edited:
+- `stroke_color`
+- `stroke_width`
+- `begin_cap_mode` (in case of a `Polygon2D`-based stroke, this will also set the end cap)
+- `end_cap_mode`
+- `line_joint_mode`
+- `extrusion_direction` - This sets the way the stroke is drawn: 
+  - over the middle of the shape's outline
+  - entirely outside the shapes's outline
+  - entirely inside the shape's outline
+
+When a `Line2D` is assigned to draw the stroke with, these properties will be kept synchronized with the `ScalableVectorShape2D` properties.
+
+In case of a `Polygon2D` based stroke, the `stroke_color` will be kept synchronized with the `Polygon2D` color.
+
+The `extrusion_direction` property only works when the shape has a closed outline.
+
+### Creating new Strokes
+When the selected shape has no stroke, an extra set of buttons is provided:
+- `Add Line2D Stroke`
+- `Add Polygon2D Stroke`
+
+Clicking either will create and assign a new `Line2D` or `Polygon2D` to the selected `ScalableVectorShape2D`:
+
+Below that, a standard godot `Assign ...`-field is also available to set these properties:
+- `line`: a `Line2D` assignment
+- `poly_stroke`: a `Polygon2D` assignment
+
+## The Collision inspector form
+
+This works the same as the Fill- and Stroke forms, but in this case a descendant of a `CollisionObject2D` is assigned to the `collision_object`-property[^4]:
+
+[^4]: Note that the `collision_polygon` property of `ScalableVectorShape2D` remains supported for backward compatibility, even though the inspector form will now show a deprecation warning and suggest replacing it by assigning a `CollisionObject2D` to the `collision_object` property.
+
+![the collision inspector form](./screenshots/collision-inspector-form.png)
+
+Every time the shape is changed, one or more `Polygon2D` nodes will be added/updated as direct children of this `collision_object`. The descendants of `CollisionObject2D` are:
+
+- `StaticBody2D`
+- `Area2D`
+- `AnimatableBody2D`
+- `RigidBody2D`
+- `CharacterBody2D`
+- `PhysicalBone2D`
+
+## The Path inspector form
+
+This form can hold a reference to an assigned `Path2D`. That `Path2D`'s curve is kept as a duplicate of the `ScalableVectorShape2D`.
+
+When `reversed_direction` is turned on, the `Path2D`'s curve goes the other way around.
+
+![The Path inspector form](./screenshots/path-inspector-form.png)
+
+
+## The Navigation inspector form
+
+This form can hold a reference to an assigned `NavigationRegion2D`. When the shape changes, a new navigation polygon is calculated.
+
+## The Curve settings inspector form
+
+![A screenshot of the Curve settings inspector form as per release 2.9](./screenshots/curve_settings_inspector_form.png)
+
+The curve settings inspector form provides the following options
+- A `Batch insert` keyframes button for all the `Curve2D`'s control points (the whole shape). This will be active when a valid track is being edited in a `AnimationPlayer` via the bottom panel
+- The standard godot built-in editor for `Curve2D` resources, assigned to the `curve` property of the selected `ScalableVectorShape2D`
+- The `update_curve_at_runtime` checkbox, which enables animating the entire shape
+- The `max_stages` property which influences smoothness (and performance!) of curve drawing; a higher value means smoother lines
+- The `tolerance_degrees` property, which also influences smoothness (and performance) of curve drawing: a lower value adds a smoother curve, especially for very subtle bends
+- The `arc_list` property: a container for the metadata-objects describing elliptical arc segments of the curve (implemented via `ScalableArc2D` and `ScalableArcList` resource-classes).
+- The `glue_map` property: with this dictionary you can control the position of any `Node2D` in the scene with the a point position in the `curve`.
+
+### The Glue Map property
+
+With the property `glue_map : Dictionary[int, Node2D]` you can control the position of any `Node2D` in the scene with the a point position in the `curve`.
+
+![The new glue map](./screenshots/glue_map.png)
+
+
+
+## The Masking Inspector form
+
+These properties are used for clipping this shape and cutting out of this shape.
+
+- The `clip_paths` property: an array of assigned `ScalableVectorShape2D`-nodes, which describe the shapes to cut out of this shape
+- When the `use_interect_when_clipping` property is checked on and this `ScalableVectorShape2D` is used in another's clip_paths array, the `Geometry2D.intersect_polygons(...)` operation is used in stead of the `Geometry2D.clip_polygons(...) operation`
+- When the `use_union_in_stead_of_clipping` property is check on and this `ScalableVectorShape2D` is used in another's clip_paths array, the `Geometry2D.merge_polygons(...)` operation is used in stead of the `Geometry2D.clip_polygons(...) operation`[^8]
+
+[^8]: see also: the [cloud example](./examples/cloud.tscn)
+
+## The Shape type inspector form
+
+This form allows manipulation of the properties of primitive shape types (rectangle, ellipsis):
+- Shape type, here you can selected the type of the shape: Path, Rect and Ellipse. (Be warned: changing a shape from a path to a primitive shape is a destructive action and cannot be undone)
+- Offset: this represents the position of the pivot relative to the shape's natural center.
+- Size: the box size of the entire shape (stroke thickness excluded)
+- Rx: the x-radius of the shape
+- Ry: the y-radius of the shape
+
+It is best to change these properties via the handles in the 2D editor. They are, however, quite useful for animating key frames.
+
+## The Skeleton inspector form
+
+This form allows for rigging your shape by assigning a `Skeleton2D` node:
+- Skeleton: the assigned `Skeleton2D` node
+- Bone: an optionally assigned `Bone2D` node. If assigned, the bone will control the position and rotation of this shape. In this case the curve will not be deformed by the skeleton.
+- Deformation Map: a Dictionary telling the shape which point must be deformed by which bone.
+
+## The Editor settings inspector form
+
+This form exposes 2 settings:
+
+- Shape Hint Color: the color of the line with which this shape is drawn, when selected
+- Lock Assigned Shapes: when this is checked, added strokes, fills and collision polygons will be locked in the editor, once created.
+
+## The Export Options inspector form
+
+### Export as PNG button
+
+With the `Export as PNG`-button you can save any `ScalableVectorShape2D` and its children as a new `.png`-file. Note that nodes which are assigned as Fill or Stroke that are higher up in the hierarchy will be excluded from the exported file.
+
+You _can_ however change the type of any `Node2D` to `ScalableVectorShape2D` temporarily in order to export group of shapes as a PNG file.
+
+### Export as 'baked' scene button
+
+With the `Export as baked scene` button you can generate a new scene (like `Save branch as scene`), with all the `ScalableVectorShape2D`-nodes converted to basic `Node2D`-nodes.
+
+Use this when you are done drawing entirely and do not want to update curves at runtime, or when you want to keep the shapes but drop the dependency of this plugin from your project.
+
+#### Caveats when 'Baking'
+An exported AnimationPlayer will not support animated curves, track references will, however, remain.
+
+
+# More about assigned `Line2D`, `Polygon2D` and `CollisionObject2D`
+
+Using the `Add ...` buttons in the inspector simply adds a new node as a child to `ScalableVectorShape2D` but it does __not need to be__ a child. The important bit is that the new node is _assigned_ to it via its properties: `polygon`, `line` and `collision_object`.
+
+## Watch the chapter about working with collisions, paint order and the node hierarchy on youtube
+
+This video gives more context on how `Line2D`, `Polygon2D` and `CollisionPolygon2D` are _assigned_ to the `ScalableVectorShape2D`:
+
+[![working with collisions, paint order and the node hierarchy on youtube](./screenshots/more-on-node-hierarchy.png)](https://www.youtube.com/watch?v=z8Y1e-TehoE&t=1453s)
+
+
+# Animating / Changing shapes at runtime
+
+## Animating using `Skeleton2D`
+
+As of release 2.24 you can rig your shapes to a `Skeleton2D`'s bones. Do this by assigning a `Skeleton2D` via the inspector:
+
+![assigning a skeleton](./screenshots/assign_skeleton.png)
+
+
+### Important notice
+⚠️ Make sure that any `AnimationPlayer`'s RESET track for this shape is removed before rigging your model to a new skeleton!
+
+An `AnimationPlayer`'s RESET track takes precedence over the `Skeleton2D`'s reset-pose. When deforming curves this leads to irratic warping because first the `AnimationPlayer`'s RESET track is executed, after which the `skeleton` is executed.
+
+### Using deformation of the curve points
+
+Once a skeleton with `Bone2D` nodes is assigned, you can use the `Paint Bone` toggle button to assign individual points to bones by clicking + dragging:
+
+![assigning points to bones](./screenshots/paint_bone.png)
+
+### Using transformation of the entire shape's position and rotation
+
+If you assign a `Bone2D` to the `bone` property, the entire shape will follow that bone's position and rotation. The `curve` will then not be deformed anymore. 
+
+
+## Youtube explainer on animating curves
+
+Watch this explainer on youtube on animating:
+
+[![link to Youtube explainer about animating](./screenshots/animating-youtube-thumbnail.png)](https://youtu.be/IwS2Rf65i18?feature=shared)
+
+## A note up front (this being said)
+
+The shapes you create will work fine with basic key-frame operations.
+
+You can even detach the Line2D, Polygon2D and CollisionObject2D from `ScalableVectorShape2D` entirely, once you're done drawing and aligning, and change the `ScalableVectorShape2D` to a simple `Node2D` if necessary.
+
+## Animating the shape and gradients at Runtime
+
+Sometimes, however, you want your shape to change at runtime (or even your collision shape!)
+
+You can use the `Update Curve at Runtime` checkbox in the inspector to enable dynamic changing of your curved shapes at runtime.
+
+![update curve at runtime](./screenshots/update-curve-at-runtime-in-2.4.0.png)
+
+## Add keyframes in an animation player
+
+You can then add an `AnimationPlayer` node to your scene, create a new animation and (batch) insert key frames for the following:
+
+- The entire shape of your `ScalableVectorShape2D`, which are:
+  - `curve:point_*/position`
+  - `curve:point_*/in`
+  - `curve:point_*/out`
+  - `arc_list:arc_*/radius`
+  - `arc_list:arc_*/rotation_deg`
+  - `arc_list:arc_*/large_arc_flag`
+  - `arc_list:arc_*/sweep_flag`
+- All the gradient properties of your fill (`Polygon2D` assigned to `ScalableVectorShape2D`), which are:
+  - `texture:gradient:colors` (the entire `PackedColorArray`)
+  - `texture:gradient:offsets` (the entire `PackedFloat32Array`)
+  - `texture:fill_from`
+  - `texture:fill_to`
+- Fill color, i.e.: the `color` of the assigned `Polygon2D`
+
+__* Note: the keyframes of stroke properties are set directly on `ScalableVectorShape2D` as of release 2.12__
+
+![the new key frame buttons in the inspector](./screenshots/animating-in-2.4.0.png)
+
+## Don't duplicate `ScalableVectorShape2D`, use the `path_changed` signal in stead
+
+When the `update_curve_at_runtime` property is checked, every time the curve changes in your game the `path_changed` signal is emitted.
+
+Duplicating a `ScalableVectorShape2D` will __not__ make a new `Curve2D`, but use a reference. This means line-segments will be calculated multiple times on one and the same curve! Very wasteful.
+
+If however you want to, for instance, animate 100 blades of grass, just use __one__ `ScalableVectorShape2D` and have the 100 `Line2D` node listen to the `path_changed` signal and overwrite their `points` property with the `PackedVector2Array` argument of your listener `func`:
+
+![path_changed signal](./screenshots/10-path_changed-signal.png)
+
+This very short section of the youtube video illustrates how to do this: https://youtu.be/IwS2Rf65i18?feature=shared&t=55
+
+
+## Performance impact
+
+Animating curve points at runtime does, however, impact performance of your game, because calculating segments is an expensive operation.
+
+Under `Tesselation settings` you can lower `Max Stages` or bump up `Tolerance Degrees` to reduce curve smoothness and increase performance (and vice-versa)
+
+# Create one Outline for Multiple Shapes with `DynamicOutline2D`
+
+Version 2.25 adds a new `@tool` node `DynamicOutline2D`.
+
+With this tool you can assign multiple shapes and draw their outline strokes in batch.
+
+When `merge_shapes` is flagged on it uses `Geometry2D.merge_polygons` under the hood to make the strokes not intersect.
+
+![example of `DynamicOutline2D` in the viewport](./screenshots/dynamic-outline-2d.png)
+
+This node does not have all the `Line2D` options, but does have these 3 stroke properties available:
+
+- `stroke_color`
+- `stroke_width`
+- `antialiased`: which adds a basic antialiasing which is shipped via the builting `CanvasItem.draw_polyline(..)` function
+- `merge_shapes`: toggle this on to merge the outlines being drawn ( ⚠️ this will slow down performance significantly. Ideally draw the outline behind the solids without merging)
+- `shapes : Array[ScalableVectorShape2D]` holds the shapes which are given an outline:
+
+![`DynamicOutline2D` in the inspector](./screenshots/dynamic-outline-2d-inspector.png)
+
+## Optimize for performance with the Bake Static Outlines Button
+
+Release 28.0 introduces a new button to the `DynamicOutline2D` inspector. With this button you can generate a set of `Line2D` nodes assigned to the `ScalableVectorShape2D`'s in `DynamicOutline2D.shapes`.
+
+These new lines will all be grouped inside one parent `Node2D` that is a direct sibling of the `DynamicOutline2D`. Their curve is managed by their `ScalableVectorShape2D` and their transform (pos/rot/scale) is managed via a `RemoteTransform2D` direct child of that `ScalableVectorShape2D`.
+
+This effectively delegates all functionality for transforming the lines' global position back to native code (via `RemoteTransform2D`) making the outline scalable and fast again. 
+
+### The Scene Tree Before Baking Outlines
+
+![The Scene Tree Before Baking Outlines](./screenshots/scene-tree-before-baking-outlines.png)
+
+### The Scene Tree After Baking Outlines
+
+As you can see in this screenshot, the `DynamicOutline2D` node is not deleted, but it is hidden. Everything should still function the same when you do delete it. 
+
+![The Scene Tree After Baking Outlines](./screenshots/scene-tree-after-baking-outline.png)
+
+# Autoscaling SVG Textures for GUI Controls
+
+Release `2.15` makes it easy to add crisp, autoscaling images for your GUI Control nodes using this new node type:
+
+- `SVGTextureHelper`: a `Node` that manages an SVG image texture property when it's a direct child of a `TextureRect`, `Button`, or `TextureButton`. It holds a reference to the svg file and a base64 encoded string of the file's contents, as well as a baseline scale factor (so you can even keep the image crips and sharp at higher zoom levels)
+
+
+## Adding Autoscaling SVG Textures via the Inspector
+
+These 3 control nodes now have an extra button `Set Scalable SVG Texture` in the inspector to set their texture with:
+
+- `TextureRect`
+- `Button`
+- `TextureButton`
+
+![setting autoscaling svg textures](./screenshots/scaling_textures.png)
+
+Once an SVG file has been chosen as a texture, a `SVGTextureHelper` node is automatically added to manage the automatically scaled image.
+
+A button with the name of the texture property and an icon-preview will then be presented with which you can pick another SVG file source.
+
+### Example of Autoscaling GUI
+
+There is an example scene in the plugin directory: `addons/curved_lines_2d/examples/gui.tscn`.
+
+## Removing an Automatically Scaled Texture
+
+To remove this type of texture again, the `SVGTextureHelper` node needs to be deleted via the scene tree:
+
+![SVGTextureHelper in the scene tree](./screenshots/svg_texture_helper_in_scene_tree.png)
+
+## Advanced use of `SVGTextureHelper`
+
+Any `Control` node's `Texture2D` properties can be managed by a manually added `SVGTextureHelper`. For this you will need to set the `target_property`-field of the `SVGTextureHelper` manually.
+
+# FAQ's
+
+## The curve of my `ScalableVectorShape2D` won't animate at runtime, what do I do?
+Check the box:
+
+![update curve at runtime](./screenshots/update-curve-at-runtime-in-2.4.0.png)
+
+## I want to change shapes while debugging my game. Is this even possible?
+
+Yes, when you check the box `Update Curve at Runtime` box.
+
+## When I animate the curve of an imported scene, it animates all the other curves as well
+
+This is a common issue: there is _one_ `Curve2D` instance being referenced by all scenes. You fix this by checking On "Local To Scene" for the `Curve2D`:
+
+![local to scene](./screenshots/local_to_scene.png)
+
+
+## When I duplicate a `ScalableVectorShape2D` and change its shape, the original `ScalableVectorShape2D` shape also changes
+
+This is a common issue: there is _one_ `Curve2D` instance being referenced by both nodes.
+
+You can work around this by using 'Make unique' by right-clicking `Curve settings > Curve > Curve2D` in the Inspector of your duplicated shape:
+
+![make unique in inspector](./screenshots/make-unique.png)
+
+When using [arcs](#editing-arc-properties) in a shape the `Arc List` property must also be 'made unique'
+
+Overriding the default duplication behavior of godot can lead to more unforeseen problems. So [a good solution must be well thought through](https://github.com/Teaching-myself-Godot/ez-curved-lines-2d/issues/200#issuecomment-3318594193).
+
+Search reddit on the trials and tribulations of 'Make Unique':
+
+- https://www.reddit.com/r/godot/search/?q=make+unique
+
+
+
+## Can I draw shapes programmatically?
+
+Yes you can. There are a couple of small things to be aware of:
+1. You need to set `my_shape.up_date_curve_at_runtime = true`
+2. To draw anything, your shape needs a Stroke, Fill, or Collision Object:
+  1. Setting a stroke: `my_shape.line = Line2D.new()`
+  2. Setting a fill: `my_shape.polygon = Polygon2D.new()`
+  3. Setting a collision object: `my_shape.collision_object = StaticBody2D.new()`
+3. The Stroke, Fill, Collision Object need to be inside the scene tree, i.e.: `my_shape.add_child(my_shape.line)`
+
+I added a [small example](./examples/add_shapes_programmatically/click_ellipse.gd) based on [this question](https://github.com/Teaching-myself-Godot/ez-curved-lines-2d/issues/111)
+
+## Should I draw shapes programmatically?
+
+This depends on the complexity of what you want to achieve.
+
+In many  cases just drawing something in the editor and saving it as a scene to import elsewhere (or `instantiate()` via preloading) is a better option, adhering to the _Keep it Simple_ principle.
+
+But that's just my personal opinion.
+
+## When should I draw shapes programmatically?
+
+There are very many situations left where you might want to do exactly this, but that is up to your own creativity.
+
+One powerful feature I can think of is 'mining': use `ScalableVectorShape2D`-nodes to make cuts in collision shapes and navigation areas.
+
+Playing [Rat's Return](./examples/rat/rats_return.tscn) will give a first impression how this might work:
+
+![Rat's return](./screenshots/rats-return.png)
+
+
+`ScalableVectorShape2D` already ships quite some convenience methods like:
+- `clipped_polygon_has_point(global_pos : Vector2) -> bool` and
+- `add_clip_path(other_shape : ScalableVectorShape2D)`
+
+But I have not come around to documenting yet.
+
+## Can I change shapes in the 2D editor while running the game?
+
+When the `Update Curve At Runtime` checkbox is checked, the shape will also sync up with a scene running in debug mode.
+
+Once you're done drawing and do not need the shape to change anymore at runtime you can turn this checkbox off again.
+
+## Can I use the SVG Importer at runtime?
+
+As of release 2.33 you can. I created this example script to illustrate how. Please join the discord to spar / give feedback about it, because it's a little experimental as yet:
+
+[`res://addons/curved_lines_2d/examples/import_svg_at_runtime/`](./examples/import_svg_at_runtime/)
+
+# Attributions
+
+## Lots of thanks go out to those who helped me out getting started:
+- This plugin was first inspired by [Mark Hedberg's blog on rendering curves in Godot](https://www.hedberggames.com/blog/rendering-curves-in-godot).
+- The suggestion to support both `Polygon2D` and collisions was done by [GeminiSquishGames](https://github.com/GeminiSquishGames), who's pointers inspired me to go further, like implementing uniform transform tools.
+- The SVG Importer code was adapted from the script hosted on github in the [pixelriot/SVG2Godot](https://github.com/pixelriot/SVG2Godot) repository
+- The code for making cutout shapes was adapted from the great [knife tool plugin](https://github.com/mrkdji/knife-tool/) by @mrkdji
+- The inspiration for using [Geometry2D.offset_polyline](https://docs.godotengine.org/en/stable/classes/class_geometry2d.html#class-geometry2d-method-offset-polyline) for strokes came from @theshaggydev, who recorded [this video](https://www.youtube.com/watch?v=5TW7H7aXhxQ) about it.
+- Lot's of gratitude to [@kcfresh53](https://github.com/kcfresh) for architecting the auto-scaling control image textures via the `SVGTextureHelper` node and the `SVGTextureResource`
+
+
+
+## And a big thank you goes to to [@MewPurPur](https://github.com/MewPurPur)
+
+The author of GodSVG for writing a great [SVG Arc command implementation](https://github.com/MewPurPur/GodSVG/blob/v1.0-alpha10/src/data_classes/ElementPath.gd#L117) I could reuse here:
+- Download from the [GodSVG website](https://www.godsvg.com/)
+- Or try out the [web version](https://www.godsvg.com/editor/)
+- Also on [itch.io](https://mewpurpur.itch.io/godsvg)
+
+
+## Many thanks to @HannesParth/Permotion
+
+As an early adopter Hannes was quick to point out good quality of life improvements like snap to pixel, setting global position exactly and exporting as PNG.
+
+Make sure to try out ["Spring Ball" on Itch](https://permotion.itch.io/spring-ball), a 48h game jam solo project that used ScalableVectorShape2D for all level objects, including a wrapper script to change the block that makes up the majority of the level between cube and triangle shapes:
+
+[![spring ball](./screenshots/spring-ball.png)](https://permotion.itch.io/spring-ball)
+
+
+## And of course everyone who helped test and review the code thus far
+
+- @hedberg-games
+- @thiagola92
+- @HannesParth
+
+
+# Reaching out / Contributing
+If you have feedback on this project, feel free to post an [issue](https://github.com/Teaching-myself-Godot/ez-curved-lines-2d/issues) on github, or to:
+- Follow my channel on youtube: [@scalablev2d](https://www.youtube.com/@scalablev2d)
+
+If you'd like to improve on the code yourself, ideally use a fork and make a pull request.
+
+This stuff makes me zero money, so you can always branch off in your own direction if you're in a hurry.

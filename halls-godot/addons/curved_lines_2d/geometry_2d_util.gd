@@ -1,0 +1,542 @@
+@tool
+extends Object
+class_name Geometry2DUtil
+
+const THRESHOLD = 0.1
+
+static func get_polygon_bounding_rect(points : PackedVector2Array) -> Rect2:
+	var minx := INF
+	var miny := INF
+	var maxx := -INF
+	var maxy := -INF
+	for p : Vector2 in points:
+		minx = p.x if p.x < minx else minx
+		miny = p.y if p.y < miny else miny
+		maxx = p.x if p.x > maxx else maxx
+		maxy = p.y if p.y > maxy else maxy
+	return Rect2(minx, miny, maxx - minx, maxy - miny)
+
+
+static func get_polygon_center(points : PackedVector2Array) -> Vector2:
+	return get_polygon_bounding_rect(points).get_center()
+
+# Shoelace formula by Gauss (https://en.wikipedia.org/wiki/Shoelace_formula)
+static func get_polygon_surface_area(mesh_vertices: PackedVector2Array) -> float:
+	var result := 0.0
+	var num_vertices := mesh_vertices.size()
+	for q in range(num_vertices):
+		var p = (q - 1 + num_vertices) % num_vertices
+		result += mesh_vertices[q].cross(mesh_vertices[p])
+	return abs(result) * 0.5
+
+
+static func slice_polygon_vertical(polygon : PackedVector2Array, slice_target : Vector2) -> Array[PackedVector2Array]:
+	var box := get_polygon_bounding_rect(polygon).grow(1.0)
+	if not box.has_point(slice_target):
+		return [polygon]
+	return Geometry2D.intersect_polygons([
+		box.position,
+		Vector2(slice_target.x, box.position.y),
+		Vector2(slice_target.x, box.position.y + box.size.y),
+		Vector2(box.position.x, box.position.y + box.size.y),
+	], polygon) + Geometry2D.intersect_polygons([
+		Vector2(slice_target.x, box.position.y),
+		Vector2(box.position.x + box.size.x, box.position.y),
+		box.position + box.size,
+		Vector2(slice_target.x, box.position.y + box.size.y),
+	], polygon)
+
+
+static func apply_polygon_bool_operation_in_place(
+		current_polygons : Array[PackedVector2Array],
+		other_polygons : Array[PackedVector2Array],
+		operation : Geometry2D.PolyBooleanOperation) -> Array[PackedVector2Array]:
+	var holes : Array[PackedVector2Array] = []
+	for other_poly in other_polygons:
+		var result_polygons : Array[PackedVector2Array] = []
+		for current_points : PackedVector2Array in current_polygons:
+			if other_poly == current_points:
+				continue
+			var result = (
+					Geometry2D.merge_polygons(current_points, other_poly)
+						if operation == Geometry2D.PolyBooleanOperation.OPERATION_UNION else
+					Geometry2D.intersect_polygons(current_points, other_poly)
+						if operation == Geometry2D.PolyBooleanOperation.OPERATION_INTERSECTION else
+					Geometry2D.clip_polygons(current_points, other_poly)
+			)
+			for poly_points in result:
+				if Geometry2D.is_polygon_clockwise(poly_points):
+					holes.append(poly_points)
+				else:
+					result_polygons.append(poly_points)
+		current_polygons.clear()
+		current_polygons.append_array(result_polygons)
+	return holes
+
+## TODO: document
+static func apply_clips_to_polygon(
+			current_polygons : Array[PackedVector2Array],
+			clips : Array[PackedVector2Array],
+			operation : Geometry2D.PolyBooleanOperation) -> Array[PackedVector2Array]:
+	var holes := apply_polygon_bool_operation_in_place(
+		current_polygons, clips, operation
+	)
+	if not holes.is_empty():
+		slice_polygons_with_holes(current_polygons, holes)
+	return current_polygons
+
+
+static func slice_polygons_with_holes(current_polygons : Array[PackedVector2Array], holes : Array[PackedVector2Array]) -> void:
+	var result_polygons : Array[PackedVector2Array] = []
+	for hole in holes:
+		for current_points : PackedVector2Array in current_polygons:
+			var slices := slice_polygon_vertical(
+				current_points, get_polygon_center(hole)
+			)
+			for slice in slices:
+				var result = Geometry2D.clip_polygons(slice, hole)
+				for poly_points in result:
+					if not Geometry2D.is_polygon_clockwise(poly_points):
+						result_polygons.append(poly_points)
+		current_polygons.clear()
+		current_polygons.append_array(result_polygons)
+		result_polygons.clear()
+
+
+
+static func calculate_outlines(result : Array[PackedVector2Array]) -> Array[PackedVector2Array]:
+	if result.size() <= 1:
+		return result
+	var succesful_merges := true
+	var guard = 0
+	var holes : Array[PackedVector2Array] = []
+	while succesful_merges and result.size() > 1 and guard < 1000:
+		succesful_merges = false
+		guard += 1
+		var indices_to_be_removed : Dictionary[int, bool] = {}
+		var merged_to_be_appended : Array[PackedVector2Array] = []
+
+		for current_poly_idx in result.size():
+			if current_poly_idx in indices_to_be_removed:
+				continue
+			for other_poly_idx in result.size():
+				if current_poly_idx == other_poly_idx or other_poly_idx in indices_to_be_removed:
+					continue
+				var merge_result := Geometry2D.merge_polygons(
+						result[current_poly_idx], result[other_poly_idx])
+				var regular := merge_result.filter(func(x): return not Geometry2D.is_polygon_clockwise(x))
+				var clockwise := merge_result.filter(Geometry2D.is_polygon_clockwise)
+				if regular.size() == 1:
+					succesful_merges = true
+					indices_to_be_removed[current_poly_idx] = true
+					indices_to_be_removed[other_poly_idx] = true
+					merged_to_be_appended.append(regular[0])
+					holes.append_array(clockwise)
+		var sorted_indices = indices_to_be_removed.keys()
+		sorted_indices.sort()
+		sorted_indices.reverse()
+		for idx in sorted_indices:
+			result.remove_at(idx)
+		result.append_array(merged_to_be_appended)
+	return result + holes
+
+
+static func calculate_polystroke(outline : PackedVector2Array, stroke_width : float,
+			end_mode : Geometry2D.PolyEndType, joint_mode : Geometry2D.PolyJoinType,
+			offset_poly : float) -> Array[PackedVector2Array]:
+	if outline.is_empty():
+		return []
+	var offset_result := Geometry2D.offset_polygon(outline, offset_poly, joint_mode) if not is_zero_approx(offset_poly) else ([] as Array[PackedVector2Array])
+	var offsetted_outline := outline if offset_result.is_empty() else offset_result[0]
+	var poly_strokes := Geometry2D.offset_polyline(offsetted_outline, stroke_width, joint_mode, end_mode)
+	var result_poly_strokes := Array(poly_strokes.filter(func(ps): return not Geometry2D.is_polygon_clockwise(ps)), TYPE_PACKED_VECTOR2_ARRAY, "", null)
+	var result_poly_holes := Array(poly_strokes.filter(Geometry2D.is_polygon_clockwise), TYPE_PACKED_VECTOR2_ARRAY, "", null)
+	if not result_poly_holes.is_empty():
+		slice_polygons_with_holes(result_poly_strokes, result_poly_holes)
+	return result_poly_strokes
+
+
+
+static func get_polygon_indices(polygons : Array[PackedVector2Array], indices : Array) -> PackedVector2Array:
+	var result : PackedVector2Array = []
+	var p_count = 0
+	indices.clear()
+	for poly_points in polygons:
+		var p_range := range(p_count, poly_points.size() + p_count)
+		result.append_array(poly_points)
+		indices.append(p_range)
+		p_count += poly_points.size()
+	return result
+
+
+static func is_point_on_segment(p : Vector2, s1 : Vector2, s2: Vector2, r := 0.01) -> bool:
+	return Geometry2D.segment_intersects_circle(s1, s2, p, r) > -1
+
+
+static func get_rotation_of_polyline_segment_at_point(p : Vector2, poly_points : PackedVector2Array) -> float:
+	var closest_result := Vector2.INF
+	var segment_idx := 0
+	for i in range(1, poly_points.size()):
+		var p_a := poly_points[i - 1]
+		var p_b := poly_points[i]
+		var c_p := Geometry2D.get_closest_point_to_segment(p, p_a, p_b)
+
+		if p.distance_to(c_p) < p.distance_to(closest_result):
+			closest_result = c_p
+			segment_idx = i - 1
+	return poly_points[segment_idx].angle_to_point(poly_points[segment_idx + 1])
+
+
+static func get_closest_point_on_polyline(p : Vector2, poly_points : PackedVector2Array) -> Vector2:
+	var closest_result := Vector2.INF
+	for i in range(1, poly_points.size()):
+		var p_a := poly_points[i - 1]
+		var p_b := poly_points[i]
+		var c_p := Geometry2D.get_closest_point_to_segment(p, p_a, p_b)
+		if p.distance_to(c_p) < p.distance_to(closest_result):
+			closest_result = c_p
+	return closest_result
+
+
+static func get_intersection_point_on_polyline(p1 : Vector2, q1 : Vector2, poly_points : PackedVector2Array) -> Vector2:
+	var closest_distance := INF
+	var closest_result := Vector2.INF
+	for i in range(1, poly_points.size()):
+		var p2 := poly_points[i - 1]
+		var q2 := poly_points[i]
+		var result := Geometry2D.get_closest_points_between_segments(p1, q1, p2, q2)
+		var distance := p1.distance_to(result[1])
+		if result[0].is_equal_approx(result[1]) and distance < closest_distance:
+			closest_result = result[1]
+			closest_distance = distance
+	return closest_result
+
+
+
+static func get_segment_to_polyline_intersections(p0 : Vector2, p1 : Vector2,
+		poly : PackedVector2Array) -> Array[Vector2]:
+	var valid_intersections : Array[Vector2] = []
+	if poly.size() < 2:
+		return []
+	for i in range(0, poly.size() - 1):
+		var intersection = Geometry2D.segment_intersects_segment(p0, p1, poly[i], poly[i+1])
+		if intersection != null:
+			valid_intersections.append(intersection)
+	return valid_intersections
+
+
+static func get_polyline_segment(poly : PackedVector2Array, from : Vector2, to : Vector2) -> PackedVector2Array:
+	var passed_from := false
+	var segment := PackedVector2Array()
+	for p_idx in range(0, poly.size() - 1):
+		var p = poly[p_idx]
+		var p1 = poly[p_idx + 1]
+		if p.is_equal_approx(from) or p.is_equal_approx(to):
+			if not passed_from:
+				passed_from = true
+				segment.append(p)
+			else:
+				break
+		if passed_from:
+			segment.append(p1)
+	return segment
+
+
+# returns true if the next point causes a loop (self intersection)
+static func will_self_intersect_at(poly : Array[Vector2], next_point : Vector2) -> Variant:
+	if poly.size() < 3:
+		return null
+	for i in range(0, poly.size() - 2):
+		var intersection = Geometry2D.segment_intersects_segment(poly[-1], next_point, poly[i], poly[i+1])
+		if intersection != null:
+			return [i, intersection]
+	return null
+
+
+static func get_self_intersections(poly_in : PackedVector2Array) -> Array[Vector2]:
+	if poly_in.size() < 3:
+		return []
+	var intersections : Array[Vector2] = []
+	var poly := poly_in.duplicate()
+	poly.append(poly_in[0])
+	for i in range(1, poly.size()):
+		var next_point := poly[i] if i < poly.size() - 1 else poly[0]
+		var result = will_self_intersect_at(poly.slice(0, i), next_point)
+		if result and not poly[0].distance_squared_to(result[1]) < 0.0001:
+			intersections.append(result[1])
+	return intersections
+
+
+static func get_progress_ratio_for_point_on_curve(p : Vector2, c : Curve2D, max_stages := 5,
+		tolerance_degrees := 4.0, r := 0.01) -> float:
+	# Heuristic to find progress_ratio of cpc
+	var d := 0.0
+	var pts := c.tessellate(max_stages, tolerance_degrees)
+	var p1 := pts[0]
+	for i in range(1, pts.size()):
+		if Geometry2DUtil.is_point_on_segment(p, p1, pts[i], r):
+			d += p1.distance_to(p)
+			break
+		d += p1.distance_to(pts[i])
+		p1 = pts[i]
+	return d / c.get_baked_length()
+
+
+static func get_halfway_point_on_bezier(c : Curve2D, max_stages := 5, tolerance_degrees := 4.0) -> Vector2:
+	return get_point_on_bezier_at_ratio(c, 0.5, max_stages, tolerance_degrees)
+
+
+static func get_point_on_bezier_at_ratio(c : Curve2D, ratio : float, max_stages := 5, tolerance_degrees := 4.0) -> Vector2:
+	var pts := c.tessellate(max_stages, tolerance_degrees)
+	var tot_d := c.get_baked_length()
+	return get_point_on_polyline_at_ratio(pts, ratio, tot_d)
+
+
+static func find_curve_segment_idx_for_point(curve : Curve2D, point : Vector2,
+		max_stages := 5, tolerance_degrees := 4.0) -> int:
+	for i in curve.point_count:
+		# FIXME: assuming a loop
+		var p1_idx := i + 1 if i < curve.point_count - 1 else 0
+		var curve_segment := Curve2D.new()
+		curve_segment.add_point(curve.get_point_position(i), Vector2.ZERO, curve.get_point_out(i))
+		curve_segment.add_point(curve.get_point_position(p1_idx), curve.get_point_in(p1_idx))
+		var polyline := curve_segment.tessellate(max_stages, tolerance_degrees)
+		for j in range(polyline.size() - 1):
+			if is_point_on_segment(point, polyline[j], polyline[j+1], 0.1):
+				return i
+	return -1
+
+
+static func get_sliced_curve_segment(curve : Curve2D, before_segment : int, point_position : Vector2,
+		max_stages := 5, tolerance_degrees := 4.0, r := 0.01) -> Curve2D:
+	var curve_segment := Curve2D.new()
+	curve_segment.add_point(curve.get_point_position(before_segment - 1))
+	curve_segment.set_point_out(0, curve.get_point_out(before_segment - 1))
+	curve_segment.add_point(curve.get_point_position(before_segment))
+	curve_segment.set_point_in(1, curve.get_point_in(before_segment))
+	var progress_ratio := Geometry2DUtil.get_progress_ratio_for_point_on_curve(
+			point_position, curve_segment, max_stages, tolerance_degrees, r)
+	return slice_bezier(
+		curve_segment.get_point_position(0),
+		curve_segment.get_point_out(0),
+		curve_segment.get_point_in(1),
+		curve_segment.get_point_position(1),
+		progress_ratio
+	)
+
+
+static func get_reversed_curve(curve : Curve2D) -> Curve2D:
+	var new_curve := Curve2D.new()
+	for i in range(curve.point_count - 1, -1, -1):
+		new_curve.add_point(curve.get_point_position(i), curve.get_point_out(i), curve.get_point_in(i))
+	return new_curve
+
+
+static func add_point_to_bezier(curve : Curve2D, placement_point : Vector2, before_segment : int,
+		max_stages := 5, tolerance_degrees := 4.0, r := 0.01) -> Curve2D:
+	var sliced_segment := get_sliced_curve_segment(curve, before_segment, placement_point,
+			max_stages, tolerance_degrees, r)
+	curve.add_point(placement_point, sliced_segment.get_point_in(1), sliced_segment.get_point_out(1), before_segment)
+	curve.set_point_out(before_segment - 1, sliced_segment.get_point_out(0))
+	curve.set_point_in(before_segment + 1, sliced_segment.get_point_in(2))
+
+	return curve
+
+
+static func cut_bezier_with_bezier(curve : Curve2D, cut : Curve2D,
+		max_stages := 5, tolerance_degrees := 4.0) -> Array[Curve2D]:
+	var halves : Array[Curve2D] = [
+		Curve2D.new(), Curve2D.new()
+	]
+
+	var cut_start := cut.get_point_position(0)
+	var cut_end := cut.get_point_position(cut.point_count - 1)
+	var cut_start_segment_idx  := find_curve_segment_idx_for_point(curve, cut_start, max_stages, tolerance_degrees)
+	var cut_end_segment_idx := find_curve_segment_idx_for_point(curve, cut_end, max_stages, tolerance_degrees)
+
+	if cut_start_segment_idx == cut_end_segment_idx:
+		if cut_start.distance_squared_to(curve.get_point_position(cut_start_segment_idx)) > cut_end.distance_squared_to(curve.get_point_position(cut_start_segment_idx)):
+			var swap := cut_start
+			cut_start = cut_end
+			cut_end = swap
+			cut = get_reversed_curve(cut)
+		curve = add_point_to_bezier(curve.duplicate(), cut_start, cut_start_segment_idx + 1, max_stages, tolerance_degrees)
+		cut_end = get_closest_point_on_polyline(cut_end, curve.tessellate(max_stages, tolerance_degrees))
+		curve = add_point_to_bezier(curve, cut_end, cut_start_segment_idx + 2, max_stages, tolerance_degrees)
+		cut.set_point_position(cut.point_count - 1, cut_end)
+
+		for p_idx in range(0, cut_start_segment_idx + 1):
+			halves[0].add_point(curve.get_point_position(p_idx))
+			halves[0].set_point_in(p_idx, curve.get_point_in(p_idx))
+			halves[0].set_point_out(p_idx, curve.get_point_out(p_idx))
+		halves[0].add_point(cut_start)
+		halves[0].set_point_in(cut_start_segment_idx + 1, curve.get_point_in(cut_start_segment_idx + 1))
+		halves[0].set_point_out(cut_start_segment_idx + 1, cut.get_point_out(0))
+		var seg_p_idx := halves[0].point_count
+		for p_idx in range(1, cut.point_count):
+			halves[0].add_point(cut.get_point_position(p_idx))
+			halves[0].set_point_in(seg_p_idx, cut.get_point_in(p_idx))
+			halves[0].set_point_out(seg_p_idx, cut.get_point_out(p_idx))
+			seg_p_idx += 1
+		for p_idx in range(cut_start_segment_idx + 2, curve.point_count):
+			halves[0].add_point(curve.get_point_position(p_idx))
+			if p_idx > cut_start_segment_idx + 2:
+				halves[0].set_point_in(seg_p_idx, curve.get_point_in(p_idx))
+			halves[0].set_point_out(seg_p_idx, curve.get_point_out(p_idx))
+			seg_p_idx += 1
+		halves[1].add_point(cut_start)
+		halves[1].set_point_out(0, curve.get_point_out(cut_start_segment_idx + 1))
+		halves[1].add_point(cut_end)
+		halves[1].set_point_in(1, curve.get_point_in(cut_start_segment_idx + 2))
+		cut = get_reversed_curve(cut)
+		halves[1].set_point_out(1, cut.get_point_out(0))
+		for p_idx in range(1, cut.point_count):
+			halves[1].add_point(cut.get_point_position(p_idx))
+			halves[1].set_point_in(p_idx + 1, cut.get_point_in(p_idx))
+			halves[1].set_point_out(p_idx + 1, cut.get_point_out(p_idx))
+		halves.sort_custom(func(a : Curve2D, b : Curve2D): return get_polygon_surface_area(a.tessellate(max_stages, tolerance_degrees)) > get_polygon_surface_area(b.tessellate(max_stages, tolerance_degrees)))
+		return halves
+
+	if cut_end_segment_idx < cut_start_segment_idx:
+		var swap_idx := cut_start_segment_idx
+		var swap := cut_start
+		cut_start_segment_idx = cut_end_segment_idx
+		cut_end_segment_idx = swap_idx
+		cut_start = cut_end
+		cut_end = swap
+		cut = get_reversed_curve(cut)
+
+	var cut_start_seg_slice := get_sliced_curve_segment(curve, cut_start_segment_idx + 1, cut_start, max_stages, tolerance_degrees)
+	var cut_end_seg_slice := get_sliced_curve_segment(curve, cut_end_segment_idx + 1, cut_end, max_stages, tolerance_degrees)
+
+	var seg_p_idx := 0
+	for p_idx in range(0, cut_start_segment_idx + 1):
+		halves[0].add_point(curve.get_point_position(p_idx))
+		halves[0].set_point_out(seg_p_idx, curve.get_point_out(p_idx))
+		halves[0].set_point_in(seg_p_idx, curve.get_point_in(p_idx))
+		seg_p_idx += 1
+	halves[0].add_point(cut.get_point_position(0))
+	halves[0].set_point_out(seg_p_idx - 1, cut_start_seg_slice.get_point_out(0))
+	halves[0].set_point_in(seg_p_idx, cut_start_seg_slice.get_point_in(1))
+	halves[0].set_point_out(seg_p_idx, cut.get_point_out(0))
+	seg_p_idx += 1
+	for p_idx in range(1, cut.point_count):
+		halves[0].add_point(cut.get_point_position(p_idx))
+		halves[0].set_point_out(seg_p_idx, cut.get_point_out(p_idx))
+		halves[0].set_point_in(seg_p_idx, cut.get_point_in(p_idx))
+		seg_p_idx += 1
+	halves[0].set_point_out(seg_p_idx - 1, cut_end_seg_slice.get_point_out(1))
+	var memo_seg_p_idx = seg_p_idx
+	for p_idx in range(cut_end_segment_idx + 1, curve.point_count):
+		halves[0].add_point(curve.get_point_position(p_idx))
+		halves[0].set_point_out(seg_p_idx, curve.get_point_out(p_idx))
+		halves[0].set_point_in(seg_p_idx, curve.get_point_in(p_idx))
+		seg_p_idx += 1
+	halves[0].set_point_in(memo_seg_p_idx, cut_end_seg_slice.get_point_in(2))
+	seg_p_idx = 0
+	halves[1].add_point(cut_start)
+	halves[1].set_point_out(seg_p_idx, cut_start_seg_slice.get_point_out(1))
+	seg_p_idx += 1
+	halves[1].add_point(curve.get_point_position(cut_start_segment_idx + 1))
+	halves[1].set_point_in(seg_p_idx, cut_start_seg_slice.get_point_in(2))
+	halves[1].set_point_out(seg_p_idx, curve.get_point_out(cut_start_segment_idx + 1))
+	seg_p_idx += 1
+	for p_idx in range(cut_start_segment_idx + 2, cut_end_segment_idx + 1):
+		halves[1].add_point(curve.get_point_position(p_idx))
+		halves[1].set_point_out(seg_p_idx, curve.get_point_out(p_idx))
+		halves[1].set_point_in(seg_p_idx, curve.get_point_in(p_idx))
+		seg_p_idx += 1
+	halves[1].set_point_out(seg_p_idx - 1, cut_end_seg_slice.get_point_out(0))
+	cut = get_reversed_curve(cut)
+	halves[1].add_point(cut_end)
+	halves[1].set_point_out(seg_p_idx, cut.get_point_out(0))
+	memo_seg_p_idx = seg_p_idx
+	seg_p_idx += 1
+	for p_idx in range(1, cut.point_count):
+		halves[1].add_point(cut.get_point_position(p_idx))
+		halves[1].set_point_out(seg_p_idx, cut.get_point_out(p_idx))
+		halves[1].set_point_in(seg_p_idx, cut.get_point_in(p_idx))
+		seg_p_idx += 1
+	halves[1].set_point_in(memo_seg_p_idx, cut_end_seg_slice.get_point_in(1))
+	halves.sort_custom(func(a : Curve2D, b : Curve2D): return get_polygon_surface_area(a.tessellate(max_stages, tolerance_degrees)) > get_polygon_surface_area(b.tessellate(max_stages, tolerance_degrees)))
+	return halves
+
+
+static func get_curve_segment(segment_p1_idx : int, curve : Curve2D) -> Curve2D:
+	var curve_segment := Curve2D.new()
+	curve_segment.add_point(
+		curve.get_point_position(segment_p1_idx),
+		Vector2.ZERO,
+		curve.get_point_out(segment_p1_idx)
+	)
+	var segment_p2_idx = (0 if segment_p1_idx == curve.point_count - 1
+			else segment_p1_idx + 1)
+	curve_segment.add_point(
+		curve.get_point_position(segment_p2_idx),
+		curve.get_point_in(segment_p2_idx)
+	)
+	return curve_segment
+
+
+static func get_polyline_length(pts : PackedVector2Array) -> float:
+	var d := 0.0
+	for i in range(1, pts.size()):
+		d += pts[i-1].distance_to(pts[i])
+	return d
+
+
+static func get_point_on_polyline_at_ratio(pts : PackedVector2Array, ratio : float, tot_d : float) -> Vector2:
+	var d := 0.0
+	var p1 := pts[0]
+	for i in range(1, pts.size()):
+		var prev_d := d
+		d += p1.distance_to(pts[i])
+		if d >= tot_d * ratio or is_equal_approx(d, tot_d):
+			var d_ratio := ratio - (prev_d / tot_d) if prev_d > 0.0 else ratio
+			var d_abs := tot_d * d_ratio
+			return pts[i-1] + pts[i-1].direction_to(pts[i]) * d_abs
+		p1 = pts[i]
+	return pts[-1]
+
+
+static func get_polygon_at_granularity(poly : PackedVector2Array, granularity : float) -> PackedVector2Array:
+	var def_poly := PackedVector2Array()
+	def_poly.append(poly[0])
+	for i in range(1, poly.size()):
+		if poly[i].distance_to(def_poly[-1]) > granularity:
+			def_poly.append(poly[i])
+	return def_poly
+
+
+# Adapted from: https://stackoverflow.com/a/8405756/1081548
+static func slice_bezier(p1: Vector2, cp2 : Vector2, cp3 : Vector2, p4 : Vector2, t : float) -> Curve2D:
+	var x1 := p1.x
+	var y1 := p1.y
+	var x2 := x1 + cp2.x
+	var y2 := y1 + cp2.y
+	var x4 := p4.x
+	var y4 := p4.y
+	var x3 := x4 + cp3.x
+	var y3 := y4 + cp3.y
+	var x12 := (x2-x1)*t+x1
+	var y12 = (y2-y1)*t+y1
+	var x23 = (x3-x2)*t+x2
+	var y23 = (y3-y2)*t+y2
+	var x34 = (x4-x3)*t+x3
+	var y34 = (y4-y3)*t+y3
+	var x123 = (x23-x12)*t+x12
+	var y123 = (y23-y12)*t+y12
+	var x234 = (x34-x23)*t+x23
+	var y234 = (y34-y23)*t+y23
+	var x1234 = (x234-x123)*t+x123
+	var y1234 = (y234-y123)*t+y123
+	var sliced_curve := Curve2D.new()
+	sliced_curve.add_point(Vector2(x1, y1))
+	sliced_curve.add_point(Vector2(x1234, y1234))
+	sliced_curve.add_point(Vector2(x4, y4))
+	sliced_curve.set_point_out(0, Vector2(x12, y12) - sliced_curve.get_point_position(0))
+	sliced_curve.set_point_in(1, Vector2(x123, y123) - sliced_curve.get_point_position(1))
+	sliced_curve.set_point_out(1, Vector2(x234, y234) - sliced_curve.get_point_position(1))
+	sliced_curve.set_point_in(2, Vector2(x34, y34) - sliced_curve.get_point_position(2))
+	return sliced_curve
+

@@ -163,6 +163,8 @@ func set_visual(show_it: bool):
 # ---------- ENDING ----------
 
 func trigger_jumpscare(player):
+	if gameManager.is_dying == true:
+		return
 	is_jumpscaring = true
 	idle_sound_far.stop()
 	idle_sound_close.stop()

@@ -1,0 +1,3775 @@
+@tool
+extends EditorPlugin
+
+class_name CurvedLines2D
+
+const REPO_ISSUE_PAGE := "https://github.com/Teaching-myself-Godot/ez-curved-lines-2d/issues"
+const SETTING_NAME_EDITING_ENABLED := "addons/curved_lines_2d/editing_enabled"
+const SETTING_NAME_HINTS_ENABLED := "addons/curved_lines_2d/hints_enabled"
+const SETTING_NAME_SHOW_POINT_NUMBERS := "addons/curved_lines_2d/show_point_numbers"
+const SETTING_NAME_STROKE_WIDTH := "addons/curved_lines_2d/stroke_width"
+const SETTING_NAME_STROKE_COLOR := "addons/curved_lines_2d/stroke_color"
+const SETTING_NAME_USE_LINE_2D_FOR_STROKE = "addons/curved_lines_2d/use_line_2d_for_stroke"
+const SETTING_NAME_FILL_COLOR := "addons/curved_lines_2d/fill_color"
+const SETTING_NAME_ADD_STROKE_ENABLED := "addons/curved_lines_2d/add_stroke_enabled"
+const SETTING_NAME_ADD_FILL_ENABLED := "addons/curved_lines_2d/add_fill_enabled"
+const SETTING_NAME_ADD_COLLISION_TYPE := "addons/curved_lines_2d/add_collision_type"
+
+const SETTING_NAME_ELLIPSE_RX := "addons/curved_lines_2d/ellipse_rx"
+const SETTING_NAME_ELLIPSE_RY := "addons/curved_lines_2d/ellipse_ry"
+const SETTING_NAME_CENTER_ELLIPSE_OFFSET := "addons/curved_lines_2d/ellipse_center_offset"
+const SETTING_NAME_CREATE_ELLIPSE_AS_PATH := "addons/curved_lines_2d/ellipse_create_as_path"
+const SETTING_NAME_RECT_WIDTH := "addons/curved_lines_2d/rect_width"
+const SETTING_NAME_RECT_HEIGHT := "addons/curved_lines_2d/rect_height"
+const SETTING_NAME_RECT_RX := "addons/curved_lines_2d/rect_rx"
+const SETTING_NAME_RECT_RY := "addons/curved_lines_2d/rect_ry"
+const SETTING_NAME_CENTER_RECT_OFFSET := "addons/curved_lines_2d/rect_center_offset"
+const SETTING_NAME_CREATE_RECT_AS_PATH := "addons/curved_lines_2d/rect_create_as_path"
+
+const SETTING_NAME_PAINT_ORDER := "addons/curved_lines_2d/paint_order"
+
+const SETTING_NAME_DEFAULT_LINE_BEGIN_CAP := "addons/curved_lines_2d/line_begin_cap"
+const SETTING_NAME_DEFAULT_LINE_END_CAP := "addons/curved_lines_2d/line_end_cap"
+const SETTING_NAME_DEFAULT_LINE_JOINT_MODE := "addons/curved_lines_2d/line_joint_mode"
+const SETTING_NAME_DEFAULT_EXTRUSION := "addons/curved_lines_2d/stroke_extrusion_direction"
+
+const SETTING_NAME_CURVE_UPDATE_CURVE_AT_RUNTIME := "addons/curved_lines_2d/update_curve_at_runtime"
+const SETTING_NAME_CURVE_RESOURCE_LOCAL_TO_SCENE := "addons/curved_lines_2d/make_resources_local_to_scene"
+const SETTING_NAME_CURVE_TOLERANCE_DEGREES := "addons/curved_lines_2d/default_tolerance_degrees"
+const SETTING_NAME_CURVE_MAX_STAGES := "addons/curved_lines_2d/default_max_stages"
+
+const SETTING_NAME_ANTIALIASED_LINE_2D := "addons/curved_lines_2d/antialiased_line_2d"
+
+const SETTING_NAME_KEEP_DRAWING := "addons/curved_lines_2d/keep_drawing"
+const SETTING_NAME_FREEHAND_DRAW_GRANULARITY := "addons/curved_lines_2d/granularity"
+const SETTING_NAME_APPLY_CURVE_FITTING := "addons/curved_lines_2d/apply_curve_fitting"
+const SETTING_NAME_CLOSE_PENCIL_PATH := "addons/curved_lines_2d/close_pencil_path"
+const SETTING_NAME_BRUSH_SHAPE := "addons/curved_lines_2d/brush_shape"
+const SETTING_NAME_BRUSH_SIZE_X := "addons/curved_lines_2d/brush_size_x"
+const SETTING_NAME_BRUSH_SIZE_Y := "addons/curved_lines_2d/brush_size_y"
+const SETTING_NAME_BRUSH_ROTATION := "addons/curved_lines_2d/brush_rotation"
+const SETTING_NAME_BRUSH_FILL_IN_PARENT_SHAPE := "addons/curved_lines_2d/fill_in_parent_shape_with_brush"
+
+const VIEWPORT_ORANGE := Color(0.737, 0.463, 0.337)
+const WIDTH_CURVE_EDIT_CLAMP_DISTANCE := 25.0
+const CLOSE_TO_MOUSE_RADIUS := 20.0
+
+const SET_PIVOT_BUTTON_IDX := 5
+const GRID_SNAP_BUTTON_IDX := 9
+const SNAPPING_OPTIONS_BUTTON_IDX := 10
+enum KeepDrawingBehavior {
+	KEEP_DRAWING_ON_SAME_PARENT,
+	SELECT_DRAWN_SHAPE
+}
+
+enum BrushShape { ELLIPSE, RECTANGLE }
+enum PaintOrder {
+	FILL_STROKE_MARKERS,
+	STROKE_FILL_MARKERS,
+	FILL_MARKERS_STROKE,
+	MARKERS_FILL_STROKE,
+	STROKE_MARKERS_FILL,
+	MARKERS_STROKE_FILL
+}
+enum UndoRedoEntry { UNDOS, DOS, NAME, DO_PROPS, UNDO_PROPS, ACTION_TYPE }
+
+const PAINT_ORDER_MAP := {
+	PaintOrder.FILL_STROKE_MARKERS: ['_add_fill_to_created_shape', '_add_stroke_to_created_shape', '_add_collision_to_created_shape'],
+	PaintOrder.STROKE_FILL_MARKERS: ['_add_stroke_to_created_shape', '_add_fill_to_created_shape', '_add_collision_to_created_shape'],
+	PaintOrder.FILL_MARKERS_STROKE: ['_add_fill_to_created_shape', '_add_collision_to_created_shape', '_add_stroke_to_created_shape'],
+	PaintOrder.MARKERS_FILL_STROKE: ['_add_collision_to_created_shape', '_add_fill_to_created_shape', '_add_stroke_to_created_shape'],
+	PaintOrder.STROKE_MARKERS_FILL: ['_add_stroke_to_created_shape', '_add_collision_to_created_shape', '_add_fill_to_created_shape'],
+	PaintOrder.MARKERS_STROKE_FILL: ['_add_collision_to_created_shape', '_add_stroke_to_created_shape', '_add_fill_to_created_shape']
+}
+const SHAPE_NAME_MAP := {
+	ScalableVectorShape2D.ShapeType.RECT: "a rectangle",
+	ScalableVectorShape2D.ShapeType.ELLIPSE: "a circle",
+	ScalableVectorShape2D.ShapeType.PATH: "an empty shape"
+}
+const OPERATION_NAME_MAP := {
+	Geometry2D.OPERATION_DIFFERENCE: { "verb": "cut out", "noun": "cutout" },
+	Geometry2D.OPERATION_INTERSECTION: { "verb": "clip off", "noun": "clip" },
+	Geometry2D.OPERATION_UNION: { "verb": "merge with", "noun": "merged shape" }
+}
+
+enum SVSEditMode {
+	NONE, TRANSLATE, ROTATE, SCALE,
+	MERGE, BRUSH, PENCIL, PAINT_BONE,
+	KNIFE, CREATE_ELLIPSE, CREATE_RECT,
+	SET_PIVOT
+}
+
+const CANCELABLE_MODES : Array[SVSEditMode] = [
+	SVSEditMode.TRANSLATE, SVSEditMode.ROTATE, SVSEditMode.SCALE,
+	SVSEditMode.MERGE, SVSEditMode.BRUSH, SVSEditMode.PENCIL,
+	SVSEditMode.PAINT_BONE, SVSEditMode.KNIFE,
+	SVSEditMode.CREATE_ELLIPSE, SVSEditMode.CREATE_RECT,
+	SVSEditMode.SET_PIVOT
+]
+
+const DRAW_MODES : Array[SVSEditMode] = [
+	SVSEditMode.BRUSH, SVSEditMode.PENCIL, SVSEditMode.KNIFE,
+	SVSEditMode.CREATE_ELLIPSE, SVSEditMode.CREATE_RECT
+]
+
+var plugin : Line2DGeneratorInspectorPlugin
+var scalable_vector_shapes_2d_dock
+var select_mode_button : Button
+var undo_redo : EditorUndoRedoManager
+var in_undo_redo_transaction := false
+var shape_preview : Curve2D = null
+var selection_candidate : Node = null
+var current_cutout_shape := ScalableVectorShape2D.ShapeType.RECT
+var current_clip_operation := Geometry2D.OPERATION_DIFFERENCE
+
+enum UndoRedoActionType {
+	UNSPECIFIED, DRAGGING_POINT, DRAGGING_CP
+}
+var undo_redo_transaction : Dictionary = {
+	UndoRedoEntry.ACTION_TYPE: UndoRedoActionType.UNSPECIFIED,
+	UndoRedoEntry.NAME: "",
+	UndoRedoEntry.DOS: [],
+	UndoRedoEntry.UNDOS: [],
+	UndoRedoEntry.DO_PROPS: [],
+	UndoRedoEntry.UNDO_PROPS: []
+}
+
+var set_global_position_popup_panel : PopupPanel
+var arc_settings_popup_panel : PopupPanel
+
+var _vp_horizontal_scrollbar_locked_value := 0.0
+var _locking_vp_horizontal_scrollbar := false
+var _vp_vertical_scrollbar_locked_value := 0.0
+var _locking_vp_vertical_scrollbar := false
+
+
+var svs_edit_buttons : Control
+var _svs_edit_mode := SVSEditMode.NONE
+var _drag_start := Vector2.ZERO
+var _prev_uniform_rotate_angle := 0.0
+var _stored_natural_center := Vector2.ZERO
+var _lmb_is_down_inside_viewport := false
+
+# Hover state helpers
+var _hover_point_idx : int = -1
+var _hover_cp_in_idx : int = -1
+var _hover_cp_out_idx : int = -1
+var _hover_closest_point_on_curve : ClosestPointOnCurveMeta = null
+var _hover_gradient_from := false
+var _hover_gradient_to := false
+var _hover_gradient_color_stop_idx : int = -1
+var _hover_closest_point_on_gradient := Vector2.INF
+var _select_hinted_svs : Array[ScalableVectorShape2D] = []
+
+# Resize handle helpers
+var _resize_orig_size := Vector2.INF
+var _resize_orig_pos := Vector2.INF
+var _resize_orig_offset := Vector2.INF
+var _resize_orig_top_left := Vector2.INF
+var _create_size_override := Vector2.INF
+var _create_offset_override := Vector2.INF
+
+# Merge points helper vars
+var _merge_box_rect := Rect2(Vector2.ZERO, Vector2.ZERO)
+
+# Pencil draw helper vars
+var _drawing_pencil_line := false
+var _pencil_start_pos := Vector2.ZERO
+var _pencil_stroke : Array[Vector2] = []
+var _knife_intersections : Array[Vector2] = []
+
+# Brush draw helper vars
+var _current_brush_shape := PackedVector2Array()
+var _current_brush_stroke := PackedVector2Array()
+var _brush_start_pos := Vector2.ZERO
+var _last_brush_pos := Vector2.ZERO
+
+
+# Bone Paint helper vars
+var _current_bone_idx := 0
+var _last_skeleton : Skeleton2D = null
+
+# Generalized state handling helpers
+var _dragging_selection := false
+
+# Grid snap settings
+var _snap_dialog : AcceptDialog
+var _grid_snap_settings := Vector4i(0, 0, 1, 1)
+
+func _enter_tree():
+	scalable_vector_shapes_2d_dock = load("res://addons/curved_lines_2d/scalable_vector_shapes_2d_dock.tscn").instantiate()
+	plugin = load("res://addons/curved_lines_2d/line_2d_generator_inspector_plugin.gd").new()
+	add_inspector_plugin(plugin)
+	add_custom_type(
+		"DrawablePath2D",
+		"Path2D",
+		load("res://addons/curved_lines_2d/drawable_path_2d.gd"),
+		load("res://addons/curved_lines_2d/DrawablePath2D.svg")
+	)
+	add_custom_type(
+		"DynamicOutline2D",
+		"Node2D",
+		load("res://addons/curved_lines_2d/dynamic_outline_2d.gd"),
+		load("res://addons/curved_lines_2d/DynamicOutline2D.svg")
+	)
+	add_custom_type(
+		"ScalableVectorShape2D",
+		"Node2D",
+		load("res://addons/curved_lines_2d/scalable_vector_shape_2d.gd"),
+		load("res://addons/curved_lines_2d/DrawablePath2D.svg")
+	)
+	add_custom_type(
+		"AdaptableVectorShape3D",
+		"Node3D",
+		load("res://addons/curved_lines_2d/adaptable_vector_shape_3d.gd"),
+		load("res://addons/curved_lines_2d/AdaptableVectorShape3D.svg")
+	)
+	undo_redo = get_undo_redo()
+	add_control_to_bottom_panel(scalable_vector_shapes_2d_dock as Control, "Scalable Vector Shapes 2D")
+	EditorInterface.get_selection().selection_changed.connect(_on_selection_changed)
+	undo_redo.version_changed.connect(_on_undo_redo_version_changed)
+	EditorInterface.get_resource_filesystem().resources_reimported.connect(_on_resources_reloaded)
+	make_bottom_panel_item_visible(scalable_vector_shapes_2d_dock)
+	set_global_position_popup_panel = load("res://addons/curved_lines_2d/set_global_position_popup_panel.tscn").instantiate()
+	arc_settings_popup_panel = load("res://addons/curved_lines_2d/arc_settings_popup_panel.tscn").instantiate()
+	EditorInterface.get_base_control().add_child(set_global_position_popup_panel)
+	EditorInterface.get_base_control().add_child(arc_settings_popup_panel)
+	if not set_global_position_popup_panel.value_changed.is_connected(_on_global_position_for_handle_changed):
+		set_global_position_popup_panel.value_changed.connect(_on_global_position_for_handle_changed)
+	if not set_global_position_popup_panel.visibility_changed.is_connected(_commit_undo_redo_transaction):
+		set_global_position_popup_panel.visibility_changed.connect(_commit_undo_redo_transaction)
+	if not scalable_vector_shapes_2d_dock.shape_created.is_connected(_on_shape_created):
+		scalable_vector_shapes_2d_dock.shape_created.connect(_on_shape_created)
+	if not scalable_vector_shapes_2d_dock.set_shape_preview.is_connected(_on_shape_preview):
+		scalable_vector_shapes_2d_dock.set_shape_preview.connect(_on_shape_preview)
+	if not scalable_vector_shapes_2d_dock.brush_changed.is_connected(_update_brush):
+		scalable_vector_shapes_2d_dock.brush_changed.connect(_update_brush)
+	if not scalable_vector_shapes_2d_dock.create_tab.mode_changed.is_connected(_on_svs_edit_mode_changed):
+		scalable_vector_shapes_2d_dock.create_tab.mode_changed.connect(_on_svs_edit_mode_changed)
+	if not scalable_vector_shapes_2d_dock.create_tab.ellipse_created.is_connected(_on_ellipse_created):
+		scalable_vector_shapes_2d_dock.create_tab.ellipse_created.connect(_on_ellipse_created)
+	if not scalable_vector_shapes_2d_dock.create_tab.rect_created.is_connected(_on_rect_created):
+		scalable_vector_shapes_2d_dock.create_tab.rect_created.connect(_on_rect_created)
+	scalable_vector_shapes_2d_dock.create_tab.flip_horizontal.connect(_flip_svs_horizontal)
+	scalable_vector_shapes_2d_dock.create_tab.flip_vertical.connect(_flip_svs_vertical)
+	scene_changed.connect(_on_scene_changed)
+	scene_saved.connect(_on_scene_saved)
+	svs_edit_buttons = load("res://addons/curved_lines_2d/svs_edit_buttons.tscn").instantiate()
+	var canvas_editor_buttons_container = _find_canvas_item_editor_control().find_child("*HFlowContainer*", true, false)
+	canvas_editor_buttons_container.add_child(svs_edit_buttons)
+	_update_brush()
+
+	if not _get_select_mode_button().toggled.is_connected(_on_select_mode_toggled):
+		_get_select_mode_button().toggled.connect(_on_select_mode_toggled)
+	_on_select_mode_toggled(_get_select_mode_button().button_pressed)
+	svs_edit_buttons.mode_changed.connect(_on_svs_edit_mode_changed)
+	svs_edit_buttons.flip_horizontal.connect(_flip_svs_horizontal)
+	svs_edit_buttons.flip_vertical.connect(_flip_svs_vertical)
+	svs_edit_buttons.convert_to_svs.connect(_extract_svs_from_selected_node)
+	_snap_dialog = _find_snap_dialog()
+	if is_instance_valid(_snap_dialog) and not _snap_dialog.confirmed.is_connected(_on_confirm_grid_snap_settings):
+		_snap_dialog.confirmed.connect(_on_confirm_grid_snap_settings)
+
+
+func _find_snap_dialog() -> AcceptDialog:
+	var possible := EditorInterface.get_base_control().find_children("*", "SnapDialog", true, false)
+	if possible.is_empty():
+		push_warning("Could not find grid snap Dialog, please report as bug at ", REPO_ISSUE_PAGE)
+		return null
+	return possible[0]
+
+
+func _on_confirm_grid_snap_settings() -> void:
+	if not is_instance_valid(_snap_dialog):
+		return
+	var spin_boxes := _snap_dialog.find_children("*", "SpinBox", true, false)
+	if spin_boxes.size() < 4:
+		return
+	_grid_snap_settings = Vector4i(
+		int((spin_boxes[0] as SpinBox).value),
+		int((spin_boxes[1] as SpinBox).value),
+		int((spin_boxes[2] as SpinBox).value),
+		int((spin_boxes[3] as SpinBox).value)
+	)
+
+
+func _override_and_confirm_grid_settings_dialog() -> void:
+	if not is_instance_valid(_snap_dialog):
+		return
+	var spin_boxes := _snap_dialog.find_children("*", "SpinBox", true, false)
+	if spin_boxes.size() < 4:
+		return
+	for i in 4:
+		(spin_boxes[i] as SpinBox).value = _grid_snap_settings[i]
+	_snap_dialog.confirmed.emit()
+
+
+func _get_grid_snap_settings_from_scene_config() -> Vector4i:
+	var root := EditorInterface.get_edited_scene_root()
+	if not is_instance_valid(root):
+		# scene without a root node, just return last known setting
+		_override_and_confirm_grid_settings_dialog()
+		return _grid_snap_settings
+	if root.scene_file_path.is_empty():
+		# we could not find a file path, so fall back
+		_override_and_confirm_grid_settings_dialog()
+		return _grid_snap_settings
+	var settings_dir = EditorInterface.get_editor_paths().get_project_settings_dir()
+	var state_file = settings_dir.path_join("%s-editstate-%s.cfg" % [root.scene_file_path.get_file(), root.scene_file_path.md5_text()])
+	var config = ConfigFile.new()
+	if not config.load(state_file) == OK:
+		# we failed to open the state file for whatever reason, so fall back
+		_override_and_confirm_grid_settings_dialog()
+		return _grid_snap_settings
+	var editor_states := config.get_value("editor_states", "2D", {})
+	var grid_offset : Vector2 = editor_states["grid_offset"] if "grid_offset" in editor_states else Vector2.ZERO
+	var grid_step : Vector2 = editor_states["grid_step"] if "grid_step" in editor_states else Vector2.ONE
+	return Vector4i(
+		int(grid_offset.x), int(grid_offset.y), int(grid_step.x), int(grid_step.y)
+	)
+
+
+func _find_canvas_item_editor_control() -> Control:
+	var candidate := EditorInterface.get_editor_viewport_2d().find_parent("*CanvasItemEditor*")
+	if candidate:
+		return candidate
+	return EditorInterface.get_base_control().find_child("2D", true, false)
+
+
+func select_node_reversibly(target_node : Node) -> void:
+	if is_instance_valid(target_node):
+		EditorInterface.edit_node(target_node)
+
+
+func _reset_hover_states() -> void:
+	_hover_point_idx = -1
+	_hover_cp_in_idx = -1
+	_hover_cp_out_idx = -1
+	_hover_closest_point_on_curve = null
+	_hover_gradient_from = false
+	_hover_gradient_to = false
+	_hover_gradient_color_stop_idx = -1
+	_hover_closest_point_on_gradient = Vector2.INF
+
+
+func _on_undo_redo_version_changed() -> void:
+	_reset_hover_states()
+	update_overlays()
+
+
+func _select_scene_root_when_nothing_is_selected() -> void:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if not is_instance_valid(current_selection):
+		var scene_root := EditorInterface.get_edited_scene_root()
+		if is_instance_valid(scene_root):
+			EditorInterface.edit_node(scene_root)
+
+
+func _on_select_mode_toggled(toggled_on : bool) -> void:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if _drawing_pencil_line:
+		return
+	if toggled_on and _is_svs_valid(current_selection):
+		svs_edit_buttons.show()
+		svs_edit_buttons.show_svs_editors()
+		scalable_vector_shapes_2d_dock.create_tab.enable_svs_editors()
+		if (_get_keep_drawing_behavior() == KeepDrawingBehavior.KEEP_DRAWING_ON_SAME_PARENT and (
+				_svs_edit_mode in DRAW_MODES) and not Input.is_key_pressed(KEY_Q)):
+					return
+		svs_edit_buttons.set_default_mode()
+		scalable_vector_shapes_2d_dock.create_tab.set_default_mode()
+	elif toggled_on and current_selection:
+		svs_edit_buttons.show()
+		svs_edit_buttons.hide_svs_editors()
+		scalable_vector_shapes_2d_dock.create_tab.disable_svs_editors()
+		if (_get_keep_drawing_behavior() == KeepDrawingBehavior.KEEP_DRAWING_ON_SAME_PARENT and (
+				_svs_edit_mode in DRAW_MODES) and
+				not Input.is_key_pressed(KEY_Q)):
+					return
+		svs_edit_buttons.set_default_mode()
+	else:
+		svs_edit_buttons.set_default_mode()
+		svs_edit_buttons.hide()
+		scalable_vector_shapes_2d_dock.create_tab.disable_all_editors()
+
+
+func _on_svs_edit_mode_changed(new_mode : SVSEditMode) -> void:
+	if _svs_edit_mode == SVSEditMode.MERGE and new_mode != SVSEditMode.MERGE:
+		_merge_box_rect.size = Vector2.ZERO
+	if new_mode != SVSEditMode.PENCIL:
+		_drawing_pencil_line = false
+	if new_mode == SVSEditMode.KNIFE:
+		var svs := EditorInterface.get_selection().get_selected_nodes().pop_back()
+		if _is_svs_valid(svs):
+			(svs as ScalableVectorShape2D).reset_skeleton_to_rest_pose()
+	_svs_edit_mode = new_mode
+	scalable_vector_shapes_2d_dock.create_tab.set_edit_mode_toggle_button(new_mode)
+	svs_edit_buttons.set_edit_mode_toggle_button(new_mode)
+	update_overlays()
+
+
+func _is_ctrl_or_cmd_pressed() -> bool:
+	return Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_META)
+
+
+func _update_brush(via_hotkey := false) -> void:
+	var current_brush_curve := Curve2D.new()
+	if _get_brush_shape() == BrushShape.ELLIPSE:
+		ScalableVectorShape2D.set_ellipse_points(current_brush_curve,
+				Vector2(_get_brush_size_x(), _get_brush_size_y()), Vector2.ZERO,
+					deg_to_rad(_get_brush_rotation()))
+	else:
+		ScalableVectorShape2D.set_rect_points(current_brush_curve,
+				_get_brush_size_x(), _get_brush_size_y(), 0.0, 0.0, Vector2.ZERO,
+					deg_to_rad(_get_brush_rotation()))
+	_current_brush_shape = current_brush_curve.tessellate(_get_default_max_stages(), _get_default_tolerance_degrees())
+	if via_hotkey:
+		scalable_vector_shapes_2d_dock.sync_draw_settings()
+
+
+func _on_shape_preview(curve : Curve2D):
+	shape_preview = curve
+	update_overlays()
+
+
+func _get_rect_offset_position(test_ctrl_held := false) -> Vector2:
+	return (
+			Vector2.ZERO
+				if _get_center_rect_offset() or (test_ctrl_held and _is_ctrl_or_cmd_pressed()) else
+			Vector2(_get_default_rect_width() * 0.5, _get_default_rect_height() * 0.5)
+	)
+
+
+func _on_rect_created(scene_root : Node) -> void:
+	var new_rect := ScalableVectorShape2D.new()
+	new_rect.shape_type = ScalableVectorShape2D.ShapeType.RECT
+	new_rect.size = Vector2(_get_default_rect_width(), _get_default_rect_height())
+	new_rect.rx = _get_default_rect_rx()
+	new_rect.ry = _get_default_rect_ry()
+	new_rect.offset = _get_rect_offset_position()
+	_create_shape(new_rect, scene_root, "Rectangle")
+
+
+func _get_ellipse_offset_position(test_ctrl_held := false) -> Vector2:
+	return (
+			Vector2.ZERO
+				if _get_center_ellipse_offset() or (test_ctrl_held and _is_ctrl_or_cmd_pressed()) else
+			Vector2(_get_default_ellipse_rx(), _get_default_ellipse_ry())
+	)
+
+
+func _get_ellipse_svs(new_ellipse : ScalableVectorShape2D) -> ScalableVectorShape2D:
+	new_ellipse.shape_type = ScalableVectorShape2D.ShapeType.ELLIPSE
+	new_ellipse.size = Vector2(_get_default_ellipse_rx() * 2, _get_default_ellipse_ry() * 2)
+	new_ellipse.offset = _get_ellipse_offset_position()
+	return new_ellipse
+
+
+func _on_ellipse_created(scene_root : Node) -> void:
+	_create_shape(_get_ellipse_svs(ScalableVectorShape2D.new()), scene_root, "Ellipse")
+
+
+func _on_shape_created(curve : Curve2D, scene_root : Node, node_name : String) -> void:
+	var new_shape := ScalableVectorShape2D.new()
+	new_shape.curve = curve
+	_create_shape(new_shape, scene_root, node_name)
+
+
+func _copy_prop(src : ScalableVectorShape2D, prop_name : String, default : Variant) -> Variant:
+	if is_instance_valid(src) and prop_name in src:
+		return src[prop_name]
+	return default
+
+
+func _create_shape(new_shape : ScalableVectorShape2D, scene_root : Node, node_name : String,
+		is_cutout_for : ScalableVectorShape2D = null, force_no_realign := false,
+		parent : Node = null, src : ScalableVectorShape2D = null) -> void:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if parent == null:
+		parent = current_selection if current_selection is Node else scene_root
+	new_shape.update_curve_at_runtime = _copy_prop(src, "update_curve_at_runtime", _is_setting_update_curve_at_runtime())
+	new_shape.curve.resource_local_to_scene = _copy_prop(src, "resource_local_to_scene", _is_making_curve_resources_local_to_scene())
+	new_shape.arc_list.resource_local_to_scene = _copy_prop(src, "resource_local_to_scene", _is_making_curve_resources_local_to_scene())
+	new_shape.tolerance_degrees = _copy_prop(src, "tolerance_degrees", _get_default_tolerance_degrees())
+	new_shape.max_stages = _copy_prop(src, "max_stages", _get_default_max_stages())
+	new_shape.name = node_name
+	if not is_instance_valid(is_cutout_for):
+		new_shape.position = Vector2.ZERO
+	if is_instance_valid(src) and src != scene_root:
+		new_shape.transform = src.transform
+	undo_redo.create_action("Add a %s to the scene " % node_name)
+	if is_instance_valid(src):
+		undo_redo.add_do_method(src, 'add_sibling', new_shape, true)
+	else:
+		undo_redo.add_do_method(parent, 'add_child', new_shape, true)
+	undo_redo.add_do_method(new_shape, 'set_owner', scene_root)
+	undo_redo.add_do_reference(new_shape)
+	undo_redo.add_undo_method(parent, 'remove_child', new_shape)
+	if is_instance_valid(is_cutout_for):
+		var new_clip_paths := is_cutout_for.clip_paths.duplicate()
+		match current_clip_operation:
+			Geometry2D.OPERATION_UNION:
+				new_shape.use_union_in_stead_of_clipping = true
+			Geometry2D.OPERATION_INTERSECTION:
+				new_shape.use_interect_when_clipping = true
+			Geometry2D.OPERATION_DIFFERENCE:
+				new_shape.use_interect_when_clipping = false
+				new_shape.use_union_in_stead_of_clipping  = false
+		new_clip_paths.append(new_shape)
+		undo_redo.add_do_property(is_cutout_for, 'clip_paths', new_clip_paths)
+		undo_redo.add_undo_property(is_cutout_for, 'clip_paths', is_cutout_for.clip_paths)
+	else:
+		for draw_fn in PAINT_ORDER_MAP[_get_default_paint_order()]:
+			call(draw_fn, new_shape, scene_root, src)
+	undo_redo.add_do_method(self, 'select_node_reversibly', new_shape)
+	undo_redo.add_undo_method(self, 'select_node_reversibly', parent)
+	undo_redo.commit_action()
+	new_shape.stroke_color = _copy_prop(src, "stroke_color", _get_default_stroke_color())
+	new_shape.stroke_width = _copy_prop(src, "stroke_width", _get_default_stroke_width())
+	new_shape.begin_cap_mode = _copy_prop(src, "begin_cap_mode", _get_default_begin_cap())
+	new_shape.end_cap_mode = _copy_prop(src, "end_cap_mode",  _get_default_end_cap())
+	new_shape.line_joint_mode = _copy_prop(src, "line_joint_mode", _get_default_joint_mode())
+	new_shape.extrusion_direction = _copy_prop(src, "extrusion_direction", _get_default_stroke_extrusion_direction())
+	if not force_no_realign and not is_instance_valid(is_cutout_for):
+		_set_viewport_pos_to_selection()
+
+
+func _create_svs_vertex_merge_2d() -> void:
+	var vertex_map := _find_merge_vertices()
+	if vertex_map.size() < 2:
+		return
+	var new_vertex_merge := SVSVertexMerge2D.new()
+	new_vertex_merge.name = "SVSVertexMerge2D"
+	var scene_root := EditorInterface.get_edited_scene_root()
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	var parent = current_selection if current_selection is Node else scene_root
+	undo_redo.create_action("Add SVSVertexMerge2D")
+	undo_redo.add_do_method(parent, 'add_child', new_vertex_merge, true)
+	undo_redo.add_do_method(new_vertex_merge, 'set_owner', scene_root)
+	undo_redo.add_do_property(new_vertex_merge, "vertex_map", vertex_map)
+	undo_redo.add_undo_property(new_vertex_merge, "vertex_map", {})
+	undo_redo.add_undo_method(new_vertex_merge, 'set_owner', null)
+	undo_redo.add_undo_method(parent, 'remove_child', new_vertex_merge)
+	for svs in vertex_map.keys():
+		undo_redo.add_undo_property(svs, "curve", svs.curve.duplicate())
+	undo_redo.commit_action()
+
+
+func _add_fill_to_created_shape(new_shape : ScalableVectorShape2D, scene_root : Node, src : ScalableVectorShape2D) -> void:
+	if is_instance_valid(src) and not is_instance_valid(src.polygon):
+		return
+	if _is_add_fill_enabled() or (is_instance_valid(src) and is_instance_valid(src.polygon)):
+		var polygon := Polygon2D.new()
+		polygon.name = "Fill"
+		undo_redo.add_do_property(new_shape, 'polygon', polygon)
+		undo_redo.add_do_method(new_shape, 'add_child', polygon, true)
+		undo_redo.add_do_property(new_shape, 'fill_color', _copy_prop(src, "fill_color", _get_default_fill_color()))
+		undo_redo.add_do_method(polygon, 'set_owner', scene_root)
+		if is_instance_valid(src) and is_instance_valid(src.polygon) and src.polygon.texture:
+			if src.polygon.texture is GradientTexture2D:
+				polygon.texture = src.polygon.texture.duplicate(true)
+			else:
+				polygon.texture = src.polygon.texture
+			polygon.texture_offset = src.polygon.texture_offset
+			polygon.texture_scale = src.polygon.texture_scale
+		undo_redo.add_do_reference(polygon)
+		undo_redo.add_undo_reference(new_shape)
+		undo_redo.add_undo_method(new_shape, 'remove_child', polygon)
+
+
+func _add_stroke_to_created_shape(new_shape : ScalableVectorShape2D, scene_root : Node, src : ScalableVectorShape2D) -> void:
+	if is_instance_valid(src) and not is_instance_valid(src.line) and not is_instance_valid(src.poly_stroke):
+		return
+	if _is_add_stroke_enabled() or (is_instance_valid(src) and (is_instance_valid(src.line) or is_instance_valid(src.poly_stroke))):
+		if _using_line_2d_for_stroke() or (is_instance_valid(src) and is_instance_valid(src.line)):
+			var line := Line2D.new()
+			line.name = "Stroke"
+			line.sharp_limit = 90.0
+			if CurvedLines2D._use_antialiased_line_2d():
+				line.texture = load("res://addons/curved_lines_2d/LumAlpha8.tex")
+				line.texture_mode = Line2D.LINE_TEXTURE_TILE
+				line.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+
+			undo_redo.add_do_property(new_shape, 'line', line)
+			undo_redo.add_do_method(new_shape, 'add_child', line, true)
+			undo_redo.add_do_method(line, 'set_owner', scene_root)
+			undo_redo.add_do_reference(line)
+			undo_redo.add_undo_method(new_shape, 'remove_child', line)
+		else:
+			var poly_stroke := Polygon2D.new()
+			poly_stroke.name = "Stroke"
+			undo_redo.add_do_property(new_shape, 'poly_stroke', poly_stroke)
+			undo_redo.add_do_method(new_shape, 'add_child', poly_stroke, true)
+			undo_redo.add_do_method(poly_stroke, 'set_owner', scene_root)
+			undo_redo.add_do_reference(poly_stroke)
+			undo_redo.add_undo_method(new_shape, 'remove_child', poly_stroke)
+
+
+func _add_collision_to_created_shape(new_shape : ScalableVectorShape2D, scene_root : Node, src : ScalableVectorShape2D) -> void:
+	if is_instance_valid(src) and not is_instance_valid(src.collision_object):
+		return
+	if _add_collision_object_type() != ScalableVectorShape2D.CollisionObjectType.NONE or (is_instance_valid(src) and is_instance_valid(src.collision_object)):
+		var collision : CollisionObject2D = null
+		if is_instance_valid(src) and is_instance_valid(src.collision_object):
+			if src.collision_object is StaticBody2D:
+				collision = StaticBody2D.new()
+			elif src.collision_object is Area2D:
+				collision = Area2D.new()
+			elif src.collision_object is AnimatableBody2D:
+				collision = AnimatableBody2D.new()
+			elif src.collision_object is RigidBody2D:
+				collision = RigidBody2D.new()
+			elif src.collision_object is CharacterBody2D:
+				collision = CharacterBody2D.new()
+			elif src.collision_object is PhysicalBone2D:
+				collision = PhysicalBone2D.new()
+		else:
+			match  _add_collision_object_type():
+				ScalableVectorShape2D.CollisionObjectType.STATIC_BODY_2D:
+					collision = StaticBody2D.new()
+				ScalableVectorShape2D.CollisionObjectType.AREA_2D:
+					collision = Area2D.new()
+				ScalableVectorShape2D.CollisionObjectType.ANIMATABLE_BODY_2D:
+					collision = AnimatableBody2D.new()
+				ScalableVectorShape2D.CollisionObjectType.RIGID_BODY_2D:
+					collision = RigidBody2D.new()
+				ScalableVectorShape2D.CollisionObjectType.CHARACTER_BODY_2D:
+					collision = CharacterBody2D.new()
+				ScalableVectorShape2D.CollisionObjectType.PHYSICAL_BONE_2D:
+					collision = PhysicalBone2D.new()
+		undo_redo.add_do_method(new_shape, 'add_child', collision, true)
+		undo_redo.add_do_reference(collision)
+		undo_redo.add_do_method(collision, 'set_owner', scene_root)
+		undo_redo.add_do_property(new_shape, 'collision_object', collision)
+		undo_redo.add_undo_method(new_shape, 'remove_child', collision)
+
+
+func _scene_can_export_animations() -> bool:
+	return (EditorInterface.get_edited_scene_root() is CanvasItem and
+		not EditorInterface.get_edited_scene_root().find_children("*", "AnimationPlayer").filter(
+				func(an): return an.owner == EditorInterface.get_edited_scene_root()
+		).is_empty() and
+		not EditorInterface.get_edited_scene_root()
+				.find_children("*", "ScalableVectorShape2D").is_empty()
+	)
+
+
+func _on_selection_changed():
+	var scene_root := EditorInterface.get_edited_scene_root()
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if _is_editing_enabled() and is_instance_valid(scene_root):
+		# inelegant fix to always keep an instance of Node selected, so
+		# _forward_canvas_gui_input will still be called upon losing focus
+		if (not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+				and EditorInterface.get_selection().get_selected_nodes().is_empty()
+				and not scene_root is Control):
+			EditorInterface.edit_node(scene_root)
+	if current_selection is AnimationPlayer and _scene_can_export_animations():
+		scalable_vector_shapes_2d_dock.set_selected_animation_player(current_selection)
+	_on_select_mode_toggled(_get_select_mode_button().button_pressed)
+	if current_selection is Line2D or current_selection is Polygon2D or current_selection is CollisionPolygon2D:
+		svs_edit_buttons.show_convert_to_svs()
+	else:
+		svs_edit_buttons.hide_convert_to_svs()
+
+	if _is_svs_valid(current_selection):
+		var svs := current_selection as ScalableVectorShape2D
+		svs_edit_buttons.show_knife()
+		scalable_vector_shapes_2d_dock.create_tab.sync_svs_settings(svs)
+		if not svs.assigned_node_changed.is_connected(scalable_vector_shapes_2d_dock.create_tab.sync_svs_settings.bind(svs)):
+			svs.assigned_node_changed.connect(scalable_vector_shapes_2d_dock.create_tab.sync_svs_settings.bind(svs))
+		if not svs.dimensions_changed.is_connected(scalable_vector_shapes_2d_dock.create_tab.sync_svs_settings.bind(svs)):
+			svs.dimensions_changed.connect(scalable_vector_shapes_2d_dock.create_tab.sync_svs_settings.bind(svs))
+		if not svs.transform_changed.is_connected(scalable_vector_shapes_2d_dock.create_tab.sync_svs_settings):
+			svs.set_notify_transform(true)
+			svs.transform_changed.connect(scalable_vector_shapes_2d_dock.create_tab.sync_svs_settings)
+	else:
+		svs_edit_buttons.hide_knife()
+		if _svs_edit_mode == SVSEditMode.KNIFE:
+			svs_edit_buttons.set_default_mode()
+	if current_selection is SyncedSVGRoot:
+		var x := current_selection as SyncedSVGRoot
+		if not x.resources_changed.is_connected(_on_resources_reloaded):
+			x.resources_changed.connect(_on_resources_reloaded)
+	update_overlays()
+
+
+func _on_scene_changed(scn : Node):
+	_grid_snap_settings = _get_grid_snap_settings_from_scene_config()
+	if _scene_can_export_animations():
+		var anim_pl = scn.find_children("*", "AnimationPlayer").filter(
+				func(an): return an.owner == EditorInterface.get_edited_scene_root()
+		).pop_back()
+		scalable_vector_shapes_2d_dock.set_selected_animation_player(anim_pl)
+	else:
+		scalable_vector_shapes_2d_dock.set_selected_animation_player(null)
+	_check_for_synced_svg_changes(scn)
+
+
+func _on_scene_saved(_file_path) -> void:
+	_grid_snap_settings = _get_grid_snap_settings_from_scene_config()
+
+
+func _check_for_synced_svg_changes(scn : Node) -> void:
+	if not is_instance_valid(scn):
+		return
+	for svg_root : SyncedSVGRoot in scn.find_children("*", "SyncedSVGRoot"):
+		_print_warning_if_synced_svg_file_changed(svg_root)
+	if scn is SyncedSVGRoot:
+		_print_warning_if_synced_svg_file_changed(scn)
+
+
+func _print_warning_if_synced_svg_file_changed(svg_root : SyncedSVGRoot) -> void:
+	if svg_root.get_child_count() > 0:
+		if svg_root.get_child(0).owner != EditorInterface.get_edited_scene_root():
+			return
+	if FileAccess.get_md5(svg_root.svg_resource_path) != svg_root.get_meta("_checksum"):
+		push_warning("Warning: external svg file changed since last sync: " + svg_root.svg_resource_path + " in " + str(svg_root))
+
+
+func _handles(object: Object) -> bool:
+	return object is Node
+
+
+func _find_scalable_vector_shape_2d_nodes() -> Array[Node]:
+	var scene_root := EditorInterface.get_edited_scene_root()
+	if is_instance_valid(scene_root):
+		var result := scene_root.find_children("*", "ScalableVectorShape2D")
+		if scene_root is ScalableVectorShape2D:
+			result.push_front(scene_root)
+		return result
+	return []
+
+
+func _find_scalable_vector_shape_2d_nodes_at(pos : Vector2) -> Array[Node]:
+	if is_instance_valid(EditorInterface.get_edited_scene_root()):
+		return (_find_scalable_vector_shape_2d_nodes()
+					.filter(func(x : ScalableVectorShape2D): return not x.has_meta("_edit_lock_"))
+					.filter(func(x : ScalableVectorShape2D): return not _is_inside_edit_group(x))
+					.filter(func(x : ScalableVectorShape2D): return x.is_visible_in_tree())
+					.filter(func(x : ScalableVectorShape2D): return x.owner == EditorInterface.get_edited_scene_root())
+					.filter(func(x : ScalableVectorShape2D): return x.has_point(_svp_mouse_pos(pos, x)))
+		)
+	return []
+
+
+func _get_canvas_item_editor_button_by_base_index(idx : int) -> BaseButton:
+	var results = (
+			_find_canvas_item_editor_control()
+					.find_children("*Button*", "", true, false)
+	)
+	if Engine.get_version_info()["minor"] >= 6 and idx >= 8:
+		idx += 1
+	if Engine.get_version_info()["minor"] >= 8 and idx >= 8:
+		idx += 4
+	if Engine.get_version_info()["minor"] >= 7 and idx > 0:
+		if results.size() >= idx + 1:
+			return results[idx + 1]
+	else:
+		if results.size() >= idx:
+			return results[idx]
+	return null
+
+
+func _is_canvas_item_editor_button_pressed_by_base_index(idx : int) -> bool:
+	var candidate := _get_canvas_item_editor_button_by_base_index(idx)
+	if is_instance_valid(candidate) and candidate is BaseButton:
+		return (candidate as BaseButton).button_pressed
+	return false
+
+
+func _is_change_pivot_button_active() -> bool:
+	return _is_canvas_item_editor_button_pressed_by_base_index(SET_PIVOT_BUTTON_IDX)
+
+
+func _is_grid_snapping_active() -> bool:
+	return _is_canvas_item_editor_button_pressed_by_base_index(GRID_SNAP_BUTTON_IDX)
+
+
+func _is_pixel_snap_active() -> bool:
+	var candidate := _get_canvas_item_editor_button_by_base_index(SNAPPING_OPTIONS_BUTTON_IDX)
+	if candidate is MenuButton:
+		return (candidate as MenuButton).get_popup().is_item_checked(3)
+	return false
+
+
+func _is_snapped_to_pixel() -> bool:
+	return _is_grid_snapping_active() or _is_pixel_snap_active()
+
+
+func _get_snap_resolution() -> Vector2:
+	if _is_grid_snapping_active():
+		return Vector2(_grid_snap_settings[2], _grid_snap_settings[3])
+	# if _get_snap_resolution() is used at all here, pixel snap has
+	# already been checked to be true earlier
+	return Vector2.ONE
+
+
+
+func _get_select_mode_button() -> Button:
+	if is_instance_valid(select_mode_button):
+		return select_mode_button
+	else:
+		select_mode_button = (
+			_find_canvas_item_editor_control()
+					.find_child("*Button*", true, false)
+		)
+		return select_mode_button
+
+
+func _get_viewport_center() -> Vector2:
+	var tr := EditorInterface.get_editor_viewport_2d().global_canvas_transform
+	var og := tr.get_origin()
+	var sz := Vector2(EditorInterface.get_editor_viewport_2d().size)
+	return (sz / 2) / tr.get_scale() - og / tr.get_scale()
+
+
+func _set_viewport_pos_to_selection() -> void:
+	EditorInterface.get_editor_viewport_2d().get_parent().grab_focus()
+	var key_ev := InputEventKey.new()
+	key_ev.keycode = KEY_F
+	key_ev.pressed = true
+	Input.parse_input_event(key_ev)
+
+
+func _vp_transform(p : Vector2) -> Vector2:
+	var s := EditorInterface.get_editor_viewport_2d().get_final_transform().get_scale()
+	var o := EditorInterface.get_editor_viewport_2d().get_final_transform().get_origin()
+	return (p * s) + o
+
+
+func _is_svs_valid(svs : Object) -> bool:
+	return is_instance_valid(svs) and svs is ScalableVectorShape2D and svs.curve
+
+
+func _get_hovered_handle_metadata(svs : ScalableVectorShape2D) -> Dictionary:
+
+	if _hover_point_idx > -1:
+		return {
+			'global_pos': svs.to_global(svs.curve.get_point_position(
+				_hover_point_idx
+			)),
+			'meta_name': "_hover_point_idx_",
+			'point_idx': _hover_point_idx
+		}
+	elif _hover_cp_in_idx > -1:
+		return {
+			'global_pos': svs.to_global(svs.curve.get_point_position(
+				_hover_cp_in_idx
+			) + svs.curve.get_point_in(
+				_hover_cp_in_idx
+			)),
+			'meta_name': "_hover_cp_in_idx_",
+			'point_idx': _hover_cp_in_idx
+		}
+	elif _hover_cp_out_idx > -1:
+		return {
+			'global_pos': svs.to_global(svs.curve.get_point_position(
+				_hover_cp_out_idx
+			) + svs.curve.get_point_out(
+				_hover_cp_out_idx
+			)),
+			'meta_name': "_hover_cp_out_idx_",
+			'point_idx': _hover_cp_out_idx
+		}
+	return {}
+
+
+func _curve_control_has_hover(svs : ScalableVectorShape2D) -> bool:
+	return (
+		_hover_point_idx > -1 or
+		_hover_cp_in_idx > -1 or
+		_hover_cp_out_idx > -1
+	)
+
+
+func _handle_has_hover(svs : ScalableVectorShape2D) -> bool:
+	return (
+		_hover_point_idx > -1 or
+		_hover_cp_in_idx > -1 or
+		_hover_cp_out_idx > -1 or
+		_hover_gradient_from or
+		_hover_gradient_to or
+		_hover_gradient_color_stop_idx > -1
+	)
+
+
+func _draw_control_point_handle(viewport_control : Control, svs : ScalableVectorShape2D,
+		handle : Dictionary, prefix : String, is_hovered : bool, self_is_hovered : bool) -> String:
+	if handle[prefix].length():
+		var mul := _get_svp_transform(svs)
+		var color := VIEWPORT_ORANGE if is_hovered else Color.WHITE
+		var width := 2 if is_hovered else 1
+		viewport_control.draw_line(_vp_transform(handle['point_position'] * mul),
+				_vp_transform(handle[prefix + '_position'] * mul), Color.WEB_GRAY, 1, true)
+		viewport_control.draw_circle(_vp_transform(handle[prefix + '_position'] * mul), 5, Color.DIM_GRAY)
+		viewport_control.draw_circle(_vp_transform(handle[prefix + '_position'] * mul), 5, color, false, width)
+		if self_is_hovered:
+			var hint_txt := "Control point " + prefix
+			if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+				hint_txt += "\n - Drag to move\n - Right click to delete"
+				hint_txt += "\n - Hold Shift + Drag to move mirrored"
+			if Input.is_key_pressed(KEY_ALT):
+				hint_txt += "\n - Click to set exact global position (Alt held)"
+			else:
+				hint_txt += "\n - Alt + Click to set exact global position"
+			return hint_txt
+	return ""
+
+
+func _draw_rect_control_point_handle(viewport_control : Control, svs : ScalableVectorShape2D,
+		handle : Dictionary, prefix : String, is_hovered : bool) -> String:
+	var prop_name := "rx" if prefix == "in" else "ry"
+	var color := VIEWPORT_ORANGE if is_hovered else Color.WHITE
+	var width := 2 if is_hovered else 1
+	var mul := _get_svp_transform(svs)
+
+	viewport_control.draw_line(
+			_vp_transform(handle['top_left_pos'] * mul),
+			_vp_transform(handle[prefix + '_position'] * mul), Color.WEB_GRAY, 1, true)
+	viewport_control.draw_circle(_vp_transform(handle[prefix + '_position'] * mul), 5, Color.DIM_GRAY)
+	viewport_control.draw_circle(_vp_transform(handle[prefix + '_position'] * mul), 5, color, false, width)
+	if is_hovered:
+		var hint_txt := "Control point rounded corners "
+		if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			var dir := "right / left" if prefix == 'in' else "up / down"
+			hint_txt += "\n - Drag %s to move \n - Right click to remove rounded corners" % dir
+			hint_txt += "\n - Hold Shift + Drag to drag only this handle"
+		return hint_txt
+	return ""
+
+
+func _draw_hint(viewport_control : Control, txt : String, force_draw := false) -> void:
+	if set_global_position_popup_panel.visible:
+		return
+	if not _get_select_mode_button().button_pressed:
+		return
+	if not _are_hints_enabled() and not force_draw:
+		return
+	var txt_pos := (_vp_transform(EditorInterface.get_editor_viewport_2d().get_mouse_position())
+		+ Vector2(15, 8))
+	var lines := txt.split("\n")
+	for i in range(lines.size()):
+		var text := lines[i]
+		var pos := txt_pos + Vector2.DOWN * (i * (ThemeDB.fallback_font_size + ThemeDB.fallback_font_size * .2))
+		viewport_control.draw_string_outline(ThemeDB.fallback_font, pos, text,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, ThemeDB.fallback_font_size, 3, Color.BLACK)
+		viewport_control.draw_string(ThemeDB.fallback_font, pos, text,
+			HORIZONTAL_ALIGNMENT_LEFT, -1, ThemeDB.fallback_font_size, Color.WHITE_SMOKE)
+
+
+func _draw_point_number(viewport_control: Control, p : Vector2, text : String) -> void:
+	if not _am_showing_point_numbers():
+		return
+	var pos := _vp_transform(p)
+	var width := 8 * (text.length() + 1)
+	viewport_control.draw_string_outline(ThemeDB.fallback_font, pos +  + Vector2(-width, 6), text,
+		HORIZONTAL_ALIGNMENT_LEFT, width, ThemeDB.fallback_font_size, 3, Color.BLACK)
+	viewport_control.draw_string(ThemeDB.fallback_font, pos + Vector2(-width, 6), text,
+		HORIZONTAL_ALIGNMENT_LEFT, width, ThemeDB.fallback_font_size, Color.WHITE_SMOKE)
+
+
+func _draw_handles(viewport_control : Control, svs : ScalableVectorShape2D) -> void:
+	if not _get_select_mode_button().button_pressed:
+		return
+	var hint_txt := ""
+	var point_txt := ""
+	var point_pos_txt := ""
+	var point_hint_pos := Vector2.ZERO
+	var handles = svs.get_curve_handles()
+	var mul := _get_svp_transform(svs)
+
+	for i in range(handles.size()):
+		var handle = handles[i]
+
+		var is_hovered : bool = _hover_point_idx == i
+		var cp_in_is_hovered : bool = _hover_cp_in_idx == i
+		var cp_out_is_hovered : bool = _hover_cp_out_idx == i
+		var color := VIEWPORT_ORANGE if is_hovered else Color.WHITE
+		var width := 2 if is_hovered else 1
+		if is_hovered:
+			point_pos_txt = "Global point position: (%.3f, %.3f)" % [handle["point_position"].x, handle["point_position"].y]
+		elif cp_in_is_hovered:
+			point_pos_txt = "Global curve handle position: (%.3f, %.3f)" % [handle["in_position"].x,handle["in_position"].y]
+		elif cp_out_is_hovered:
+			point_pos_txt = "Global curve handle position: (%.3f, %.3f)" % [handle["out_position"].x, handle["out_position"].y]
+		if svs.shape_type == ScalableVectorShape2D.ShapeType.RECT:
+			hint_txt += _draw_rect_control_point_handle(viewport_control, svs, handle, 'in',
+					cp_in_is_hovered)
+			if handle['out'].length():
+				hint_txt += _draw_rect_control_point_handle(viewport_control, svs, handle, 'out',
+						cp_out_is_hovered)
+		elif svs.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+			if not svs.is_arc_start(i - 1):
+				hint_txt += _draw_control_point_handle(viewport_control, svs, handle, 'in',
+						is_hovered or cp_in_is_hovered, cp_in_is_hovered)
+			if not svs.is_arc_start(i):
+				hint_txt +=_draw_control_point_handle(viewport_control, svs, handle, 'out',
+						is_hovered or cp_out_is_hovered, cp_out_is_hovered)
+
+		if handle['mirrored']:
+			# mirrored handles
+			var rect := Rect2(_vp_transform(handle['point_position'] * mul) - Vector2(5, 5), Vector2(10, 10))
+			viewport_control.draw_rect(rect, Color.DIM_GRAY, .5)
+			viewport_control.draw_rect(rect, color, false, width)
+		else:
+			# unmirrored handles / zero length handles
+			var p1 := _vp_transform(handle['point_position'] * mul)
+			var pts := PackedVector2Array([
+					Vector2(p1.x - 8, p1.y), Vector2(p1.x, p1.y - 8),
+					Vector2(p1.x + 8, p1.y), Vector2(p1.x, p1.y + 8)
+			])
+			viewport_control.draw_polygon(pts, [Color.DIM_GRAY])
+			pts.append(Vector2(p1.x - 8, p1.y))
+			viewport_control.draw_polyline(pts, color, width)
+
+		if is_hovered:
+			if svs.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+				point_txt = str(i) + handle['is_closed']
+				point_hint_pos = handle['point_position']
+			if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+				if Input.is_key_pressed(KEY_SHIFT) and svs.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+					hint_txt += " - Release mouse to set curve handles"
+			else:
+				if svs.shape_type == ScalableVectorShape2D.ShapeType.RECT:
+					hint_txt += " - Drag to resize rectange\n - Hold Ctrl to resize out from the offset position"
+				elif svs.shape_type == ScalableVectorShape2D.ShapeType.ELLIPSE:
+					hint_txt += " - Drag to resize ellipse\n - Hold Ctrl to resize out from the offset position"
+				else:
+					hint_txt += " - Drag to move"
+				if handle['is_closed'].length() > 0:
+					hint_txt += "\n - Double click to break loop"
+				elif svs.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+					hint_txt += "\n - Right click to delete"
+					if not svs.is_curve_closed() and (
+						(i == 0 and handles.size() > 2) or
+						(i == handles.size() - 1 and i > 1)
+					):
+						hint_txt += "\n - Double click to close loop"
+				if svs.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+					hint_txt += "\n - Hold Shift + Drag to create curve handles"
+					if Input.is_key_pressed(KEY_ALT):
+						hint_txt += "\n - Click to set exact global position (Alt held)"
+					else:
+						hint_txt += "\n - Alt + Click to set exact global position"
+
+
+	var gradient_handles := svs.get_gradient_handles()
+	if not gradient_handles.is_empty():
+		var p1 := _vp_transform(gradient_handles['fill_from_pos'] * mul)
+		var p2 := _vp_transform(gradient_handles['fill_to_pos'] * mul)
+		var hint_color := svs.shape_hint_color if svs.shape_hint_color else Color.LIME_GREEN
+
+		if _hover_gradient_from:
+			hint_txt = "- Drag to move gradient start position"
+			viewport_control.draw_circle(p1, 16, hint_color)
+			viewport_control.draw_circle(p1, 12, Color.WHITE, false, 0.5, true)
+		if _hover_gradient_to:
+			hint_txt = "- Drag to move gradient end position"
+			viewport_control.draw_circle(p2, 16, hint_color)
+			viewport_control.draw_circle(p2, 12, Color.WHITE, false, 0.5, true)
+
+		for p : Vector2 in gradient_handles['stop_positions']:
+			viewport_control.draw_circle(_vp_transform(p * mul) + Vector2(1,1), 5, Color(0.0,0.0,0.0, 0.4), true, -1, true)
+
+		viewport_control.draw_line(p1, p2, hint_color, .5, true)
+
+		for idx in range(gradient_handles['stop_positions'].size()):
+			var p := _vp_transform(gradient_handles['stop_positions'][idx] * mul)
+			var color := (Color.WHITE
+					if _hover_gradient_color_stop_idx == idx
+					else Color.WEB_GRAY)
+			viewport_control.draw_circle(p, 5, gradient_handles["stop_colors"][idx])
+			viewport_control.draw_circle(p, 5, color, false, 0.5, true)
+
+		var p1_color := Color.WHITE if _hover_gradient_from else hint_color
+		var p2_color := Color.WHITE if _hover_gradient_to else hint_color
+		_draw_crosshair(viewport_control, p1 , 8, 8, p1_color, 1)
+		_draw_crosshair(viewport_control, p2 , 8, 8, p2_color, 1)
+		if _hover_gradient_color_stop_idx > -1:
+			hint_txt = "- Drag to move color stop\n- Right click to remove color stop"
+		if (_hover_closest_point_on_gradient != Vector2.INF
+				and not _is_ctrl_or_cmd_pressed()
+				and not Input.is_key_pressed(KEY_SHIFT)):
+			_draw_crosshair(viewport_control,
+					_vp_transform(_hover_closest_point_on_gradient * mul))
+			hint_txt = "- Double click to add color stop here"
+	if not point_txt.is_empty():
+		_draw_point_number(viewport_control, point_hint_pos * mul, point_txt)
+
+	if not point_pos_txt.is_empty() and _is_pixel_snap_active() and not _is_grid_snapping_active():
+		point_pos_txt += "\n   (* pixel snap is active) "
+
+	if not _are_hints_enabled() and _am_showing_point_numbers():
+		_draw_hint(viewport_control, point_pos_txt, true)
+	elif _are_hints_enabled() and _am_showing_point_numbers() and point_pos_txt.length():
+		hint_txt += "\n\n - " + point_pos_txt
+
+	if not hint_txt.is_empty():
+		_draw_hint(viewport_control, hint_txt)
+
+
+func _get_svp_transform(n : Node) -> Transform2D:
+	while is_instance_valid(n) and not n == EditorInterface.get_edited_scene_root():
+		if n is SubViewportContainer:
+			var tr : Transform2D = n.get_global_transform_with_canvas().affine_inverse()
+			return Transform2D(tr.get_rotation(), n.scale, 0.0, tr.get_origin())
+		n = n.get_parent()
+	return Transform2D.IDENTITY
+
+
+func _svp_mouse_pos(pos : Vector2, n : Node) -> Vector2:
+	while is_instance_valid(n) and not n == EditorInterface.get_edited_scene_root():
+		if n is SubViewport:
+			return (n as SubViewport).get_mouse_position()
+		n = n.get_parent()
+	return pos
+
+
+func _is_inside_edit_group(svs : ScalableVectorShape2D) -> bool:
+	if svs == EditorInterface.get_edited_scene_root():
+		return false
+	var n := svs.get_parent()
+	while is_instance_valid(n) and not n == EditorInterface.get_edited_scene_root():
+		if n.has_meta("_edit_group_"):
+			return true
+		n = n.get_parent()
+	return false
+
+
+func _set_handle_hover(g_mouse_pos : Vector2, svs : ScalableVectorShape2D) -> void:
+	var mouse_pos := _vp_transform(g_mouse_pos)
+	var handles = svs.get_curve_handles()
+	var gradient_handles = svs.get_gradient_handles()
+	_reset_hover_states()
+	var mul := _get_svp_transform(svs)
+	for i in range(handles.size()):
+		var handle = handles[i]
+		if mouse_pos.distance_to(_vp_transform(handle['point_position'])) < 10:
+			_hover_point_idx = i
+		elif mouse_pos.distance_to(_vp_transform(handle['in_position'])) < 10:
+			_hover_cp_in_idx = i
+		elif mouse_pos.distance_to(_vp_transform(handle['out_position'])) < 10:
+			_hover_cp_out_idx = i
+	if not gradient_handles.is_empty() and not _handle_has_hover(svs):
+		var stop_idx = gradient_handles['stop_positions'].find_custom(func(p):
+					return mouse_pos.distance_to(_vp_transform(p)) < 6)
+		if stop_idx > -1:
+			_hover_gradient_color_stop_idx = stop_idx
+		elif mouse_pos.distance_to(_vp_transform(gradient_handles['fill_from_pos'])) < CLOSE_TO_MOUSE_RADIUS:
+			_hover_gradient_from = true
+		elif mouse_pos.distance_to(_vp_transform(gradient_handles['fill_to_pos'])) < CLOSE_TO_MOUSE_RADIUS:
+			_hover_gradient_to = true
+		else:
+			var p := Geometry2D.get_closest_point_to_segment(g_mouse_pos,
+					gradient_handles['fill_from_pos'],
+					gradient_handles['fill_to_pos'])
+			if _vp_transform(g_mouse_pos).distance_to(_vp_transform(p)) < 10:
+				_hover_closest_point_on_gradient = p
+
+	var closest_point_on_curve := svs.get_closest_point_on_curve(g_mouse_pos)
+	if _vp_transform(g_mouse_pos).distance_to(_vp_transform(closest_point_on_curve.point_position)) < 15:
+		_hover_closest_point_on_curve = closest_point_on_curve
+
+
+func _draw_curve(viewport_control : Control, svs : ScalableVectorShape2D,
+		is_selected := true) -> void:
+	var color := svs.shape_hint_color if svs.shape_hint_color else Color.LIME_GREEN
+	if not is_selected:
+		color = Color(0.5, 0.5, 0.5, 0.2)
+	_draw_curve_def(viewport_control, svs, color, 1.0, is_selected)
+
+
+func _draw_curve_def(viewport_control : Control, svs : ScalableVectorShape2D, color : Color,
+			width : float, antialiased : bool) -> void:
+	if not svs.is_visible_in_tree():
+		return
+	var mul := _get_svp_transform(svs)
+	var points = svs.get_poly_points().map(func(p): return p * mul).map(_vp_transform)
+	var last_p := Vector2.INF
+	for p : Vector2 in points:
+		if last_p != Vector2.INF:
+			viewport_control.draw_line(last_p, p, color, width, antialiased)
+		last_p = p
+	if is_instance_valid(svs.line) and svs.line.closed and points.size() > 1:
+		viewport_control.draw_dashed_line(last_p, points[0], color, width, 5.0, true, antialiased)
+	for p in svs.self_intersections:
+		_draw_crosshair(viewport_control, _vp_transform(svs.to_global(p) * mul), 3, 10, Color.YELLOW, 4)
+		_draw_crosshair(viewport_control, _vp_transform(svs.to_global(p) * mul), 2, 10, Color.RED, 2)
+
+
+func _draw_crosshair(viewport_control : Control, p : Vector2, orbit := 2.0, outer_orbit := 6.0,
+	color := Color.WHITE, width := 1) -> void:
+	if not _get_select_mode_button().button_pressed:
+		return
+	var line_len = outer_orbit + orbit
+	viewport_control.draw_line(p - line_len * Vector2.UP, p - orbit * Vector2.UP, Color.WEB_GRAY, width + 1)
+	viewport_control.draw_line(p - line_len * Vector2.RIGHT, p - orbit * Vector2.RIGHT, Color.WEB_GRAY, width + 1)
+	viewport_control.draw_line(p - line_len * Vector2.DOWN, p - orbit * Vector2.DOWN, Color.WEB_GRAY, width + 1)
+	viewport_control.draw_line(p - line_len * Vector2.LEFT, p - orbit * Vector2.LEFT, Color.WEB_GRAY, width + 1)
+	viewport_control.draw_line(p - line_len * Vector2.UP, p - orbit * Vector2.UP, color, width)
+	viewport_control.draw_line(p - line_len * Vector2.RIGHT, p - orbit * Vector2.RIGHT, color, width)
+	viewport_control.draw_line(p - line_len * Vector2.DOWN, p - orbit * Vector2.DOWN, color, width)
+	viewport_control.draw_line(p - line_len * Vector2.LEFT, p - orbit * Vector2.LEFT, color, width)
+
+
+func _draw_change_width_curve_icon(viewport_control : Control, p : Vector2, segment_rotation : float,
+		fill_color := Color.WHITE) -> void:
+	var triangle := [14 * Vector2.UP, Vector2(10, -4), Vector2(-10, -4)].map(
+			func(p1 : Vector2): return p + p1.rotated(segment_rotation)
+	)
+	var triangle2 := [14 * Vector2.UP, Vector2(10, -4), Vector2(-10, -4)].map(
+			func(p1 : Vector2): return p + p1.rotated(segment_rotation + PI)
+	)
+	viewport_control.draw_polygon(Geometry2D.offset_polygon(triangle, 0.5)[0], [Color.BLACK])
+	viewport_control.draw_polygon(triangle, [fill_color])
+	viewport_control.draw_polygon(Geometry2D.offset_polygon(triangle2, 0.5)[0], [Color.BLACK])
+	viewport_control.draw_polygon(triangle2, [fill_color])
+
+
+func _draw_add_point_hint(viewport_control : Control, svs : ScalableVectorShape2D, only_cutout_hints : bool) -> void:
+	var mouse_pos := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	var p := _vp_transform(mouse_pos)
+
+	if _is_ctrl_or_cmd_pressed() and Input.is_key_pressed(KEY_SHIFT):
+		if svs.has_fine_point(_svp_mouse_pos(mouse_pos, svs)):
+			_draw_crosshair(viewport_control, p)
+			_draw_hint(viewport_control,
+					"- Click to %s %s here (Ctrl+Shift held)\n" %
+							[OPERATION_NAME_MAP[current_clip_operation]["verb"], SHAPE_NAME_MAP[current_cutout_shape]] +
+					"- Use mousewheel to to change the shape of your %s (Ctrl+Shift held)\n" %
+							OPERATION_NAME_MAP[current_clip_operation]["noun"] +
+					"- Use right click to change the clipping operation (Ctrl+Shift held)"
+			)
+		else:
+			_draw_hint(viewport_control,
+					"- Hover over the selected shape to %s %s  (Ctrl+Shift held)\n" %
+							[
+								OPERATION_NAME_MAP[current_clip_operation]["verb"],
+								SHAPE_NAME_MAP[current_cutout_shape]
+							] +
+					"- Use mousewheel to to change the shape of your %s (Ctrl+Shift held)\n" %
+							OPERATION_NAME_MAP[current_clip_operation]["noun"] +
+					"- Use right click to change the clipping operation (Ctrl+Shift held)"
+			)
+	elif _is_ctrl_or_cmd_pressed() and _hover_point_idx > -1 and svs.shape_type != ScalableVectorShape2D.ShapeType.PATH:
+		pass
+	elif _is_ctrl_or_cmd_pressed() and not only_cutout_hints and not svs.is_curve_closed():
+		_draw_crosshair(viewport_control, p)
+		_draw_hint(viewport_control, "- Click to add point here (Ctrl held)")
+	elif Input.is_key_pressed(KEY_SHIFT):
+		_draw_hint(viewport_control, "- Use mousewheel to resize shape (Shift held)")
+	elif _hover_closest_point_on_gradient == Vector2.INF:
+		var hint := ""
+		if not svs.is_curve_closed():
+			hint = "- Hold Ctrl to add points to selected shape (or Cmd for mac)"
+		hint += "\n- Hold Shift to resize shape with mousewheel"
+		if only_cutout_hints:
+			hint = "- Hold Shift to resize shape with mousewheel"
+		if svs.has_fine_point(_svp_mouse_pos(mouse_pos, svs)):
+			hint += "\n- Double click to subdivide all curve segments
+				- Hold Ctrl+Shift to %s %s here (or Cmd+Shift for mac)\n" % [
+					OPERATION_NAME_MAP[current_clip_operation]["verb"],
+					SHAPE_NAME_MAP[current_cutout_shape]
+			]
+		_draw_hint(viewport_control, hint)
+
+
+func _draw_closest_point_on_curve(viewport_control : Control, svs : ScalableVectorShape2D) -> void:
+	if _hover_closest_point_on_curve:
+		var hint := ""
+		var mul := _get_svp_transform(svs)
+		var md_p := _hover_closest_point_on_curve
+		if svs.is_arc_start(md_p.before_segment - 1):
+			var arc_start_idx := md_p.before_segment - 1
+			var arc := svs.arc_list.get_arc_for_point(arc_start_idx)
+			var arc_points := Array(svs.tessellate_arc_segment(
+				svs.curve.get_point_position(arc_start_idx),
+				arc.radius, arc.rotation_deg, arc.large_arc_flag, arc.sweep_flag,
+				svs.curve.get_point_position(arc_start_idx + 1),
+			)).map(func(p): return _vp_transform(svs.to_global(p) * mul))
+			viewport_control.draw_polyline(arc_points, Color.RED, 3.0, true)
+			hint = "- Left click to open arc settings"
+			hint += "\n- Right click to remove arc (straighten this line segment)"
+		else:
+			var clamped_to_existing := false
+			if Input.is_key_pressed(KEY_ALT):
+				_draw_crosshair(viewport_control, _vp_transform(svs.to_global(svs.get_curve_segment_halfway_point(md_p.before_segment)) * mul), 3.0, 8, Color.ANTIQUE_WHITE, 2)
+			elif _is_ctrl_or_cmd_pressed() and is_instance_valid(svs.line) and md_p.before_segment < svs.curve.point_count:
+				if svs.line.width_curve:
+					for i in svs.line.width_curve.point_count:
+						var p := svs.line.width_curve.get_point_position(i)
+						var cp := svs.get_closest_point_on_curve(
+							svs.to_global(Geometry2DUtil.get_point_on_bezier_at_ratio(
+									svs.get_deformed_curve(), p.x, svs.max_stages, svs.tolerance_degrees
+						)))
+						if _vp_transform(cp.point_position * mul).distance_to(_vp_transform(md_p.point_position * mul)) < WIDTH_CURVE_EDIT_CLAMP_DISTANCE:
+							clamped_to_existing = true
+							_draw_change_width_curve_icon(viewport_control, _vp_transform(cp.point_position * mul), cp.segment_rotation - mul.get_rotation())
+						else:
+							_draw_change_width_curve_icon(viewport_control, _vp_transform(cp.point_position * mul), cp.segment_rotation - mul.get_rotation(), Color.DIM_GRAY)
+				if not clamped_to_existing:
+					_draw_change_width_curve_icon(viewport_control,
+							_vp_transform(md_p.point_position * mul),
+							md_p.segment_rotation - mul.get_rotation()
+					)
+			else:
+				_draw_crosshair(viewport_control, _vp_transform(md_p.point_position * mul))
+			if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+				if svs.curve.point_count > 1:
+					if Input.is_key_pressed(KEY_ALT):
+						hint += "\n- Left Click to add point halfway the line (Alt held)"
+					elif _is_ctrl_or_cmd_pressed() and is_instance_valid(svs.line):
+						hint += "\n- Use mousewheel to thin/thicken the stroke line (Ctrl held)"
+						if clamped_to_existing:
+							hint += "\n- Right click to remove this width curve control point (Ctrl held)"
+					else:
+						hint = "- Double click to add point on the line"
+						hint += "\n- Alt + Click to add point halfway the line"
+						if is_instance_valid(svs.line):
+							hint += "\n- Use Ctrl+mousewheel to thin/thicken the stroke Line2D"
+						if md_p.before_segment < svs.curve.point_count:
+							hint += "\n- Drag to change curve"
+							hint += "\n- Right click to convert line segment to arc"
+				else:
+					_draw_add_point_hint(viewport_control, svs, false)
+		if not hint.is_empty():
+			_draw_hint(viewport_control, hint)
+
+
+func _draw_outline_for_uniform_transforms(viewport_control : Control, svs : ScalableVectorShape2D) -> void:
+	var mul := _get_svp_transform(svs)
+	viewport_control.draw_polyline(svs
+			.get_bounding_box()
+			.map(func(p): return p * mul)
+			.map(_vp_transform), VIEWPORT_ORANGE, 2.0)
+	_draw_curve_def(viewport_control, svs, svs.shape_hint_color, 0.5, true)
+	for idx in svs.curve.point_count:
+		var p := svs.to_global(svs.curve.get_point_position(idx))
+		_draw_crosshair(viewport_control, _vp_transform(p * mul), 2.0, 4.0, Color.WHITE)
+	var natural_center := svs.to_global(svs.get_center())
+	if (_svs_edit_mode == SVSEditMode.ROTATE
+				and _lmb_is_down_inside_viewport
+				and Input.is_key_pressed(KEY_SHIFT)
+	):
+		natural_center = _stored_natural_center
+
+	_draw_crosshair(viewport_control, _vp_transform(natural_center * mul), 2.0, 4.0, Color.WHITE)
+
+
+func _draw_canvas_for_uniform_translate(viewport_control : Control, svs : ScalableVectorShape2D) -> void:
+	_draw_outline_for_uniform_transforms(viewport_control, svs)
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_draw_hint(viewport_control, "- Drag to move all points (left mouse button held)")
+	else:
+		_draw_hint(viewport_control, "- Hold left mouse button to start moving all points" +
+				"\n- Press Q to return to normal editing")
+
+
+func _draw_canvas_for_uniform_rotate(viewport_control : Control, svs : ScalableVectorShape2D) -> void:
+	_draw_outline_for_uniform_transforms(viewport_control, svs)
+	if _lmb_is_down_inside_viewport:
+		var hint_text := "- Drag to rotate all points (left mouse button held)"
+		if _is_ctrl_or_cmd_pressed():
+			hint_text += "\n- Rotating in steps of 5° (Ctrl held)"
+		else:
+			hint_text += "\n- Hold Ctrl to rotate in steps of 5°"
+		if svs.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+			if Input.is_key_pressed(KEY_SHIFT):
+				hint_text += "\n- Rotating around the natural center in stead of the pivot (Shift held)"
+			else:
+				hint_text += "\n- Hold Shift to rotate around the natural center in stead of the pivot"
+		_draw_hint(viewport_control, hint_text)
+	else:
+		_draw_hint(viewport_control, "- Hold left mouse button to start rotating all points" +
+				"\n- Press Q to return to normal editing")
+	if _lmb_is_down_inside_viewport:
+		var rotation_origin = svs.global_position
+		if (Input.is_key_pressed(KEY_SHIFT) or
+				svs.shape_type != ScalableVectorShape2D.ShapeType.PATH
+		):
+			rotation_origin = _stored_natural_center
+		var rotation_target := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+		if _is_ctrl_or_cmd_pressed():
+			var ang := snapped(rotation_origin.angle_to_point(rotation_target), deg_to_rad(5.0))
+			var dst := rotation_origin.distance_to(rotation_target)
+			rotation_target = rotation_origin + Vector2.RIGHT.rotated(ang) * dst
+		var mul := _get_svp_transform(svs)
+		viewport_control.draw_line(_vp_transform(rotation_origin * mul) ,_vp_transform(rotation_target),
+				svs.shape_hint_color, 1, true)
+
+
+func _draw_canvas_for_uniform_scale(viewport_control : Control, svs : ScalableVectorShape2D) -> void:
+	_draw_outline_for_uniform_transforms(viewport_control, svs)
+	if _lmb_is_down_inside_viewport:
+		var hint_text := "- Drag to scale all points (left mouse button held)"
+		if svs.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+			if Input.is_key_pressed(KEY_SHIFT):
+				hint_text += "\n- Scaling out from natural center (Shift held)"
+			else:
+				hint_text += "\n- Hold Shift to scale out from natural center in stead of pivot"
+		_draw_hint(viewport_control, hint_text)
+	else:
+		_draw_hint(viewport_control, "- Hold left mouse button to start scaling all points" +
+				"\n- Press Q to return to normal editing")
+
+	if _lmb_is_down_inside_viewport:
+		var origin = svs.global_position
+		if (Input.is_key_pressed(KEY_SHIFT) or
+				svs.shape_type != ScalableVectorShape2D.ShapeType.PATH
+		):
+			origin = svs.to_global(svs.get_center())
+		var target := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+		var mul := _get_svp_transform(svs)
+		viewport_control.draw_line(_vp_transform(origin * mul), _vp_transform(target),
+				svs.shape_hint_color, 1, true)
+
+
+func _find_merge_vertices() -> Dictionary[ScalableVectorShape2D, int]:
+	var vertex_map : Dictionary[ScalableVectorShape2D, int] = {}
+	for svs : ScalableVectorShape2D in EditorInterface.get_edited_scene_root().find_children("*", "ScalableVectorShape2D"):
+		var point_was_found_inside_rect := false
+		for idx in svs.curve.point_count:
+			var p := svs.to_global(svs.curve.get_point_position(idx))
+			var p_inside_rect := _merge_box_rect.abs().has_point(_vp_transform(p * _get_svp_transform(svs)))
+			if p_inside_rect and not point_was_found_inside_rect:
+				vertex_map[svs] = idx
+				point_was_found_inside_rect = true
+	return vertex_map
+
+
+func _handle_draw_vertex_merge_box(viewport_control: Control) -> void:
+	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_draw_hint(viewport_control, "Drag box around a point of 2 or more ScalableVectorShape2D to merge them")
+	viewport_control.draw_rect(_merge_box_rect, Color.LIME, false, 1)
+	for svs : ScalableVectorShape2D in EditorInterface.get_edited_scene_root().find_children("*", "ScalableVectorShape2D"):
+		var mul := _get_svp_transform(svs)
+		for idx in svs.curve.point_count:
+			_draw_crosshair(
+				viewport_control,
+				_vp_transform(svs.to_global(svs.curve.get_point_position(idx)) * mul),
+				2.0, 4.0, VIEWPORT_ORANGE, 1
+			)
+
+	var vertex_map := _find_merge_vertices()
+	for svs : ScalableVectorShape2D in vertex_map.keys():
+		var mul := _get_svp_transform(svs)
+		_draw_crosshair(viewport_control, _vp_transform(
+			svs.to_global(svs.curve.get_point_position(vertex_map[svs])) * mul
+		), 2.0, 5.0, Color.WHITE, 2)
+
+	if vertex_map.size() > 1:
+		var entries = ""
+		for k in vertex_map.keys():
+			entries += "\n - " + k.name
+		_draw_hint(viewport_control, "\nMerge points of:%s" % entries)
+
+
+func _handle_knife_draw(viewport_control : Control) -> void:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if not _is_svs_valid(current_selection):
+		return _draw_hint(viewport_control, "** Selected node cannot be cut by knife tool **")
+	var mul := _get_svp_transform(current_selection)
+	var svs := current_selection as ScalableVectorShape2D
+	if is_instance_valid(current_selection) and Input.is_key_pressed(KEY_SHIFT) and _drawing_pencil_line:
+		var pos := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+		if _is_snapped_to_pixel():
+			pos = pos.snapped(_get_snap_resolution())
+
+		for p in _pencil_stroke:
+			_draw_crosshair(
+				viewport_control,
+				_vp_transform(p * mul),
+				2.0, 4.0, VIEWPORT_ORANGE, 1
+			)
+		if not _pencil_stroke.is_empty():
+			viewport_control.draw_line(
+				_vp_transform(_pencil_stroke[-1] * mul),
+				_vp_transform(pos),
+				Color.RED
+			)
+	if _pencil_stroke.size() > 1:
+		var pts := Array(_pencil_stroke).map(func(p): return _vp_transform(p * mul))
+		viewport_control.draw_polyline(pts, Color.BLACK, 1.5, true)
+		viewport_control.draw_polyline(pts, Color.DARK_CYAN, 1.0, true)
+		var cuts := _knife_intersections.duplicate()
+		var next_cut := cuts.pop_front()
+		if svs.has_fine_point(_pencil_start_pos):
+			next_cut = cuts.pop_front()
+		var inside_valid_cut := false
+		for p_idx in range(0, _pencil_stroke.size() - 1):
+			var p = _pencil_stroke[p_idx]
+			var p1 = _pencil_stroke[p_idx + 1]
+			if next_cut != null and p.is_equal_approx(next_cut):
+				_draw_crosshair(
+					viewport_control,
+					_vp_transform(p * mul),
+					1.0, 4.0, Color.WHITE, 5
+				)
+				_draw_crosshair(
+					viewport_control,
+					_vp_transform(p * mul),
+					1.0, 4.0, Color.RED, 2
+				)
+				inside_valid_cut = not inside_valid_cut
+				next_cut = cuts.pop_front()
+			if inside_valid_cut:
+				viewport_control.draw_line(
+						_vp_transform(p * mul), _vp_transform(p1 * mul),
+						Color.WHITE, 1, true)
+
+	if _is_svs_valid(current_selection):
+		_draw_curve(viewport_control, current_selection)
+	_show_draw_line_hints(viewport_control)
+
+
+
+func _handle_pencil_draw(viewport_control : Control) -> void:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	var mul := _get_svp_transform(current_selection)
+
+	if is_instance_valid(current_selection) and Input.is_key_pressed(KEY_SHIFT) and _drawing_pencil_line:
+		var pos := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+		if _is_snapped_to_pixel():
+			pos = pos.snapped(_get_snap_resolution())
+
+		for p in _pencil_stroke:
+			_draw_crosshair(
+				viewport_control,
+				_vp_transform(p * mul),
+				2.0, 4.0, VIEWPORT_ORANGE, 1
+			)
+		if not _pencil_stroke.is_empty():
+			viewport_control.draw_line(
+				_vp_transform(_pencil_stroke[-1] * mul),
+				_vp_transform(pos),
+				Color.RED
+			)
+
+	if _pencil_stroke.size() > 1:
+		var pts := Array(_pencil_stroke).map(func(p): return _vp_transform(p * mul))
+		if _get_close_pencil_path():
+			pts.append(pts[0])
+		match _get_default_paint_order():
+			PaintOrder.MARKERS_STROKE_FILL, PaintOrder.STROKE_FILL_MARKERS, PaintOrder.STROKE_MARKERS_FILL:
+				if _is_add_stroke_enabled():
+					viewport_control.draw_polyline(pts, _get_default_stroke_color(), _get_default_stroke_width() * EditorInterface.get_editor_viewport_2d().get_final_transform().get_scale().x, true)
+				if _is_add_fill_enabled() and Geometry2D.triangulate_polygon(_pencil_stroke).size() > 0:
+					viewport_control.draw_polygon(pts, [_get_default_fill_color()])
+			PaintOrder.MARKERS_FILL_STROKE, PaintOrder.FILL_STROKE_MARKERS, PaintOrder.FILL_MARKERS_STROKE, _:
+				if _is_add_fill_enabled() and Geometry2D.triangulate_polygon(_pencil_stroke).size() > 0:
+					viewport_control.draw_polygon(pts, [_get_default_fill_color()])
+				if _is_add_stroke_enabled():
+					viewport_control.draw_polyline(pts, _get_default_stroke_color(), _get_default_stroke_width() * EditorInterface.get_editor_viewport_2d().get_final_transform().get_scale().x, true)
+		if not _is_add_fill_enabled() and not _is_add_stroke_enabled():
+			viewport_control.draw_polyline(pts, Color.LIME, 1.0, true)
+	_show_draw_line_hints(viewport_control)
+
+
+func _show_draw_line_hints(viewport_control : Control) -> void:
+	if Input.is_key_pressed(KEY_SHIFT):
+		if _drawing_pencil_line:
+			_draw_hint(viewport_control, "- Left click to add a straight line segment (Shift Held)")
+		else:
+			_draw_hint(viewport_control, "- Left click to start %s straight lines (Shift Held)" %
+				("drawing" if _svs_edit_mode == SVSEditMode.PENCIL else "cutting")
+			)
+	elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_draw_hint(viewport_control, "- Hold Shift to %s straight line segments
+			- Release left mouse button to finish %s
+		" % [
+				"draw" if _svs_edit_mode == SVSEditMode.PENCIL else "cut",
+				"outline / stroke" if _svs_edit_mode == SVSEditMode.PENCIL else "cut"
+			])
+	else:
+		if _drawing_pencil_line:
+			_draw_hint(viewport_control, "- Hold left again to continue %s (Shift Released)
+				- Left click to finish (Shift released)
+				- Hold Shift again to continue %s straight line segments
+			" % [
+				"drawing" if _svs_edit_mode == SVSEditMode.PENCIL else "cutting",
+				"drawing" if _svs_edit_mode == SVSEditMode.PENCIL else "cutting"
+			])
+		else:
+			_draw_hint(viewport_control, "
+				- Hold and drag left mouse button to %s
+				- Hold Shift to %s straight line segments
+			" % [
+				"draw outlines / strokes" if _svs_edit_mode == SVSEditMode.PENCIL else "start cutting",
+				"draw" if _svs_edit_mode == SVSEditMode.PENCIL else "cut",
+			])
+
+
+func _handle_brush_draw(viewport_control : Control) -> void:
+	var ctrl_hint := (
+		"- Toggle brush shape between Rectangle and Ellipse (Ctrl/Cmd held)"
+			if _is_ctrl_or_cmd_pressed() else
+		"- Use Ctrl+mousewheel to toggle brush shape (Cmd on mac)"
+	)
+	var shift_hint := (
+		"- Use mousewheel to resize brush (Shift held)"
+			if Input.is_key_pressed(KEY_SHIFT) else
+		"- Use Shift+mousewheel to resize brush"
+	)
+	var ctr_shift_hint := (
+		"- Use mousewheel to rotate brush (Ctr+Shift held)"
+			if Input.is_key_pressed(KEY_SHIFT) and _is_ctrl_or_cmd_pressed() else
+		"- Use Ctrl+Shift+mousewheel to rotate brush"
+	)
+	var cmd_key_hints := (
+			("\n" + ctrl_hint if not Input.is_key_pressed(KEY_SHIFT) else "") +
+			("\n" + shift_hint if not _is_ctrl_or_cmd_pressed() else "") +
+			("\n" + ctr_shift_hint)
+	)
+	var sel := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	var mul := _get_svp_transform(
+		sel if sel else EditorInterface.get_edited_scene_root()
+	)
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		if not _current_brush_stroke.is_empty():
+			var pts := Array(_current_brush_stroke).map(func(p): return _vp_transform(p * mul))
+			pts.append(pts[0])
+			match _get_default_paint_order():
+				PaintOrder.MARKERS_STROKE_FILL, PaintOrder.STROKE_FILL_MARKERS, PaintOrder.STROKE_MARKERS_FILL:
+					if _is_add_stroke_enabled():
+						viewport_control.draw_polyline(pts, _get_default_stroke_color(), _get_default_stroke_width() * EditorInterface.get_editor_viewport_2d().get_final_transform().get_scale().x, true)
+					if _is_add_fill_enabled() and _polygon_can_be_drawn(pts):
+						viewport_control.draw_polygon(pts, [_get_default_fill_color()])
+				PaintOrder.MARKERS_FILL_STROKE, PaintOrder.FILL_STROKE_MARKERS, PaintOrder.FILL_MARKERS_STROKE, _:
+					if _is_add_fill_enabled() and _polygon_can_be_drawn(pts):
+						viewport_control.draw_polygon(pts, [_get_default_fill_color()])
+					if _is_add_stroke_enabled():
+						viewport_control.draw_polyline(pts, _get_default_stroke_color(), _get_default_stroke_width() * EditorInterface.get_editor_viewport_2d().get_final_transform().get_scale().x, true)
+			if not _is_add_fill_enabled() and not _is_add_stroke_enabled():
+				viewport_control.draw_polyline(pts, Color.LIME, 1.0, true)
+
+		_draw_hint(viewport_control, "- Release left mouse button finish drawing" + cmd_key_hints)
+	else:
+		var mouse_pos := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+		if _is_snapped_to_pixel():
+			mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+		var pts := Array(Geometry2DUtil.get_polygon_at_granularity(_current_brush_shape,
+				_get_guarded_brush_granularity()
+		)).map(func(p): return _vp_transform(p * Transform2D(mul.get_rotation(), mul.get_scale(), 0.0, Vector2.ZERO) + mouse_pos))
+		if _is_add_fill_enabled() and _polygon_can_be_drawn(pts):
+			viewport_control.draw_polygon(pts, [_get_default_fill_color()])
+		else:
+			viewport_control.draw_polyline(pts, Color.LIME)
+
+		_draw_hint(viewport_control, "- Hold and drag left mouse button to draw a polygon with brush" +
+				cmd_key_hints
+		)
+
+	if _is_svs_valid(sel):
+		_draw_curve(viewport_control, sel)
+
+
+func _handle_paint_bone_draw(viewport_control : Control) -> void:
+	var sel := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if not sel is ScalableVectorShape2D:
+		return
+	var svs := sel as ScalableVectorShape2D
+	if not is_instance_valid(svs.skeleton):
+		return _draw_hint(viewport_control, "** No Skeleton2D assigned, cannot assign points to bones! **")
+	if svs.skeleton.get_bone_count() == 0:
+		return _draw_hint(viewport_control, "** Skeleton2D has no bones! **")
+	if is_instance_valid(svs.bone):
+		return _draw_hint(viewport_control, "** A Bone2D is assigned, unassign to enable point deform **")
+	if _current_bone_idx > svs.skeleton.get_bone_count() - 1:
+		_current_bone_idx = 0
+	if svs.skeleton != _last_skeleton:
+		_current_bone_idx = 0
+		_last_skeleton = svs.skeleton
+	var current_bone := svs.skeleton.get_bone(_current_bone_idx)
+	var ctrl_hint := "- Click+drag to assign points to Bone2D: %s (%d / %d)" % [
+			current_bone.name, _current_bone_idx + 1, svs.skeleton.get_bone_count()
+	]
+	ctrl_hint += (
+		"\n- Use mousewheel to change bone (Ctrl held)"
+			if _is_ctrl_or_cmd_pressed() else
+		"\n- Ctrl+mousewheel to change bone (Cmd for Mac)"
+	)
+	_draw_hint(viewport_control, ctrl_hint)
+	_draw_curve_def(viewport_control, svs, svs.shape_hint_color, 0.5, true)
+	var curve := svs.get_deformed_curve()
+	var mul := _get_svp_transform(svs)
+
+	for idx in curve.point_count:
+		var p := svs.to_global(curve.get_point_position(idx))
+		if idx in svs.deformation_map and svs.deformation_map[idx] == current_bone:
+			_draw_crosshair(viewport_control, _vp_transform(p * mul), 1.0, 6.0, Color.BLACK, 4)
+			_draw_crosshair(viewport_control, _vp_transform(p * mul), 1.0, 6.0, Color.WHITE, 2)
+		else:
+			_draw_crosshair(viewport_control, _vp_transform(p * mul), 1.0, 6.0, Color.BLACK, 4)
+			_draw_crosshair(viewport_control, _vp_transform(p * mul), 1.0, 6.0, VIEWPORT_ORANGE, 2)
+
+	viewport_control.draw_circle(viewport_control.get_local_mouse_position(), CLOSE_TO_MOUSE_RADIUS, Color.GRAY, false)
+	viewport_control.draw_circle(_vp_transform(current_bone.global_position * mul), 5, Color.RED)
+
+
+func _editor_has_cursor() -> bool:
+	return (EditorInterface.get_editor_viewport_2d()
+			.get_visible_rect()
+			.has_point(_vp_transform(
+				EditorInterface.get_editor_viewport_2d().get_mouse_position())))
+
+
+func _handle_create_ellipse_preview(viewport_control : Control) -> void:
+	if shape_preview:
+		_draw_preview(viewport_control)
+	if _editor_has_cursor():
+		_draw_hint(viewport_control, "- Left click or drag to create an ellipse" +
+			("" if _get_center_ellipse_offset() or _is_ctrl_or_cmd_pressed() else "\n - Hold Ctrl to center pivot")
+		)
+
+
+func _handle_create_rect_preview(viewport_control : Control) -> void:
+	if shape_preview:
+		_draw_preview(viewport_control)
+	if _editor_has_cursor():
+		_draw_hint(viewport_control, "- Left click or drag to create a rectangle" +
+			("" if _get_center_ellipse_offset() or _is_ctrl_or_cmd_pressed() else "\n - Hold Ctrl to center pivot")
+		)
+
+
+func _is_editing_width_curve(svs : ScalableVectorShape2D) -> bool:
+	return (
+			_is_ctrl_or_cmd_pressed() and
+			_hover_closest_point_on_curve and
+			is_instance_valid(svs.line)
+	)
+
+
+func _draw_set_pivot_hints(viewport_control : Control, svs : ScalableVectorShape2D) -> void:
+	var mouse_pos := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	_draw_outline_for_uniform_transforms(viewport_control, svs)
+	_draw_crosshair(viewport_control, _vp_transform(mouse_pos),
+		2.0, 6.0, Color.WHITE, 3
+	)
+	_draw_crosshair(viewport_control, _vp_transform(mouse_pos),
+		2.0, 6.0, VIEWPORT_ORANGE, 1
+	)
+	_draw_hint(viewport_control, " - Click to set pivot at %s " % str(mouse_pos))
+
+
+func _forward_canvas_draw_over_viewport(viewport_control: Control) -> void:
+	if not _is_editing_enabled():
+		return
+	if not is_instance_valid(EditorInterface.get_edited_scene_root()):
+		return
+	if _svs_edit_mode == SVSEditMode.MERGE:
+		return _handle_draw_vertex_merge_box(viewport_control)
+	elif _svs_edit_mode == SVSEditMode.PENCIL:
+		return _handle_pencil_draw(viewport_control)
+	elif _svs_edit_mode == SVSEditMode.BRUSH:
+		return _handle_brush_draw(viewport_control)
+	elif _svs_edit_mode == SVSEditMode.KNIFE:
+		return _handle_knife_draw(viewport_control)
+	elif _svs_edit_mode == SVSEditMode.PAINT_BONE:
+		return _handle_paint_bone_draw(viewport_control)
+	elif _svs_edit_mode == SVSEditMode.CREATE_ELLIPSE:
+		return _handle_create_ellipse_preview(viewport_control)
+	elif _svs_edit_mode == SVSEditMode.CREATE_RECT:
+		return _handle_create_rect_preview(viewport_control)
+
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if _is_svs_valid(current_selection) and _get_select_mode_button().button_pressed:
+		if _svs_edit_mode == SVSEditMode.TRANSLATE:
+			return _draw_canvas_for_uniform_translate(viewport_control, current_selection)
+		elif _svs_edit_mode == SVSEditMode.SCALE:
+			return _draw_canvas_for_uniform_scale(viewport_control, current_selection)
+		elif _svs_edit_mode == SVSEditMode.ROTATE:
+			return _draw_canvas_for_uniform_rotate(viewport_control, current_selection)
+		elif _svs_edit_mode == SVSEditMode.SET_PIVOT:
+			return _draw_set_pivot_hints(viewport_control, current_selection)
+
+
+	var all_valid_svs_nodes := _find_scalable_vector_shape_2d_nodes().filter(_is_svs_valid)
+	for result : ScalableVectorShape2D in all_valid_svs_nodes:
+		if result == current_selection:
+			var mul := _get_svp_transform(result)
+			viewport_control.draw_polyline(result
+					.get_bounding_box()
+					.map(func(p): return p * mul)
+					.map(_vp_transform), VIEWPORT_ORANGE, 2.0)
+			_draw_curve(viewport_control, result)
+			if not _is_editing_width_curve(result):
+				_draw_handles(viewport_control, result)
+			if (not _handle_has_hover(result)) or _is_ctrl_or_cmd_pressed():
+				if result.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+					if _hover_closest_point_on_curve:
+						_draw_closest_point_on_curve(viewport_control, result)
+					else:
+						_draw_add_point_hint(viewport_control, result, false)
+				else:
+						_draw_add_point_hint(viewport_control, result, true)
+		elif result in _select_hinted_svs:
+			var mul := _get_svp_transform(result)
+			viewport_control.draw_polyline(result
+					.get_bounding_box()
+					.map(func(p): return p * mul)
+					.map(_vp_transform), Color.WEB_GRAY, 1.0)
+		if not(result.line or result.collision_polygon or result.polygon):
+			_draw_curve(viewport_control, result, false)
+
+
+func _draw_preview(viewport_control : Control) -> void:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if shape_preview and shape_preview.point_count > 2:
+		var mul :=  _get_svp_transform(current_selection)
+		var points := Array(shape_preview.tessellate())
+		var stroke_width = (_get_default_stroke_width() * EditorInterface.get_editor_viewport_2d()
+				.get_final_transform().get_scale().x)
+		var glob_pos := Vector2.ZERO
+		if current_selection is Node2D:
+			points = points.map(current_selection.to_global)
+			stroke_width *= current_selection.global_scale.x
+			glob_pos = current_selection.global_position
+		elif current_selection is Control:
+			points = points.map(func(p): return current_selection.get_global_transform() * p)
+			stroke_width *= current_selection.get_global_transform().get_scale().x
+			glob_pos = current_selection.get_global_transform().get_origin()
+		var mouse_pos := (
+			_drag_start
+				if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) else
+			EditorInterface.get_editor_viewport_2d().get_mouse_position()
+		)
+		if _editor_has_cursor():
+			if _is_snapped_to_pixel():
+				mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+			mul = Transform2D(mul.get_rotation(), mul.get_scale(), 0.0, -(mouse_pos - glob_pos))
+
+		points = points.map(func(p): return _vp_transform(p * mul))
+		var stroke_points := points
+		if _get_default_stroke_extrusion_direction() != ScalableVectorShape2D.StrokeExtrusionDirection.MIDDLE:
+			var offset = 0.5 * (
+					stroke_width
+						if _get_default_stroke_extrusion_direction() == ScalableVectorShape2D.StrokeExtrusionDirection.OUTWARD else
+					-stroke_width
+			)
+			var offset_result := Geometry2D.offset_polygon(points, offset, Geometry2D.PolyJoinType.JOIN_MITER)
+			stroke_points = points if offset_result.is_empty() else offset_result[0]
+			stroke_points.append(stroke_points[0])
+		match _get_default_paint_order():
+			PaintOrder.MARKERS_STROKE_FILL, PaintOrder.STROKE_FILL_MARKERS, PaintOrder.STROKE_MARKERS_FILL:
+				if _is_add_stroke_enabled():
+					viewport_control.draw_polyline(stroke_points, _get_default_stroke_color(), stroke_width)
+				if _is_add_fill_enabled() and _polygon_can_be_drawn(points):
+					viewport_control.draw_polygon(points, [_get_default_fill_color()])
+			PaintOrder.MARKERS_FILL_STROKE, PaintOrder.FILL_STROKE_MARKERS, PaintOrder.FILL_MARKERS_STROKE, _:
+				if _is_add_fill_enabled() and _polygon_can_be_drawn(points):
+					viewport_control.draw_polygon(points, [_get_default_fill_color()])
+				if _is_add_stroke_enabled():
+					viewport_control.draw_polyline(stroke_points, _get_default_stroke_color(), stroke_width)
+
+		if not _is_add_fill_enabled() and not _is_add_stroke_enabled():
+			viewport_control.draw_polyline(points, Color.LIME, 1)
+		_draw_crosshair(viewport_control, _vp_transform(mouse_pos))
+
+
+func _start_undo_redo_transaction(name := "", undo_redo_action_type := UndoRedoActionType.UNSPECIFIED) -> void:
+	in_undo_redo_transaction = true
+	undo_redo_transaction = {
+		UndoRedoEntry.ACTION_TYPE: undo_redo_action_type,
+		UndoRedoEntry.NAME: name,
+		UndoRedoEntry.DOS: [],
+		UndoRedoEntry.UNDOS: [],
+		UndoRedoEntry.DO_PROPS: [],
+		UndoRedoEntry.UNDO_PROPS : []
+	}
+
+
+func _commit_undo_redo_transaction() -> void:
+	if not in_undo_redo_transaction:
+		return
+	in_undo_redo_transaction = false
+	undo_redo.create_action(undo_redo_transaction[UndoRedoEntry.NAME])
+	for do_method in undo_redo_transaction[UndoRedoEntry.DOS]:
+		undo_redo.callv('add_do_method', do_method)
+	for do_prop in undo_redo_transaction[UndoRedoEntry.DO_PROPS]:
+		undo_redo.callv('add_do_property', do_prop)
+	for undo_method in undo_redo_transaction[UndoRedoEntry.UNDOS]:
+		undo_redo.callv('add_undo_method', undo_method)
+	for undo_prop in undo_redo_transaction[UndoRedoEntry.UNDO_PROPS]:
+		undo_redo.callv('add_undo_property', undo_prop)
+	undo_redo.commit_action(false)
+	undo_redo_transaction = {
+		UndoRedoEntry.NAME: name,
+		UndoRedoEntry.DOS: [],
+		UndoRedoEntry.UNDOS: [],
+		UndoRedoEntry.UNDO_PROPS: [],
+		UndoRedoEntry.DO_PROPS: []
+	}
+
+
+func _in_other_undo_redo_transaction(other_type : UndoRedoActionType) -> bool:
+	return in_undo_redo_transaction and other_type != undo_redo_transaction[UndoRedoEntry.ACTION_TYPE]
+
+
+func _on_global_position_for_handle_changed(global_pos : Vector2, meta_name: String, idx : int) -> void:
+	var cur := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if _is_svs_valid(cur):
+		if meta_name == "_hover_cp_in_idx_":
+			_update_curve_cp_in_position(cur, global_pos, idx)
+		if meta_name == "_hover_cp_out_idx_":
+			_update_curve_cp_out_position(cur, global_pos, idx)
+		if meta_name == "_hover_point_idx_":
+			_update_curve_point_position(cur, global_pos, idx)
+		update_overlays()
+
+
+func _update_curve_point_position(current_selection : ScalableVectorShape2D, mouse_pos : Vector2, idx : int) -> void:
+	if _in_other_undo_redo_transaction(UndoRedoActionType.DRAGGING_POINT):
+		_commit_undo_redo_transaction()
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Move point on " + str(current_selection), UndoRedoActionType.DRAGGING_POINT)
+		if idx == 0 and current_selection.is_curve_closed():
+			var idx_1 = current_selection.curve.point_count - 1
+			undo_redo_transaction[UndoRedoEntry.UNDOS].append([
+				current_selection.curve, 'set_point_position', idx_1, current_selection.curve.get_point_position(idx_1)
+			])
+		undo_redo_transaction[UndoRedoEntry.UNDOS].append([
+			current_selection.curve, 'set_point_position', idx, current_selection.curve.get_point_position(idx)
+		])
+
+	undo_redo_transaction[UndoRedoEntry.DOS] = []
+	if idx == 0 and current_selection.is_curve_closed():
+		var idx_1 = current_selection.curve.point_count - 1
+		undo_redo_transaction[UndoRedoEntry.DOS].append([
+				current_selection, 'set_global_curve_point_position', mouse_pos, idx_1,
+				_is_snapped_to_pixel(), _get_snap_resolution()
+		])
+		current_selection.set_global_curve_point_position(mouse_pos, idx_1,
+				_is_snapped_to_pixel(), _get_snap_resolution())
+	undo_redo_transaction[UndoRedoEntry.DOS].append([
+			current_selection, 'set_global_curve_point_position', mouse_pos, idx,
+			_is_snapped_to_pixel(), _get_snap_resolution()
+	])
+	current_selection.set_global_curve_point_position(mouse_pos, idx,
+			_is_snapped_to_pixel(), _get_snap_resolution())
+
+
+func _update_rect_dimensions(svs : ScalableVectorShape2D, mouse_pos : Vector2) -> void:
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Change rect size on " + str(svs))
+		undo_redo_transaction[UndoRedoEntry.UNDO_PROPS] = [
+			[svs, 'size', svs.size],
+			[svs, 'offset', svs.offset]
+		]
+		_resize_orig_size = svs.size
+		_resize_orig_pos = svs.position
+		_resize_orig_offset = svs.offset
+		_resize_orig_top_left = svs.get_global_top_left()
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+
+	if _is_ctrl_or_cmd_pressed():
+		var d := (svs.to_local(mouse_pos) - svs.offset).rotated(-svs.spin)
+		svs.size = d * 2
+	else:
+		var d := (svs.to_local(mouse_pos) - svs.to_local(_resize_orig_top_left)).rotated(-svs.spin)
+		svs.size = d
+		svs.offset = _resize_orig_offset - (_resize_orig_size - svs.size) * 0.5
+
+	undo_redo_transaction[UndoRedoEntry.DO_PROPS] = [
+		[svs, 'size', svs.size],
+		[svs, 'offset', svs.offset]
+	]
+
+
+func _update_rect_corner_radius(svs : ScalableVectorShape2D, mouse_pos : Vector2, prop_name : String, is_symmetrical : bool) -> void:
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Change rect " + prop_name + " on " + str(svs))
+		undo_redo_transaction[UndoRedoEntry.UNDO_PROPS] = [
+			[svs, 'rx', svs.rx], [svs, 'ry', svs.ry]
+		]
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	var top_left := (-svs.size * 0.5).rotated(svs.spin) + svs.offset
+	if prop_name == 'rx':
+		svs.rx = svs.to_local(mouse_pos).rotated(-svs.spin).x - top_left.rotated(-svs.spin).x
+		if is_symmetrical:
+			svs.ry = svs.rx
+	if prop_name == 'ry':
+		svs.ry = svs.to_local(mouse_pos).rotated(-svs.spin).y - top_left.rotated(-svs.spin).y
+		if is_symmetrical:
+			svs.rx = svs.ry
+
+	undo_redo_transaction[UndoRedoEntry.DO_PROPS] = [
+		[svs, 'rx', svs.rx],
+		[svs, 'ry', svs.ry]
+	]
+
+
+func _update_curve_cp_in_position(current_selection : ScalableVectorShape2D, mouse_pos : Vector2, idx : int) -> void:
+	if idx == 0:
+		idx = current_selection.curve.point_count - 1
+
+	var cp_in_is_cp_out_of_loop_start := (Input.is_key_pressed(KEY_SHIFT) and
+			not(idx == current_selection.curve.point_count - 1
+					and not current_selection.is_curve_closed())
+	)
+	if _in_other_undo_redo_transaction(UndoRedoActionType.DRAGGING_CP):
+		_commit_undo_redo_transaction()
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Move control point in %d on %s" % [idx, current_selection], UndoRedoActionType.DRAGGING_CP)
+		undo_redo_transaction[UndoRedoEntry.UNDOS].append([current_selection.curve, 'set_point_in', idx, current_selection.curve.get_point_in(idx)])
+		if cp_in_is_cp_out_of_loop_start:
+			var idx_1 = 0 if idx == current_selection.curve.point_count - 1 else idx
+			undo_redo_transaction[UndoRedoEntry.UNDOS].append([current_selection.curve, 'set_point_out', idx_1, current_selection.curve.get_point_out(idx_1)])
+
+	current_selection.set_global_curve_cp_in_position(mouse_pos, idx,
+			_is_snapped_to_pixel(), _get_snap_resolution())
+	undo_redo_transaction[UndoRedoEntry.DOS] = [[
+			current_selection, 'set_global_curve_cp_in_position', mouse_pos, idx,
+			_is_snapped_to_pixel(), _get_snap_resolution()
+	]]
+	if cp_in_is_cp_out_of_loop_start:
+		var idx_1 = 0 if idx == current_selection.curve.point_count - 1 else idx
+		current_selection.curve.set_point_out(idx_1, -current_selection.curve.get_point_in(idx))
+		undo_redo_transaction[UndoRedoEntry.DOS].append([current_selection.curve, 'set_point_out', idx_1, -current_selection.curve.get_point_in(idx)])
+
+
+func _update_gradient_from_position(svs : ScalableVectorShape2D, mouse_pos : Vector2) -> void:
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Move gradient from position for %s" % str(svs))
+		undo_redo_transaction[UndoRedoEntry.UNDO_PROPS].append([svs.polygon.texture, 'fill_from',
+				svs.polygon.texture.fill_from])
+	var box := svs.get_bounding_rect()
+	svs.polygon.texture.fill_from = (svs.to_local(mouse_pos) - box.position) / box.size
+	undo_redo_transaction[UndoRedoEntry.DO_PROPS] = [[
+		svs.polygon.texture, 'fill_from', svs.polygon.texture.fill_from
+	]]
+
+
+func _update_gradient_to_position(svs : ScalableVectorShape2D, mouse_pos : Vector2) -> void:
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Move gradient to position for %s" % str(svs))
+		undo_redo_transaction[UndoRedoEntry.UNDO_PROPS].append([svs.polygon.texture, 'fill_to',
+				svs.polygon.texture.fill_to])
+	var box := svs.get_bounding_rect()
+	svs.polygon.texture.fill_to = (svs.to_local(mouse_pos) - box.position) / box.size
+	undo_redo_transaction[UndoRedoEntry.DO_PROPS] = [[
+		svs.polygon.texture, 'fill_to', svs.polygon.texture.fill_to
+	]]
+
+
+func _get_gradient_offset(svs : ScalableVectorShape2D, mouse_pos : Vector2) -> float:
+	var box := svs.get_bounding_rect()
+	var gradient_tex : GradientTexture2D = svs.polygon.texture
+	var p := ((svs.to_local(mouse_pos) - box.position) / box.size)
+	var p1 := Geometry2D.get_closest_point_to_segment(p, gradient_tex.fill_from, gradient_tex.fill_to)
+	return p1.distance_to(gradient_tex.fill_from) / gradient_tex.fill_from.distance_to(gradient_tex.fill_to)
+
+
+func _update_gradient_stop_color_pos(svs : ScalableVectorShape2D, mouse_pos : Vector2, idx : int) -> void:
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	var new_offset := _get_gradient_offset(svs, mouse_pos)
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Move gradient offset  %d on %s" % [idx, svs])
+		undo_redo_transaction[UndoRedoEntry.UNDOS].append([svs.polygon.texture.gradient,
+				'set_offset', idx, svs.polygon.texture.gradient.offsets[idx]])
+	undo_redo_transaction[UndoRedoEntry.DOS] = [[
+			svs.polygon.texture.gradient, 'set_offset', idx, new_offset
+	]]
+	svs.polygon.texture.gradient.set_offset(idx, new_offset)
+
+
+func _add_color_stop(svs : ScalableVectorShape2D, mouse_pos : Vector2) -> void:
+	var new_offset := _get_gradient_offset(svs, mouse_pos)
+	var colors = Array(svs.polygon.texture.gradient.colors)
+	var offsets = Array(svs.polygon.texture.gradient.offsets)
+	var stops = {}
+	for idx in range(colors.size()):
+		stops[offsets[idx]] = colors[idx]
+	stops[new_offset] = svs.polygon.texture.gradient.sample(new_offset)
+	var stop_keys := stops.keys()
+	stop_keys.sort()
+	var new_colors = []
+	var new_offsets = []
+	for offset in stop_keys:
+		new_colors.append(stops[offset])
+		new_offsets.append(offset)
+
+	undo_redo.create_action("Add color stop to %s " % str(svs))
+	undo_redo.add_do_property(svs.polygon.texture.gradient, 'colors', new_colors)
+	undo_redo.add_do_property(svs.polygon.texture.gradient, 'offsets', new_offsets)
+	undo_redo.add_do_method(svs, 'notify_assigned_node_change')
+	undo_redo.add_undo_property(svs.polygon.texture.gradient, 'colors', colors)
+	undo_redo.add_undo_property(svs.polygon.texture.gradient, 'offsets', offsets)
+	undo_redo.add_undo_method(svs, 'notify_assigned_node_change')
+	undo_redo.commit_action()
+
+
+func _remove_color_stop(svs : ScalableVectorShape2D, remove_idx : int) -> void:
+	var colors = Array(svs.polygon.texture.gradient.colors)
+	var offsets = Array(svs.polygon.texture.gradient.offsets)
+	var stops = {}
+	for idx in range(colors.size()):
+		if idx != remove_idx:
+			stops[offsets[idx]] = colors[idx]
+	var stop_keys := stops.keys()
+	stop_keys.sort()
+	var new_colors = []
+	var new_offsets = []
+	for offset in stop_keys:
+		new_colors.append(stops[offset])
+		new_offsets.append(offset)
+
+	undo_redo.create_action("Remove color stop from %s " % str(svs))
+	undo_redo.add_do_property(svs.polygon.texture.gradient, 'colors', new_colors)
+	undo_redo.add_do_property(svs.polygon.texture.gradient, 'offsets', new_offsets)
+	undo_redo.add_do_method(svs, 'notify_assigned_node_change')
+	undo_redo.add_undo_property(svs.polygon.texture.gradient, 'colors', colors)
+	undo_redo.add_undo_property(svs.polygon.texture.gradient, 'offsets', offsets)
+	undo_redo.add_undo_method(svs, 'notify_assigned_node_change')
+	undo_redo.commit_action()
+
+
+func _update_curve_cp_out_position(current_selection : ScalableVectorShape2D, mouse_pos : Vector2, idx : int) -> void:
+	if idx == current_selection.curve.point_count - 1:
+		idx = 0
+
+	var cp_out_is_cp_in_of_loop_end := (Input.is_key_pressed(KEY_SHIFT)
+			and not(idx == 0 and not current_selection.is_curve_closed()))
+
+	if _in_other_undo_redo_transaction(UndoRedoActionType.DRAGGING_CP):
+		_commit_undo_redo_transaction()
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Move control point out %d on %s" % [idx, current_selection], UndoRedoActionType.DRAGGING_CP)
+		undo_redo_transaction[UndoRedoEntry.UNDOS].append([current_selection.curve, 'set_point_out', idx, current_selection.curve.get_point_out(idx)])
+		if cp_out_is_cp_in_of_loop_end:
+			var idx_1 = current_selection.curve.point_count - 1 if idx == 0 else idx
+			undo_redo_transaction[UndoRedoEntry.UNDOS].append([current_selection.curve, 'set_point_in', idx_1, current_selection.curve.get_point_in(idx_1)])
+
+	current_selection.set_global_curve_cp_out_position(mouse_pos, idx,
+			_is_snapped_to_pixel(), _get_snap_resolution())
+	undo_redo_transaction[UndoRedoEntry.DOS] = [[
+			current_selection, 'set_global_curve_cp_out_position', mouse_pos, idx,
+			_is_snapped_to_pixel(), _get_snap_resolution()
+	]]
+	if cp_out_is_cp_in_of_loop_end:
+		var idx_1 = current_selection.curve.point_count - 1 if idx == 0 else idx
+		current_selection.curve.set_point_in(idx_1, -current_selection.curve.get_point_out(idx))
+		undo_redo_transaction[UndoRedoEntry.DOS].append([current_selection.curve, 'set_point_in', idx_1, -current_selection.curve.get_point_out(idx)])
+
+
+func _set_shape_origin(current_selection : ScalableVectorShape2D, mouse_pos : Vector2) -> void:
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	undo_redo.create_action("Set origin on %s" % current_selection)
+	undo_redo.add_do_method(current_selection, 'set_origin', mouse_pos)
+	undo_redo.add_undo_method(current_selection, 'set_origin', current_selection.global_position)
+	undo_redo.commit_action()
+
+
+func _remove_width_curve_point(svs : ScalableVectorShape2D) -> void:
+	if not is_instance_valid(svs.line):
+		return
+	if svs.line.width_curve == null:
+		return
+	var md_p : ClosestPointOnCurveMeta = _hover_closest_point_on_curve
+	var clamped_to_existing := -1
+	for i in svs.line.width_curve.point_count:
+		var p := svs.line.width_curve.get_point_position(i)
+		var cp := svs.get_closest_point_on_curve(
+			svs.to_global(Geometry2DUtil.get_point_on_bezier_at_ratio(
+					svs.get_deformed_curve(), p.x, svs.max_stages, svs.tolerance_degrees
+		)))
+		if _vp_transform(cp.point_position).distance_to(_vp_transform(md_p.point_position)) < WIDTH_CURVE_EDIT_CLAMP_DISTANCE:
+			clamped_to_existing = i
+			break
+	if clamped_to_existing < 0:
+		return
+	var width_curve : Curve = svs.line.width_curve.duplicate(true)
+	width_curve.remove_point(clamped_to_existing)
+	if width_curve.point_count == 0:
+		width_curve = null
+	undo_redo.create_action("remove width curve handle: " + str(svs))
+	undo_redo.add_do_property(svs.line, 'width_curve', width_curve)
+	undo_redo.add_undo_property(svs.line, 'width_curve', svs.line.width_curve.duplicate(true) if svs.line.width_curve else null)
+	undo_redo.commit_action()
+
+
+func _change_width_curve(svs : ScalableVectorShape2D, make_thicker : bool) -> void:
+	if not is_instance_valid(svs.line):
+		return
+	var md_p : ClosestPointOnCurveMeta = _hover_closest_point_on_curve
+	if md_p.before_segment >= svs.curve.point_count:
+		return
+	var progress_ratio := Geometry2DUtil.get_progress_ratio_for_point_on_curve(
+			md_p.local_point_position, svs.get_deformed_curve(), svs.max_stages, svs.tolerance_degrees
+	)
+
+	var width_curve := Curve.new()
+	if svs.line.width_curve == null:
+		width_curve.add_point(Vector2(progress_ratio, 1.0))
+	else:
+		width_curve = svs.line.width_curve.duplicate(true)
+		width_curve.max_value = 2.0
+		var clamped_to_existing := -1
+		for i in width_curve.point_count:
+			var p := width_curve.get_point_position(i)
+			var cp := svs.get_closest_point_on_curve(
+				svs.to_global(Geometry2DUtil.get_point_on_bezier_at_ratio(
+						svs.get_deformed_curve(), p.x, svs.max_stages, svs.tolerance_degrees
+			)))
+			if _vp_transform(cp.point_position).distance_to(_vp_transform(md_p.point_position)) < WIDTH_CURVE_EDIT_CLAMP_DISTANCE:
+				clamped_to_existing = i
+				break
+		if clamped_to_existing > -1:
+			var new_value := (
+				width_curve.get_point_position(clamped_to_existing).y +
+					(0.1 if make_thicker else -0.1)
+			)
+			if new_value < 0.0:
+				new_value = 0.0
+			width_curve.set_point_value(clamped_to_existing, new_value)
+		else:
+			var new_value := (
+					width_curve.sample(progress_ratio) +
+						(0.1 if make_thicker else -0.1)
+			)
+			if new_value < 0.0:
+				new_value = 0.0
+			width_curve.add_point(Vector2(progress_ratio, new_value))
+	undo_redo.create_action("Edit width curve: %s " % str(svs))
+	undo_redo.add_do_property(svs.line, 'width_curve', width_curve)
+	undo_redo.add_undo_property(svs.line, 'width_curve', svs.line.width_curve.duplicate(true) if svs.line.width_curve else null)
+	undo_redo.commit_action()
+
+
+func _resize_shape(svs : ScalableVectorShape2D, s : float) -> void:
+	if svs.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+		if not in_undo_redo_transaction:
+			_start_undo_redo_transaction("Resize shape %s" % str(svs))
+			undo_redo_transaction[UndoRedoEntry.UNDOS].append([
+					svs, 'replace_curve_points', svs.curve.duplicate()])
+
+		undo_redo_transaction[UndoRedoEntry.DOS] = []
+		for idx in range(svs.curve.point_count):
+			svs.curve.set_point_position(idx, svs.curve.get_point_position(idx) * s)
+			svs.curve.set_point_in(idx, svs.curve.get_point_in(idx) * s)
+			svs.curve.set_point_out(idx, svs.curve.get_point_out(idx) * s)
+			undo_redo_transaction[UndoRedoEntry.DOS].append([svs.curve,
+					'set_point_position', idx, svs.curve.get_point_position(idx) * s])
+			undo_redo_transaction[UndoRedoEntry.DOS].append([svs.curve,
+					'set_point_in', idx, svs.curve.get_point_in(idx) * s])
+			undo_redo_transaction[UndoRedoEntry.DOS].append([svs.curve,
+					'set_point_out', idx, svs.curve.get_point_out(idx) * s])
+	else:
+		if not in_undo_redo_transaction:
+			_start_undo_redo_transaction("Resize shape %s" % str(svs))
+			undo_redo_transaction[UndoRedoEntry.UNDO_PROPS] = [[svs, 'size', svs.size]]
+		undo_redo_transaction[UndoRedoEntry.DO_PROPS] = [[svs, 'size', svs.size * s]]
+		svs.size *= s
+
+
+func _remove_point_from_curve(current_selection : ScalableVectorShape2D, idx : int) -> void:
+	var orig_n := current_selection.curve.point_count
+	if current_selection.is_curve_closed() and idx == 0:
+		idx = orig_n - 1
+
+	var backup := current_selection.curve.duplicate()
+	undo_redo.create_action("Remove point %d from %s" % [idx, str(current_selection)])
+	undo_redo.add_do_method(current_selection.curve, 'set_point_in', 0, Vector2.ZERO)
+	if orig_n > 2:
+		undo_redo.add_do_method(current_selection.curve, 'set_point_out', orig_n - 2, Vector2.ZERO)
+
+	var redo_arcs : Array[ScalableArc] = []
+	for a : ScalableArc in current_selection.arc_list.arcs:
+		if a.start_point == idx or a.start_point == idx - 1:
+			undo_redo.add_do_method(current_selection.arc_list, 'remove_arc_for_point', a.start_point)
+			redo_arcs.append(a)
+
+	undo_redo.add_do_method(current_selection.curve, 'remove_point', idx)
+	undo_redo.add_do_method(current_selection.arc_list, 'handle_point_removed_at_index', idx)
+
+	undo_redo.add_undo_method(current_selection, 'replace_curve_points', backup)
+	undo_redo.add_undo_method(current_selection.arc_list, 'handle_point_added_at_index', idx)
+	for a in redo_arcs:
+		undo_redo.add_undo_reference(a)
+		undo_redo.add_undo_method(current_selection.arc_list, 'add_arc', a)
+
+	if current_selection.deformation_map:
+		var new_deformation_map := current_selection.deformation_map.duplicate()
+		for i in range(idx, current_selection.curve.point_count - 1):
+			if i + 1 in current_selection.deformation_map:
+				new_deformation_map[i] = current_selection.deformation_map[i + 1]
+		undo_redo.add_do_property(current_selection, 'deformation_map', new_deformation_map)
+		undo_redo.add_undo_property(current_selection, 'deformation_map', current_selection.deformation_map.duplicate())
+
+	undo_redo.commit_action()
+
+
+func _remove_cp_in_from_curve(current_selection : ScalableVectorShape2D, idx : int) -> void:
+	if idx == 0:
+		idx = current_selection.curve.point_count - 1
+	undo_redo.create_action("Remove control point in %d from %s " % [idx, str(current_selection)])
+	undo_redo.add_do_method(current_selection.curve, 'set_point_in', idx, Vector2.ZERO)
+	undo_redo.add_undo_method(current_selection.curve, 'set_point_in', idx, current_selection.curve.get_point_in(idx))
+	undo_redo.commit_action()
+
+
+func _remove_cp_out_from_curve(current_selection : ScalableVectorShape2D, idx : int) -> void:
+	if idx == current_selection.curve.point_count - 1:
+		idx = 0
+	undo_redo.create_action("Remove control point out %d from %s " % [idx, str(current_selection)])
+	undo_redo.add_do_method(current_selection.curve, 'set_point_out', idx, Vector2.ZERO)
+	undo_redo.add_undo_method(current_selection.curve, 'set_point_out', idx, current_selection.curve.get_point_out(idx))
+	undo_redo.commit_action()
+
+
+func _remove_rounded_corners_from_rect(svs : ScalableVectorShape2D):
+	undo_redo.create_action("Remove rounded corners from %s " % str(svs))
+	undo_redo.add_do_property(svs, 'rx', 0.0)
+	undo_redo.add_do_property(svs, 'ry', 0.0)
+	undo_redo.add_undo_property(svs, 'rx', svs.rx)
+	undo_redo.add_undo_property(svs, 'ry', svs.ry)
+	undo_redo.commit_action()
+
+
+func _add_point_to_curve(svs : ScalableVectorShape2D, local_pos : Vector2,
+		cp_in := Vector2.ZERO, cp_out := Vector2.ZERO, idx := -1, do_commit := true) -> void:
+	undo_redo.create_action("Add point at %s to %s " % [str(local_pos), str(svs)])
+
+	undo_redo.add_do_method(svs.curve, 'add_point', local_pos, cp_in, cp_out, idx)
+	if idx < 0:
+		undo_redo.add_undo_method(svs.curve, 'remove_point', svs.curve.point_count)
+	else:
+		undo_redo.add_do_method(svs.arc_list, 'handle_point_added_at_index', idx)
+		undo_redo.add_undo_method(svs.curve, 'remove_point', idx)
+		undo_redo.add_undo_method(svs.arc_list, 'handle_point_removed_at_index', idx)
+
+	if svs.deformation_map:
+		var new_deformation_map := svs.deformation_map.duplicate()
+		for i in range(idx, svs.curve.point_count):
+			if i in svs.deformation_map:
+				new_deformation_map[i + 1] = svs.deformation_map[i]
+		undo_redo.add_do_property(svs, 'deformation_map', new_deformation_map)
+		undo_redo.add_undo_property(svs, 'deformation_map', svs.deformation_map.duplicate())
+
+	if not do_commit:
+		return
+	undo_redo.commit_action()
+
+
+func _add_point_on_curved_segment(svs : ScalableVectorShape2D, placement_point : Vector2, before_segment : int) -> void:
+	var sliced_segment := Geometry2DUtil.get_sliced_curve_segment(svs.curve, before_segment, placement_point,
+			svs.max_stages, svs.tolerance_degrees)
+	_add_point_to_curve(svs, placement_point, Vector2.ZERO, Vector2.ZERO, before_segment, false)
+	undo_redo.add_do_method(svs.curve, "set_point_out", before_segment - 1, sliced_segment.get_point_out(0))
+	undo_redo.add_undo_method(svs.curve, "set_point_out", before_segment -1, svs.curve.get_point_out(before_segment - 1))
+	undo_redo.add_do_method(svs.curve, "set_point_in", before_segment, sliced_segment.get_point_in(1))
+	undo_redo.add_undo_method(svs.curve, "set_point_in", before_segment, svs.curve.get_point_in(before_segment))
+	undo_redo.add_do_method(svs.curve, "set_point_out", before_segment, sliced_segment.get_point_out(1))
+	undo_redo.add_undo_method(svs.curve, "set_point_out", before_segment, svs.curve.get_point_out(before_segment))
+	undo_redo.add_do_method(svs.curve, "set_point_in", before_segment + 1, sliced_segment.get_point_in(2))
+	undo_redo.add_undo_reference(svs.curve)
+	undo_redo.commit_action()
+
+
+func _create_arc(svs :  ScalableVectorShape2D, start_point_idx : int) -> void:
+	if svs.curve.point_count < 2:
+		return
+	undo_redo.create_action("Remove arc for segment %d on %s " % [start_point_idx, str(svs)])
+	undo_redo.add_do_method(svs, 'add_arc', start_point_idx)
+	undo_redo.add_undo_method(svs.arc_list, 'remove_arc_for_point', start_point_idx)
+	undo_redo.commit_action()
+
+
+func _remove_arc(svs : ScalableVectorShape2D, start_point_idx : int) -> void:
+	var redo_arc := svs.arc_list.get_arc_for_point(start_point_idx)
+	if redo_arc == null:
+		return
+	undo_redo.create_action("Remove arc for segment %d on %s " % [start_point_idx, str(svs)])
+	undo_redo.add_do_method(svs.arc_list, 'remove_arc_for_point', start_point_idx)
+	undo_redo.add_undo_method(svs.arc_list, 'add_arc', redo_arc)
+	undo_redo.add_undo_reference(redo_arc)
+	undo_redo.commit_action()
+
+
+func _add_point_on_position(svs : ScalableVectorShape2D, pos : Vector2) -> void:
+	if svs.shape_type != ScalableVectorShape2D.ShapeType.PATH:
+		return
+	_add_point_to_curve(svs, svs.to_local(pos))
+
+
+func _start_cutout_shape(svs : ScalableVectorShape2D, pos : Vector2) -> void:
+	var new_shape = ScalableVectorShape2D.new()
+	var mouse_pos := _svp_mouse_pos(
+			EditorInterface.get_editor_viewport_2d().get_mouse_position(),
+			svs
+	)
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	new_shape.curve = Curve2D.new()
+	new_shape.position = svs.to_local(mouse_pos)
+	new_shape.shape_type = current_cutout_shape
+	new_shape.curve.add_point(Vector2.ZERO)
+
+	_create_shape(new_shape, EditorInterface.get_edited_scene_root(), "CutoutOf%s" % svs.name, svs)
+
+
+func _add_point_on_curve_segment(svs : ScalableVectorShape2D, subdivide := false) -> void:
+	if svs.shape_type != ScalableVectorShape2D.ShapeType.PATH:
+		return
+	if not _hover_closest_point_on_curve:
+		return
+	var md_closest_point : ClosestPointOnCurveMeta = _hover_closest_point_on_curve
+	if svs.is_arc_start(md_closest_point.before_segment - 1):
+		return
+	var placement_point := svs.to_undeformed_position(
+			svs.get_curve_segment_halfway_point(md_closest_point.before_segment) if subdivide else md_closest_point.local_point_position,
+			md_closest_point.before_segment,
+			false
+	)
+	if md_closest_point.before_segment >= svs.curve.point_count:
+		_add_point_to_curve(svs, placement_point)
+	else:
+		if (
+			svs.curve.get_point_out(md_closest_point.before_segment - 1).length() > 0.0 or
+			svs.curve.get_point_in(md_closest_point.before_segment).length() > 0.0
+		):
+			# This is a curved segment, so when a point is added, control points are recalculated
+			_add_point_on_curved_segment(svs, placement_point, md_closest_point.before_segment)
+		else:
+			_add_point_to_curve(svs, placement_point,
+				Vector2.ZERO, Vector2.ZERO, md_closest_point.before_segment)
+
+
+func _subdivide_curve(svs : ScalableVectorShape2D) -> void:
+	var orig_curve := svs.curve
+	svs.curve = svs.curve.duplicate()
+	undo_redo.create_action("Subdivide shape %s" % str(svs))
+	undo_redo.add_do_property(svs, 'curve', svs.get_subdivided_curve())
+	undo_redo.add_undo_property(svs, 'curve', orig_curve)
+	undo_redo.commit_action()
+
+
+func _drag_curve_segment(svs : ScalableVectorShape2D, mouse_pos : Vector2) -> void:
+	if svs.shape_type != ScalableVectorShape2D.ShapeType.PATH:
+		return
+	if not _hover_closest_point_on_curve:
+		return
+	var md_closest_point : ClosestPointOnCurveMeta = _hover_closest_point_on_curve
+	if svs.is_arc_start(md_closest_point.before_segment - 1) or md_closest_point.before_segment >= svs.curve.point_count or md_closest_point.before_segment < 1:
+		return
+
+	if _is_snapped_to_pixel():
+		mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+	# Compute control points based on mouse position to align middle of segment curve to it
+	# using the quadratic Bézier control point
+	var idx : int = md_closest_point.before_segment
+	var segment_start_point := svs.curve.get_point_position(idx - 1)
+	var segment_end_point := svs.curve.get_point_position(idx)
+	var halfway_point := (segment_start_point + segment_end_point) / 2
+	var dir := halfway_point.direction_to(svs.to_undeformed_position(mouse_pos, idx))
+	var distance := halfway_point.distance_to(svs.to_undeformed_position(mouse_pos, idx))
+	var quadratic_bezier_control_point := halfway_point + distance * 2 * dir
+	var new_point_out := (quadratic_bezier_control_point - segment_start_point) * (2.0 / 3.0)
+	var new_point_in := (quadratic_bezier_control_point - segment_end_point) * (2.0 / 3.0)
+
+	if not in_undo_redo_transaction:
+		_start_undo_redo_transaction("Change curve segment %d->%d for %s" % [idx - 1, idx, str(svs)])
+		undo_redo_transaction[UndoRedoEntry.UNDOS].append([svs.curve, 'set_point_in', idx, svs.curve.get_point_in(idx)])
+		undo_redo_transaction[UndoRedoEntry.UNDOS].append([svs.curve, 'set_point_out', idx - 1, svs.curve.get_point_out(idx - 1)])
+	undo_redo_transaction[UndoRedoEntry.DOS] = [[svs.curve, 'set_point_out', idx - 1, new_point_out]]
+	undo_redo_transaction[UndoRedoEntry.DOS].append([svs.curve, 'set_point_in', idx, new_point_in])
+	svs.curve.set_point_out(idx - 1, new_point_out)
+	svs.curve.set_point_in(idx, new_point_in)
+	md_closest_point["point_position"] = mouse_pos
+	_hover_closest_point_on_curve = md_closest_point
+	update_overlays()
+
+
+func _toggle_loop_if_applies(svs : ScalableVectorShape2D, idx : int) -> void:
+	if svs.shape_type != ScalableVectorShape2D.ShapeType.PATH:
+		return
+	if svs.curve.point_count < 3:
+		return
+	if idx == 0 or idx == svs.curve.point_count - 1:
+		if svs.is_curve_closed():
+			_remove_point_from_curve(svs, svs.curve.point_count - 1)
+		else:
+			_add_point_to_curve(svs, svs.curve.get_point_position(0))
+
+
+func _get_vp_h_scroll_bar() -> HScrollBar:
+	var editor_vp := _find_canvas_item_editor_control()
+	if editor_vp == null:
+		return null
+	return editor_vp.find_child("*HScrollBar*", true, false)
+
+
+func _get_vp_v_scroll_bar() -> VScrollBar:
+	var editor_vp := _find_canvas_item_editor_control()
+	if editor_vp == null:
+		return null
+	return editor_vp.find_child("*VScrollBar*", true, false)
+
+
+func _handle_input_for_uniform_translate(event : InputEvent, svs : ScalableVectorShape2D) -> bool:
+	var mouse_pos := _svp_mouse_pos(EditorInterface.get_editor_viewport_2d().get_mouse_position(), svs)
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		if (event as InputEventMouseButton).pressed:
+			_drag_start = mouse_pos
+			if not in_undo_redo_transaction:
+				_start_undo_redo_transaction("Translate curve points for %s" % str(svs))
+		update_overlays()
+		return true
+
+	if event is InputEventMouseMotion:
+		update_overlays()
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			var drag_delta := mouse_pos - _drag_start
+			if _is_snapped_to_pixel():
+				drag_delta = drag_delta.snapped(_get_snap_resolution())
+			if drag_delta.abs() > Vector2.ZERO:
+				_drag_start = mouse_pos
+				undo_redo_transaction[UndoRedoEntry.DOS].append([svs, 'translate_points_by', drag_delta])
+				undo_redo_transaction[UndoRedoEntry.UNDOS].append([svs, 'translate_points_by', -drag_delta])
+				svs.translate_points_by(drag_delta)
+			return true
+	return false
+
+
+func _flip_svs_horizontal():
+	var svs := EditorInterface.get_selection().get_selected_nodes().pop_front()
+	if svs is ScalableVectorShape2D:
+		undo_redo.create_action("Flip %s horizontally" % str(svs))
+		undo_redo.add_do_method(svs, 'flip_points')
+		undo_redo.add_undo_method(svs, 'flip_points')
+		undo_redo.commit_action()
+		update_overlays()
+
+
+func _flip_svs_vertical():
+	var svs := EditorInterface.get_selection().get_selected_nodes().pop_front()
+	if svs is ScalableVectorShape2D:
+		undo_redo.create_action("Flip %s vertically" % str(svs))
+		undo_redo.add_do_method(svs, 'flip_points', Vector2(1, -1))
+		undo_redo.add_undo_method(svs, 'flip_points', Vector2(1, -1))
+		undo_redo.commit_action()
+		update_overlays()
+
+
+func _handle_input_for_uniform_scale(event : InputEvent, svs : ScalableVectorShape2D) -> bool:
+	var mouse_pos := _svp_mouse_pos(EditorInterface.get_editor_viewport_2d().get_mouse_position(), svs)
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		if (event as InputEventMouseButton).pressed:
+			_drag_start = mouse_pos
+			if not in_undo_redo_transaction:
+				_start_undo_redo_transaction("Scale curve points for %s" % str(svs))
+		update_overlays()
+		return true
+
+	if event is InputEventMouseMotion:
+		update_overlays()
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			var drag_delta := mouse_pos - _drag_start
+			if _is_snapped_to_pixel():
+				drag_delta = drag_delta.snapped(_get_snap_resolution())
+			if drag_delta.abs() > Vector2.ZERO:
+				undo_redo_transaction[UndoRedoEntry.DOS].append([svs, 'scale_points_by', _drag_start, mouse_pos, Input.is_key_pressed(KEY_SHIFT)])
+				undo_redo_transaction[UndoRedoEntry.UNDOS].append([svs, 'scale_points_by', mouse_pos, _drag_start, Input.is_key_pressed(KEY_SHIFT)])
+				svs.scale_points_by(_drag_start, mouse_pos, Input.is_key_pressed(KEY_SHIFT))
+				_drag_start = mouse_pos
+			return true
+	return false
+
+
+func _handle_input_for_uniform_rotate(event : InputEvent, svs : ScalableVectorShape2D) -> bool:
+	var mouse_pos := _svp_mouse_pos(EditorInterface.get_editor_viewport_2d().get_mouse_position(), svs)
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		if (event as InputEventMouseButton).pressed:
+			_drag_start = mouse_pos
+			_prev_uniform_rotate_angle = 0.0
+			_stored_natural_center = svs.to_global(svs.get_center())
+			if not in_undo_redo_transaction:
+				_start_undo_redo_transaction("Rotate curve points for %s" % str(svs))
+		update_overlays()
+		return true
+
+	if event is InputEventMouseMotion:
+		update_overlays()
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			var use_cntr := Input.is_key_pressed(KEY_SHIFT) or svs.shape_type != ScalableVectorShape2D.ShapeType.PATH
+			var rotation_origin = (
+					_stored_natural_center
+						if use_cntr else
+					svs.global_position
+			)
+			var rotation_target := mouse_pos
+			var ang := rotation_origin.angle_to_point(rotation_target) - rotation_origin.angle_to_point(_drag_start)
+			if _is_ctrl_or_cmd_pressed():
+				ang = snappedf(ang, deg_to_rad(5.0))
+			if ang != _prev_uniform_rotate_angle:
+				var drag_delta := ang - _prev_uniform_rotate_angle
+				if use_cntr:
+					undo_redo_transaction[UndoRedoEntry.DOS].append([svs, 'rotate_points_by', drag_delta, svs.to_local(rotation_origin)])
+					undo_redo_transaction[UndoRedoEntry.UNDOS].append([svs, 'rotate_points_by', -drag_delta, svs.to_local(rotation_origin)])
+					svs.rotate_points_by(drag_delta, svs.to_local(rotation_origin))
+				else:
+					undo_redo_transaction[UndoRedoEntry.DOS].append([svs, 'rotate_points_by', drag_delta])
+					undo_redo_transaction[UndoRedoEntry.UNDOS].append([svs, 'rotate_points_by', -drag_delta])
+					svs.rotate_points_by(drag_delta)
+
+				_prev_uniform_rotate_angle = ang
+			return true
+	return false
+
+
+func _handle_draw_merge_box_input(event) -> bool:
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		if event.is_pressed():
+			_merge_box_rect.position = _vp_transform(EditorInterface.get_editor_viewport_2d().get_mouse_position())
+		else:
+			_create_svs_vertex_merge_2d()
+			svs_edit_buttons.set_default_mode()
+			update_overlays()
+			return true
+	if event is InputEventMouseMotion:
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			_merge_box_rect.size = _vp_transform(EditorInterface.get_editor_viewport_2d().get_mouse_position()) - _merge_box_rect.position
+		update_overlays()
+	return true
+
+
+func _polyline_to_curve(pts : PackedVector2Array) -> Curve2D:
+	if _apply_curve_fitting():
+		var fitness_prep := BasicFit.prepare_polyline_segments(pts, _get_basic_fit_snap(pts))
+		return BasicFit.fit_curve_to_polyline(pts, fitness_prep)
+	else:
+		var curve := Curve2D.new()
+		for p in pts:
+			curve.add_point(p)
+		return curve
+
+
+func _create_freehand_shape(name : String) -> ScalableVectorShape2D:
+	var pos := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+	if _is_snapped_to_pixel():
+		pos = pos.snapped(_get_snap_resolution())
+
+	var new_shape := ScalableVectorShape2D.new()
+	new_shape.curve = Curve2D.new()
+	_create_shape(new_shape, EditorInterface.get_edited_scene_root(), name, null, true)
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	return current_selection
+
+
+func _start_pencil_draw():
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	var pos := _svp_mouse_pos(
+			EditorInterface.get_editor_viewport_2d().get_mouse_position(),
+			current_selection if current_selection else EditorInterface.get_edited_scene_root()
+	)
+	if _is_snapped_to_pixel():
+		pos = pos.snapped(_get_snap_resolution())
+	_pencil_start_pos = pos
+	_pencil_stroke = [pos]
+	_drawing_pencil_line = true
+
+
+func _detect_knife_cuts(svs : ScalableVectorShape2D, cursor_pos : Vector2) -> void:
+	var poly : PackedVector2Array = svs.tessellate()
+	if not poly[0].is_equal_approx(poly[-1]):
+		poly.append(poly[0])
+	var valid_intersections := Geometry2DUtil.get_segment_to_polyline_intersections(
+		_pencil_stroke[-1], cursor_pos,
+		PackedVector2Array(Array(poly).map(func(p): return svs.to_global(p)))
+	)
+	valid_intersections.sort_custom(func(a : Vector2, b : Vector2):
+			return a.distance_squared_to(_pencil_stroke[-1]) < b.distance_squared_to(_pencil_stroke[-1])
+	)
+	for p in valid_intersections:
+		_pencil_stroke.append(p)
+		_knife_intersections.append(p)
+
+
+func _apply_valid_knife_cuts(svs : ScalableVectorShape2D, cursor_pos : Vector2) -> void:
+	if _knife_intersections.size() < 2:
+		return
+	if _knife_intersections.size() < 3 and svs.has_fine_point(_pencil_start_pos):
+		return
+
+	if svs.has_fine_point(_pencil_start_pos):
+		_knife_intersections.pop_front()
+
+	if not svs.is_curve_closed():
+		_add_point_to_curve(svs, svs.curve.get_point_position(0))
+
+	while _knife_intersections.size() > 1:
+		var cut_start_pos := _knife_intersections.pop_front()
+		var cut_end_pos := _knife_intersections.pop_front()
+		var cutting_line := Geometry2DUtil.get_polyline_segment(_pencil_stroke, cut_start_pos, cut_end_pos)
+		var curve := _polyline_to_curve(cutting_line)
+		var halves = Geometry2DUtil.cut_bezier_with_bezier(svs.curve, svs.curve_to_local(curve), svs.max_stages, svs.tolerance_degrees)
+		undo_redo.create_action("Replace curve for %s " % str(svs))
+		undo_redo.add_do_property(svs, "curve", halves[0])
+		undo_redo.add_undo_property(svs, "curve", svs.curve)
+		undo_redo.commit_action()
+		var scene_root := EditorInterface.get_edited_scene_root()
+		var parent := svs.get_parent()
+		var cut_svs := ScalableVectorShape2D.new()
+		cut_svs.curve = halves[1]
+		if svs == scene_root:
+			parent = svs
+		_create_shape(cut_svs, EditorInterface.get_edited_scene_root(), svs.name,
+				null, true, parent, svs)
+		select_node_reversibly(svs)
+
+	_pencil_start_pos = cursor_pos
+	_pencil_stroke.clear()
+	_pencil_stroke.append(cursor_pos)
+	_knife_intersections.clear()
+
+
+func _add_point_to_pencil_line() -> void:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	var pos := _svp_mouse_pos(EditorInterface.get_editor_viewport_2d().get_mouse_position(), current_selection)
+	if _is_snapped_to_pixel():
+		pos = pos.snapped(_get_snap_resolution())
+	if not _pencil_stroke.is_empty() and _pencil_stroke[-1].distance_to(pos) > _get_freehand_draw_granularity():
+		if _svs_edit_mode == SVSEditMode.KNIFE and _is_svs_valid(current_selection):
+			var self_intersection = Geometry2DUtil.will_self_intersect_at(_pencil_stroke, pos)
+			if self_intersection != null:
+				var replacement : Array[Vector2] = []
+				for p_idx in self_intersection[0]:
+					replacement.append(_pencil_stroke[p_idx])
+				replacement.append(self_intersection[1])
+				_pencil_stroke = replacement
+			_detect_knife_cuts(current_selection, pos)
+			_apply_valid_knife_cuts(current_selection, pos)
+		_pencil_stroke.append(pos)
+
+
+func _finish_knife_cutting() -> bool:
+	_pencil_stroke.clear()
+	_knife_intersections.clear()
+	update_overlays()
+	_drawing_pencil_line = false
+	return true
+
+
+func _handle_pencil_draw_input(event : InputEvent) -> bool:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if _svs_edit_mode == SVSEditMode.KNIFE:
+		if not _is_svs_valid(current_selection):
+			update_overlays()
+			return true
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		if Input.is_key_pressed(KEY_SHIFT):
+			if event.is_pressed() and not _drawing_pencil_line:
+				_start_pencil_draw()
+				return true
+			elif not event.is_pressed() and _drawing_pencil_line:
+				_add_point_to_pencil_line()
+		else:
+			if event.is_pressed() and _drawing_pencil_line:
+				return true
+			if event.is_pressed() and not _drawing_pencil_line:
+				_start_pencil_draw()
+				_drawing_pencil_line = true
+				return true
+			if not event.is_pressed():
+				if _svs_edit_mode == SVSEditMode.KNIFE:
+					return _finish_knife_cutting()
+				if is_instance_valid(current_selection):
+					var svs := _create_freehand_shape("PencilDrawing")
+					svs.global_position = _pencil_start_pos
+					var poly := _pencil_stroke.map(svs.to_local)
+					svs.curve = _polyline_to_curve(poly)
+					if _get_close_pencil_path() and _pencil_stroke.size() > 1:
+						svs.curve.add_point(svs.to_local(_pencil_stroke[0]))
+					_pencil_stroke.clear()
+					if _get_keep_drawing_behavior() == KeepDrawingBehavior.KEEP_DRAWING_ON_SAME_PARENT:
+						select_node_reversibly(svs.get_parent())
+					else:
+						svs_edit_buttons.set_default_mode(true)
+				update_overlays()
+				_drawing_pencil_line = false
+				return true
+
+	if event is InputEventMouseMotion:
+		update_overlays()
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			_add_point_to_pencil_line()
+			return true
+
+	return false
+
+
+func _set_curve_from_brush_stroke(svs : ScalableVectorShape2D, pts : PackedVector2Array) -> void:
+	svs.global_position = _brush_start_pos
+	var poly := PackedVector2Array(Array(pts).map(func(p): return svs.to_local(p)))
+	if _apply_curve_fitting():
+		var fitness_prep := BasicFit.prepare_polyline_segments(poly, 0.5 * (_get_brush_size_x() + _get_brush_size_y()))
+		poly.append(poly[0])
+		svs.curve = BasicFit.fit_curve_to_polyline(poly, fitness_prep)
+	else:
+		poly.append(poly[0])
+		svs.curve = _polyline_to_curve(poly)
+
+
+func _get_points_from_node(node : Node) -> Array[PackedVector2Array]:
+	if not is_instance_valid(node):
+		return []
+	if not node is Polygon2D and not node is CollisionPolygon2D and not node is Line2D:
+		return []
+	if node is Polygon2D and (node as Polygon2D).polygons.size() > 1:
+		var polys : Array[PackedVector2Array] = []
+		for p_indices in (node as Polygon2D).polygons:
+			var pts := PackedVector2Array()
+			for p_idx in p_indices:
+				pts.append((node as Polygon2D).polygon[p_idx])
+			polys.append(pts)
+		return polys
+	return [(
+		(node as Line2D).points
+			if node is Line2D else
+		(node as Polygon2D).polygon
+			if node is Polygon2D else
+		(node as CollisionPolygon2D).polygon
+	)]
+
+
+func _get_basic_fit_snap(poly : PackedVector2Array) -> float:
+	var bounds := Geometry2DUtil.get_polygon_bounding_rect(poly)
+	return (bounds.size.x + bounds.size.y) / 2.0
+
+
+func _extract_svs_from_selected_node() -> void:
+	for node in EditorInterface.get_selection().get_selected_nodes():
+		var poly_list = _get_points_from_node(node)
+		if poly_list.is_empty():
+			continue
+		for poly in poly_list:
+			var svs = ScalableVectorShape2D.new()
+			if ((node is Line2D and (node as Line2D).closed) or (not node is Line2D) and
+					not (poly[0] as Vector2).is_equal_approx(poly[-1])
+			):
+				poly.append(poly[0])
+			var fitness_prep := BasicFit.prepare_polyline_segments(poly, _get_basic_fit_snap(poly))
+			svs.curve = BasicFit.fit_curve_to_polyline(poly, fitness_prep)
+			svs.position = node.position
+			_create_shape(svs, EditorInterface.get_edited_scene_root(), "Extracted" + node.name,
+				null, true, node.get_parent())
+
+
+func _handle_brush_draw_input(event : InputEvent) -> bool:
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	var pos := _svp_mouse_pos(
+			EditorInterface.get_editor_viewport_2d().get_mouse_position(),
+			current_selection if current_selection else EditorInterface.get_edited_scene_root()
+	)
+	if _is_snapped_to_pixel():
+		pos = pos.snapped(_get_snap_resolution())
+
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		update_overlays()
+		if event.is_pressed():
+			_brush_start_pos = pos
+			_last_brush_pos = pos
+			var new_stroke := PackedVector2Array(Array(_current_brush_shape.duplicate()).map(func(p): return p + pos))
+			_current_brush_stroke = Geometry2DUtil.get_polygon_at_granularity(new_stroke,
+					_get_guarded_brush_granularity())
+
+		else:
+			if is_instance_valid(current_selection):
+				var svs := _create_freehand_shape("BrushStroke")
+				_set_curve_from_brush_stroke(svs, _current_brush_stroke)
+				_current_brush_stroke.clear()
+				if _get_keep_drawing_behavior() == KeepDrawingBehavior.KEEP_DRAWING_ON_SAME_PARENT:
+					select_node_reversibly(svs.get_parent())
+				else:
+					svs_edit_buttons.set_default_mode(true)
+				update_overlays()
+		return true
+	else:
+		if _is_ctrl_or_cmd_pressed() or Input.is_key_pressed(KEY_SHIFT):
+			_lock_vp_scroll()
+		else:
+			_locking_vp_horizontal_scrollbar = false
+			_locking_vp_vertical_scrollbar = false
+
+	if (event is InputEventMouseButton and
+		(event as InputEventMouseButton).button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] and
+		(event as InputEventMouseButton).pressed
+	):
+		if _is_ctrl_or_cmd_pressed() and Input.is_key_pressed(KEY_SHIFT):
+			var new_rotation := (
+				_get_brush_rotation() + 1
+						if event.button_index == MOUSE_BUTTON_WHEEL_UP else
+				_get_brush_rotation() - 1
+			)
+			if new_rotation < 0:
+				new_rotation = 359
+			elif new_rotation > 360:
+				new_rotation = 1
+			ProjectSettings.set_setting(SETTING_NAME_BRUSH_ROTATION, new_rotation)
+			_update_brush(true)
+			update_overlays()
+			return true
+		elif _is_ctrl_or_cmd_pressed():
+			match _get_brush_shape():
+				BrushShape.ELLIPSE:
+					ProjectSettings.set_setting(SETTING_NAME_BRUSH_SHAPE, BrushShape.RECTANGLE)
+				BrushShape.RECTANGLE:
+					ProjectSettings.set_setting(SETTING_NAME_BRUSH_SHAPE, BrushShape.ELLIPSE)
+			_update_brush(true)
+			update_overlays()
+			return true
+		elif Input.is_key_pressed(KEY_SHIFT):
+			var new_x := _get_brush_size_x() + (1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1)
+			var new_y := _get_brush_size_y() + (1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1)
+			if new_x < 1:
+				new_x = 1
+			if new_y < 1:
+				new_y = 1
+			ProjectSettings.set_setting(SETTING_NAME_BRUSH_SIZE_X, new_x)
+			ProjectSettings.set_setting(SETTING_NAME_BRUSH_SIZE_Y, new_y)
+			_update_brush(true)
+			update_overlays()
+			return true
+
+	if event is InputEventMouseMotion:
+		update_overlays()
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and pos.distance_to(_last_brush_pos):
+			var merge_target := Array(_current_brush_shape.duplicate()).map(func(p): return p + pos)
+			var direction := _last_brush_pos.direction_to(pos)
+			var extreme1 : Vector2 = Geometry2DUtil.get_closest_point_on_polyline(
+					direction.rotated(deg_to_rad(-90.0)) * max(_get_brush_size_x(), _get_brush_size_y()),
+					_current_brush_shape
+			)
+			var extreme2 := Geometry2DUtil.get_closest_point_on_polyline(
+					direction.rotated(deg_to_rad(90.0)) * max(_get_brush_size_x(), _get_brush_size_y()),
+					_current_brush_shape
+			)
+			var stroke_rect_poly := PackedVector2Array([
+				extreme1 + _last_brush_pos,
+				extreme2 + _last_brush_pos,
+				extreme2 + pos,
+				extreme1 + pos
+			])
+			_last_brush_pos = pos
+			var res0 := Geometry2D.merge_polygons(_current_brush_stroke, stroke_rect_poly)
+			var res := Geometry2D.merge_polygons(res0[0], merge_target)
+			if res.size() > 0:
+				var new_stroke := res[0]
+				if _is_svs_valid(current_selection):
+					var svs := current_selection as ScalableVectorShape2D
+					var intersect_target := Array(svs.tessellate()).map(func(p): return svs.to_global(p))
+					if _get_brush_fill_in_parent_shape():
+						var res1 := Geometry2D.intersect_polygons(res[0], intersect_target)
+						if res1.size() == 1:
+							new_stroke = res1[0]
+				_current_brush_stroke = Geometry2DUtil.get_polygon_at_granularity(new_stroke,
+						_get_guarded_brush_granularity())
+			return true
+	return false
+
+
+func _lock_vp_scroll():
+	var vp_horiz_scrollbar := _get_vp_h_scroll_bar()
+	if vp_horiz_scrollbar is HScrollBar:
+		if not _locking_vp_horizontal_scrollbar:
+			_vp_horizontal_scrollbar_locked_value = vp_horiz_scrollbar.value
+			_locking_vp_horizontal_scrollbar = true
+		vp_horiz_scrollbar.value = _vp_horizontal_scrollbar_locked_value
+	var vp_vert_scrollbar := _get_vp_v_scroll_bar()
+	if vp_vert_scrollbar is VScrollBar:
+		if not _locking_vp_vertical_scrollbar:
+			_vp_vertical_scrollbar_locked_value = vp_vert_scrollbar.value
+			_locking_vp_vertical_scrollbar = true
+		vp_vert_scrollbar.value = _vp_vertical_scrollbar_locked_value
+
+
+func _handle_bone_paint_input(event : InputEvent) -> bool:
+	update_overlays()
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if not _is_svs_valid(current_selection):
+		return false
+	var svs := current_selection as ScalableVectorShape2D
+	if not is_instance_valid(svs.skeleton):
+		return false
+	if svs.skeleton.get_bone_count() == 0:
+		return false
+	if is_instance_valid(svs.bone):
+		return false
+	if _current_bone_idx > svs.skeleton.get_bone_count() - 1:
+		_current_bone_idx = 0
+	if _is_ctrl_or_cmd_pressed():
+		_lock_vp_scroll()
+		if (event is InputEventMouseButton and
+			(event as InputEventMouseButton).button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] and
+			(event as InputEventMouseButton).pressed
+		):
+			if (event as InputEventMouseButton).button_index == MOUSE_BUTTON_WHEEL_UP:
+				_current_bone_idx += 1
+			else:
+				_current_bone_idx -= 1
+			if _current_bone_idx < 0:
+				_current_bone_idx = svs.skeleton.get_bone_count() - 1
+			elif _current_bone_idx > svs.skeleton.get_bone_count() - 1:
+				_current_bone_idx = 0
+			return true
+	else:
+		_locking_vp_horizontal_scrollbar = false
+		_locking_vp_vertical_scrollbar = false
+
+	if ((event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT)
+			or (event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT))):
+
+		if not in_undo_redo_transaction and event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+			_start_undo_redo_transaction("Paint points to bones")
+			undo_redo_transaction[UndoRedoEntry.UNDO_PROPS] = [[svs, 'deformation_map', svs.deformation_map.duplicate(true)]]
+
+		var mp := _vp_transform(
+				_svp_mouse_pos(EditorInterface.get_editor_viewport_2d().get_mouse_position(), svs)
+		)
+		var curve := svs.get_deformed_curve()
+		for p_idx in svs.curve.point_count:
+			var p := _vp_transform(svs.to_global(curve.get_point_position(p_idx)))
+			if p.distance_to(mp) < CLOSE_TO_MOUSE_RADIUS:
+				svs.deformation_map[p_idx] = svs.skeleton.get_bone(_current_bone_idx)
+		svs.should_update_curve = true
+		if in_undo_redo_transaction and event is InputEventMouseButton and not (event as InputEventMouseButton).pressed:
+			undo_redo_transaction[UndoRedoEntry.DO_PROPS] = [[svs, 'deformation_map', svs.deformation_map.duplicate(true)]]
+			_commit_undo_redo_transaction()
+		return true
+	return false
+
+
+func _get_preview_rect_size() -> Vector2:
+	return (
+			Vector2(_get_default_rect_width(), _get_default_rect_height())
+				if _create_size_override == Vector2.INF else
+			_create_size_override
+		)
+
+
+func _get_preview_ellipse_size() -> Vector2:
+	return (
+			Vector2(_get_default_ellipse_rx() * 2, _get_default_ellipse_ry() * 2)
+				if _create_size_override == Vector2.INF else
+			_create_size_override
+	)
+
+
+func _get_preview_ellipse_offset() -> Vector2:
+	if _get_center_ellipse_offset() or _is_ctrl_or_cmd_pressed():
+		return Vector2.ZERO
+	if _create_offset_override == Vector2.INF:
+		return _get_ellipse_offset_position()
+	return _create_offset_override
+
+
+func _get_preview_rect_offset() -> Vector2:
+	if _get_center_rect_offset() or _is_ctrl_or_cmd_pressed():
+		return Vector2.ZERO
+	if _create_offset_override == Vector2.INF:
+		return _get_rect_offset_position()
+	return _create_offset_override
+
+
+func _handle_create_primitive_input(event) -> bool:
+	update_overlays()
+	if not shape_preview:
+		shape_preview = Curve2D.new()
+	if _svs_edit_mode == SVSEditMode.CREATE_ELLIPSE:
+		ScalableVectorShape2D.set_ellipse_points(shape_preview,
+				_get_preview_ellipse_size(),
+				_get_preview_ellipse_offset()
+		)
+	else:
+		var siz := _get_preview_rect_size()
+		ScalableVectorShape2D.set_rect_points(shape_preview,
+				siz.x, siz.y,
+				_get_default_rect_rx(), _get_default_rect_ry(),
+				_get_preview_rect_offset()
+		)
+
+	if event is InputEventMouseMotion:
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			var mouse_pos := EditorInterface.get_editor_viewport_2d().get_mouse_position()
+			if _is_snapped_to_pixel():
+				mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+
+			var sel := EditorInterface.get_selection().get_selected_nodes().pop_back()
+			var mul :=  _get_svp_transform(sel)
+
+			var p2 := mouse_pos
+			var p1 := _drag_start
+			if sel is Control or sel is Node2D:
+				p1 = sel.get_global_transform().affine_inverse() * p1
+				p2 = sel.get_global_transform().affine_inverse() * p2
+			var anchor_offset_right := false
+			var anchor_offset_bottom := false
+			if p1.x > p2.x:
+				var swp := p1.x
+				p1.x = p2.x
+				p2.x = swp
+				anchor_offset_right = true
+			if p1.y > p2.y:
+				var swp := p1.y
+				p1.y = p2.y
+				p2.y = swp
+				anchor_offset_bottom = true
+
+			var siz := (p2 * mul) - (p1 * mul)
+			if _svs_edit_mode == SVSEditMode.CREATE_ELLIPSE and siz.x > 0.0 and siz.y > 0.0:
+				_create_size_override = (
+					siz * 2.0 if _get_center_ellipse_offset() or _is_ctrl_or_cmd_pressed() else siz
+				)
+				if _get_center_ellipse_offset() or _is_ctrl_or_cmd_pressed():
+					_create_offset_override = Vector2.ZERO
+				else:
+					_create_offset_override = Vector2(
+						siz.x * -0.5 if anchor_offset_right else siz.x * 0.5,
+						siz.y * -0.5 if anchor_offset_bottom else siz.y * 0.5
+					)
+			elif _svs_edit_mode == SVSEditMode.CREATE_RECT and  siz.x > 0.0 and siz.y > 0.0 and (
+					(siz.x >= _get_default_rect_rx() * 2 and siz.y >= _get_default_rect_ry() * 2) or
+					(_is_ctrl_or_cmd_pressed() and siz.x >= _get_default_rect_rx() and siz.y >= _get_default_rect_ry())
+				):
+				_create_size_override = (
+					siz * 2.0 if _get_center_rect_offset() or _is_ctrl_or_cmd_pressed() else siz
+				)
+				if _get_center_ellipse_offset() or _is_ctrl_or_cmd_pressed():
+					_create_offset_override = Vector2.ZERO
+				else:
+					_create_offset_override = Vector2(
+						siz.x * -0.5 if anchor_offset_right else siz.x * 0.5,
+						siz.y * -0.5 if anchor_offset_bottom else siz.y * 0.5
+					)
+			else:
+				_create_size_override = Vector2.INF
+				_create_offset_override = Vector2.INF
+			return true
+		else:
+			_create_size_override = Vector2.INF
+			_create_offset_override = Vector2.INF
+
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_drag_start = EditorInterface.get_editor_viewport_2d().get_mouse_position()
+			if _is_snapped_to_pixel():
+				_drag_start = _drag_start.snapped(_get_snap_resolution())
+		else:
+			var svs := ScalableVectorShape2D.new()
+			if _svs_edit_mode == SVSEditMode.CREATE_ELLIPSE and not _get_create_ellipse_as_path():
+				svs.shape_type = ScalableVectorShape2D.ShapeType.ELLIPSE
+				svs.size = _get_preview_ellipse_size()
+				svs.offset = _get_preview_ellipse_offset()
+				_create_shape(svs, EditorInterface.get_edited_scene_root(), "Ellipse",
+					null, true)
+			elif _svs_edit_mode == SVSEditMode.CREATE_RECT and not _get_create_rect_as_path():
+				svs.shape_type = ScalableVectorShape2D.ShapeType.RECT
+				svs.size = _get_preview_rect_size()
+				svs.rx = _get_default_rect_rx()
+				svs.ry = _get_default_rect_ry()
+				svs.offset = _get_preview_rect_offset()
+				_create_shape(svs, EditorInterface.get_edited_scene_root(), "Rectangle",
+					null, true)
+			else:
+				svs.curve = shape_preview.duplicate(true)
+				_create_shape(svs, EditorInterface.get_edited_scene_root(), (
+					"Rectangle" if _svs_edit_mode == SVSEditMode.CREATE_RECT else "Ellipse"
+				), null, true)
+			svs.global_position = _svp_mouse_pos(_drag_start, EditorInterface.get_selection().get_selected_nodes().pop_back())
+			if _get_keep_drawing_behavior() == KeepDrawingBehavior.KEEP_DRAWING_ON_SAME_PARENT:
+				select_node_reversibly(svs.get_parent())
+			else:
+				svs_edit_buttons.set_default_mode(true)
+			_create_size_override = Vector2.INF
+			_create_offset_override = Vector2.INF
+			shape_preview = null
+		return true
+
+	return false
+
+
+func _forward_canvas_gui_input(event: InputEvent) -> bool:
+	if (
+			event is InputEventMouseButton and
+			(event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT
+	):
+		if _svs_edit_mode in CANCELABLE_MODES:
+			_on_svs_edit_mode_changed(SVSEditMode.NONE)
+			return true
+
+	if _svs_edit_mode == SVSEditMode.MERGE:
+		return _handle_draw_merge_box_input(event)
+	elif _svs_edit_mode == SVSEditMode.PENCIL or _svs_edit_mode == SVSEditMode.KNIFE:
+		return _handle_pencil_draw_input(event)
+	elif _svs_edit_mode == SVSEditMode.BRUSH:
+		return _handle_brush_draw_input(event)
+	elif _svs_edit_mode == SVSEditMode.PAINT_BONE:
+		return _handle_bone_paint_input(event)
+	elif _svs_edit_mode == SVSEditMode.CREATE_ELLIPSE or _svs_edit_mode == SVSEditMode.CREATE_RECT:
+		return _handle_create_primitive_input(event)
+
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		_lmb_is_down_inside_viewport = (event as InputEventMouseButton).pressed
+
+	if (in_undo_redo_transaction and event is InputEventMouseButton
+			and event.button_index == MOUSE_BUTTON_LEFT
+			and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)):
+		_commit_undo_redo_transaction()
+	if (in_undo_redo_transaction and event is InputEventKey
+			and event.keycode == KEY_SHIFT and
+			not Input.is_key_pressed(KEY_SHIFT)):
+		_commit_undo_redo_transaction()
+	if not _is_editing_enabled():
+		return false
+	if not _is_change_pivot_button_active() and not _get_select_mode_button().button_pressed:
+		return false
+	if not is_instance_valid(EditorInterface.get_edited_scene_root()):
+		return false
+	var current_selection := EditorInterface.get_selection().get_selected_nodes().pop_back()
+	if _is_svs_valid(current_selection) and _get_select_mode_button().button_pressed:
+		if event is InputEventKey and (event as InputEventKey).keycode == KEY_A and (
+				not (event as InputEventKey).is_command_or_control_pressed() and
+				not (event as InputEventKey).shift_pressed and
+				not (event as InputEventKey).alt_pressed
+		):
+			_on_svs_edit_mode_changed(SVSEditMode.SET_PIVOT)
+		if _svs_edit_mode == SVSEditMode.TRANSLATE:
+			return _handle_input_for_uniform_translate(event, current_selection)
+		elif _svs_edit_mode == SVSEditMode.SCALE:
+			return _handle_input_for_uniform_scale(event, current_selection)
+		elif _svs_edit_mode == SVSEditMode.ROTATE:
+			return _handle_input_for_uniform_rotate(event, current_selection)
+
+
+	if ((_is_svs_valid(current_selection) and _is_ctrl_or_cmd_pressed() and Input.is_key_pressed(KEY_SHIFT))
+			or
+		(_is_svs_valid(current_selection) and _is_ctrl_or_cmd_pressed() and _hover_closest_point_on_curve)
+	):
+		_lock_vp_scroll()
+	else:
+		_locking_vp_horizontal_scrollbar = false
+		_locking_vp_vertical_scrollbar = false
+
+	if event is InputEventKey and event.keycode == KEY_ALT and event.is_pressed() and _is_svs_valid(current_selection):
+		_set_handle_hover(_svp_mouse_pos(
+				EditorInterface.get_editor_viewport_2d().get_mouse_position(),
+				current_selection), current_selection
+		)
+
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if is_instance_valid(current_selection) and not (event as InputEventMouseButton).pressed:
+			if _dragging_selection:
+				_dragging_selection = false
+				return false
+		var mouse_pos := _svp_mouse_pos(
+				EditorInterface.get_editor_viewport_2d().get_mouse_position(),
+				current_selection)
+		if (_is_change_pivot_button_active() or _svs_edit_mode == SVSEditMode.SET_PIVOT) and event.is_pressed():
+			if _is_svs_valid(current_selection):
+				_set_shape_origin(current_selection, mouse_pos)
+				return true
+		else:
+			if _is_svs_valid(current_selection) and _handle_has_hover(current_selection):
+				if event.double_click and _hover_point_idx > -1:
+					_toggle_loop_if_applies(current_selection, _hover_point_idx)
+				elif (_is_svs_valid(current_selection) and Input.is_key_pressed(KEY_ALT)
+						and current_selection.shape_type == ScalableVectorShape2D.ShapeType.PATH
+						and _curve_control_has_hover(current_selection)):
+					set_global_position_popup_panel.popup_with_value(
+							_get_hovered_handle_metadata(current_selection),
+							_is_snapped_to_pixel(),
+							_get_snap_resolution()
+					)
+				return true
+			elif _is_svs_valid(current_selection) and _is_ctrl_or_cmd_pressed() and Input.is_key_pressed(KEY_SHIFT):
+				if _is_snapped_to_pixel():
+					mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+				if (not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and
+							current_selection.has_fine_point(
+									_svp_mouse_pos(mouse_pos, current_selection))):
+					_start_cutout_shape(current_selection, mouse_pos)
+				return true
+			elif _is_svs_valid(current_selection) and _is_ctrl_or_cmd_pressed():
+				if _is_snapped_to_pixel():
+					mouse_pos = mouse_pos.snapped(_get_snap_resolution())
+				if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not current_selection.is_curve_closed():
+					_add_point_on_position(current_selection, mouse_pos)
+				return true
+			elif _is_svs_valid(current_selection) and _hover_closest_point_on_curve:
+				var cp_md : ClosestPointOnCurveMeta = _hover_closest_point_on_curve
+				if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and current_selection.is_arc_start(cp_md.before_segment - 1):
+					arc_settings_popup_panel.popup_with_value(current_selection.arc_list.get_arc_for_point(cp_md.before_segment - 1))
+				elif not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and Input.is_key_pressed(KEY_ALT):
+					_add_point_on_curve_segment(current_selection, true)
+				elif event.double_click:
+					_add_point_on_curve_segment(current_selection)
+				return true
+			elif _is_svs_valid(current_selection) and _hover_closest_point_on_gradient != Vector2.INF:
+				if event.double_click:
+					_add_color_stop(current_selection, mouse_pos)
+				return true
+			elif _is_svs_valid(current_selection) and current_selection.has_fine_point(_svp_mouse_pos(mouse_pos, current_selection)) and event.double_click:
+				_subdivide_curve(current_selection)
+				return true
+			else:
+				var results := _find_scalable_vector_shape_2d_nodes_at(mouse_pos)
+				var refined_result := results.rfind_custom(func(x): return x.has_fine_point(_svp_mouse_pos(mouse_pos, x)))
+				if refined_result > -1 and results[refined_result]:
+					if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+						selection_candidate = results[refined_result]
+						return true
+					else:
+						if selection_candidate == results[refined_result]:
+							EditorInterface.edit_node(results[refined_result])
+							return true
+				var result = results.pop_back()
+				if is_instance_valid(result):
+					if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+						selection_candidate = result
+						return true
+					else:
+						if selection_candidate == result:
+							EditorInterface.edit_node(result)
+							return true
+		return false
+
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if _is_svs_valid(current_selection) and _is_ctrl_or_cmd_pressed() and Input.is_key_pressed(KEY_SHIFT):
+			if not event.is_pressed():
+				current_clip_operation += 1
+				current_clip_operation = 2 if current_clip_operation < 0 else current_clip_operation
+				current_clip_operation = 0 if current_clip_operation > 2 else current_clip_operation
+			return true
+		if _is_svs_valid(current_selection) and _handle_has_hover(current_selection) and not _is_editing_width_curve(current_selection):
+			if not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not _is_ctrl_or_cmd_pressed():
+				if _hover_point_idx > -1 and current_selection.shape_type == ScalableVectorShape2D.ShapeType.PATH:
+					_remove_point_from_curve(current_selection, _hover_point_idx)
+				elif _hover_cp_in_idx > -1:
+					if current_selection.shape_type == ScalableVectorShape2D.ShapeType.RECT:
+						_remove_rounded_corners_from_rect(current_selection)
+					else:
+						_remove_cp_in_from_curve(current_selection, _hover_cp_in_idx)
+				elif _hover_cp_out_idx > -1:
+					if current_selection.shape_type == ScalableVectorShape2D.ShapeType.RECT:
+						_remove_rounded_corners_from_rect(current_selection)
+					else:
+						_remove_cp_out_from_curve(current_selection, _hover_cp_out_idx)
+				elif _hover_gradient_color_stop_idx > -1:
+					_remove_color_stop(current_selection, _hover_gradient_color_stop_idx)
+			return true
+		if _is_svs_valid(current_selection) and _hover_closest_point_on_curve:
+			if not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+				if _is_ctrl_or_cmd_pressed():
+					_remove_width_curve_point(current_selection)
+				else:
+					var cp_md = _hover_closest_point_on_curve
+					if current_selection.is_arc_start(cp_md.before_segment - 1):
+						_remove_arc(current_selection, cp_md.before_segment - 1)
+					else:
+						_create_arc(current_selection, cp_md.before_segment - 1)
+			return true
+
+	if (event is InputEventMouseButton and Input.is_key_pressed(KEY_SHIFT) and
+			event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]):
+		if _is_svs_valid(current_selection):
+			if _is_ctrl_or_cmd_pressed():
+				if not event.is_pressed():
+					current_cutout_shape += 1 if event.button_index == MOUSE_BUTTON_WHEEL_DOWN else -1
+					current_cutout_shape = 2 if current_cutout_shape < 0 else current_cutout_shape
+					current_cutout_shape = 0 if current_cutout_shape > 2 else current_cutout_shape
+				return true
+			if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				_resize_shape(current_selection, 0.99)
+			else:
+				_resize_shape(current_selection, 1.01)
+			return true
+
+	if (event is InputEventMouseButton and _is_ctrl_or_cmd_pressed() and
+				_is_svs_valid(current_selection) and
+				_hover_closest_point_on_curve and
+				event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] and
+				event.is_pressed()):
+		_change_width_curve(current_selection, event.button_index == MOUSE_BUTTON_WHEEL_UP)
+		return true
+
+	if event is InputEventMouseMotion:
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and is_instance_valid(current_selection):
+			_dragging_selection = true
+
+		var mouse_pos := _svp_mouse_pos(
+				EditorInterface.get_editor_viewport_2d().get_mouse_position(),
+				current_selection)
+		_select_hinted_svs = []
+
+		if _is_svs_valid(current_selection) and not _handle_has_hover(current_selection) and _hover_closest_point_on_curve:
+			if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+				_drag_curve_segment(current_selection, mouse_pos)
+				return true
+
+		if _is_svs_valid(current_selection):
+			if _hover_closest_point_on_curve:
+				_hover_closest_point_on_curve = null
+
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and _is_svs_valid(current_selection):
+			if _handle_has_hover(current_selection):
+				if _hover_point_idx > -1:
+					var pt_idx : int = _hover_point_idx
+					if current_selection.shape_type != ScalableVectorShape2D.ShapeType.PATH:
+						_update_rect_dimensions(current_selection, mouse_pos)
+					elif Input.is_key_pressed(KEY_SHIFT):
+						if pt_idx == 0:
+							_update_curve_cp_out_position(current_selection, mouse_pos, pt_idx)
+						else:
+							_update_curve_cp_in_position(current_selection, mouse_pos, pt_idx)
+					else:
+						_update_curve_point_position(current_selection, mouse_pos, pt_idx)
+				elif _hover_cp_in_idx > -1:
+					if current_selection.shape_type == ScalableVectorShape2D.ShapeType.RECT:
+						_update_rect_corner_radius(current_selection, mouse_pos, "rx", !Input.is_key_pressed(KEY_SHIFT))
+					else:
+						_update_curve_cp_in_position(current_selection, mouse_pos, _hover_cp_in_idx)
+				elif _hover_cp_out_idx > -1:
+					if current_selection.shape_type == ScalableVectorShape2D.ShapeType.RECT:
+						_update_rect_corner_radius(current_selection, mouse_pos, "ry", !Input.is_key_pressed(KEY_SHIFT))
+					else:
+						_update_curve_cp_out_position(current_selection, mouse_pos, _hover_cp_out_idx)
+				elif _hover_gradient_from:
+					_update_gradient_from_position(current_selection, mouse_pos)
+				elif _hover_gradient_to:
+					_update_gradient_to_position(current_selection, mouse_pos)
+				elif _hover_gradient_color_stop_idx > -1:
+					_update_gradient_stop_color_pos(current_selection, mouse_pos,
+							_hover_gradient_color_stop_idx)
+				update_overlays()
+				return true
+		else:
+			for result : ScalableVectorShape2D in _find_scalable_vector_shape_2d_nodes_at(mouse_pos):
+				_select_hinted_svs.append(result)
+			if _is_svs_valid(current_selection):
+				_set_handle_hover(mouse_pos, current_selection)
+		update_overlays()
+	return false
+
+
+func _on_resources_reloaded(resources : PackedStringArray) -> void:
+	var root := EditorInterface.get_edited_scene_root()
+	if not is_instance_valid(root):
+		return
+	for path in resources:
+		if root is SyncedSVGRoot and path == root.svg_resource_path:
+			_reimport_synchronized_svg_file(root)
+		for svg_root : SyncedSVGRoot in root.find_children("*", "SyncedSVGRoot"):
+			if path == svg_root.svg_resource_path:
+				_reimport_synchronized_svg_file(svg_root)
+
+
+func _reimport_synchronized_svg_file(svg_root : SyncedSVGRoot) -> void:
+	var scene_root := EditorInterface.get_edited_scene_root()
+	if not is_instance_valid(scene_root):
+		return
+	var new_checksum := FileAccess.get_md5(svg_root.svg_resource_path)
+	if new_checksum == svg_root.get_meta("_checksum"):
+		return
+	var ch := svg_root.get_child(0)
+	if is_instance_valid(ch) and ch.owner != scene_root:
+		_pretty_print_svg_import_msg("⚠️ Synchronized SVG in external scene changed, it can only be resynced in that scene %s" % str(svg_root), SVGImporter.LogLevel.DEBUG)
+		return
+	if svg_root.has_meta("is_importing"):
+		return
+	var stored_global_transform = svg_root.global_transform
+	svg_root.global_transform = Transform2D.IDENTITY
+	svg_root.set_meta("is_importing", true)
+	svg_root.set_meta("_checksum", new_checksum)
+	if is_instance_valid(ch):
+		svg_root.remove_child(ch)
+	var svg_importer := SVGImporter.instantiate_from_synced_svg_root(svg_root,
+			SVGImporter.get_runtime_handler(), _pretty_print_svg_import_msg)
+	await svg_importer.load_svg(svg_root.svg_resource_path,
+			scene_root, [svg_root])
+	svg_root.global_transform = stored_global_transform
+	svg_root.remove_meta("is_importing")
+	svg_root.update_configuration_warnings()
+	EditorInterface.mark_scene_as_unsaved()
+
+
+func _pretty_print_svg_import_msg(msg : String, lvl : SVGImporter.LogLevel) -> void:
+	match lvl:
+		SVGImporter.LogLevel.ERROR:
+			print_rich("[color=red]%s" % msg)
+		SVGImporter.LogLevel.WARN:
+			print_rich("[color=yellow]%s" % msg)
+		SVGImporter.LogLevel.DEBUG:
+			print_rich("[color=888888]%s" % msg)
+		SVGImporter.LogLevel.INFO,_:
+			print(msg)
+
+static func _polygon_can_be_drawn(points) -> bool:
+	return Geometry2D.triangulate_polygon(PackedVector2Array(points)).size() > 0
+
+
+static func _is_editing_enabled() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_EDITING_ENABLED):
+		return ProjectSettings.get_setting(SETTING_NAME_EDITING_ENABLED)
+	return true
+
+
+static func _are_hints_enabled() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_HINTS_ENABLED):
+		return ProjectSettings.get_setting(SETTING_NAME_HINTS_ENABLED)
+	return true
+
+
+static func _am_showing_point_numbers() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_SHOW_POINT_NUMBERS):
+		return ProjectSettings.get_setting(SETTING_NAME_SHOW_POINT_NUMBERS)
+	return true
+
+
+static func _get_default_ellipse_rx() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_ELLIPSE_RX):
+		return ProjectSettings.get_setting(SETTING_NAME_ELLIPSE_RX)
+	return 50.0
+
+
+static func _get_default_ellipse_ry() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_ELLIPSE_RY):
+		return ProjectSettings.get_setting(SETTING_NAME_ELLIPSE_RY)
+	return 50.0
+
+
+static func _get_center_ellipse_offset() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_CENTER_ELLIPSE_OFFSET):
+		return ProjectSettings.get_setting(SETTING_NAME_CENTER_ELLIPSE_OFFSET)
+	return false
+
+
+static func _get_create_ellipse_as_path() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_CREATE_ELLIPSE_AS_PATH):
+		return ProjectSettings.get_setting(SETTING_NAME_CREATE_ELLIPSE_AS_PATH)
+	return false
+
+
+static func _get_default_rect_width() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_RECT_WIDTH):
+		return ProjectSettings.get_setting(SETTING_NAME_RECT_WIDTH)
+	return 100.0
+
+
+static func _get_default_rect_height() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_RECT_HEIGHT):
+		return ProjectSettings.get_setting(SETTING_NAME_RECT_HEIGHT)
+	return 100.0
+
+
+static func _get_default_rect_rx() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_RECT_RX):
+		return ProjectSettings.get_setting(SETTING_NAME_RECT_RX)
+	return 0.0
+
+
+static func _get_default_rect_ry() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_RECT_RY):
+		return ProjectSettings.get_setting(SETTING_NAME_RECT_RY)
+	return 0.0
+
+
+static func _get_center_rect_offset() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_CENTER_RECT_OFFSET):
+		return ProjectSettings.get_setting(SETTING_NAME_CENTER_RECT_OFFSET)
+	return false
+
+
+static func _get_create_rect_as_path() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_CREATE_RECT_AS_PATH):
+		return ProjectSettings.get_setting(SETTING_NAME_CREATE_RECT_AS_PATH)
+	return false
+
+
+static func _get_default_stroke_width() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_STROKE_WIDTH):
+		return ProjectSettings.get_setting(SETTING_NAME_STROKE_WIDTH)
+	return 10.0
+
+
+static func _get_default_stroke_color() -> Color:
+	if ProjectSettings.has_setting(SETTING_NAME_STROKE_COLOR):
+		return ProjectSettings.get_setting(SETTING_NAME_STROKE_COLOR)
+	return Color.WHITE
+
+
+static func _get_default_begin_cap() -> Line2D.LineCapMode:
+	if ProjectSettings.has_setting(SETTING_NAME_DEFAULT_LINE_BEGIN_CAP):
+		return ProjectSettings.get_setting(SETTING_NAME_DEFAULT_LINE_BEGIN_CAP)
+	return Line2D.LineCapMode.LINE_CAP_NONE
+
+
+static func _get_default_end_cap() -> Line2D.LineCapMode:
+	if ProjectSettings.has_setting(SETTING_NAME_DEFAULT_LINE_END_CAP):
+		return ProjectSettings.get_setting(SETTING_NAME_DEFAULT_LINE_END_CAP)
+	return Line2D.LineCapMode.LINE_CAP_NONE
+
+
+static func _get_default_joint_mode() -> Line2D.LineJointMode:
+	if ProjectSettings.has_setting(SETTING_NAME_DEFAULT_LINE_JOINT_MODE):
+		return ProjectSettings.get_setting(SETTING_NAME_DEFAULT_LINE_JOINT_MODE)
+	return Line2D.LineJointMode.LINE_JOINT_SHARP
+
+
+static func _get_default_stroke_extrusion_direction() -> ScalableVectorShape2D.StrokeExtrusionDirection:
+	if ProjectSettings.has_setting(CurvedLines2D.SETTING_NAME_DEFAULT_EXTRUSION):
+		return ProjectSettings.get_setting(CurvedLines2D.SETTING_NAME_DEFAULT_EXTRUSION)
+	return ScalableVectorShape2D.StrokeExtrusionDirection.MIDDLE
+
+
+static func _get_default_fill_color() -> Color:
+	if ProjectSettings.has_setting(SETTING_NAME_FILL_COLOR):
+		return ProjectSettings.get_setting(SETTING_NAME_FILL_COLOR)
+	return Color.WHITE
+
+
+static func _is_add_stroke_enabled() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_ADD_STROKE_ENABLED):
+		return ProjectSettings.get_setting(SETTING_NAME_ADD_STROKE_ENABLED)
+	return true
+
+
+static func _using_line_2d_for_stroke() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_USE_LINE_2D_FOR_STROKE):
+		return ProjectSettings.get_setting(SETTING_NAME_USE_LINE_2D_FOR_STROKE)
+	return true
+
+
+static func _is_add_fill_enabled() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_ADD_FILL_ENABLED):
+		return ProjectSettings.get_setting(SETTING_NAME_ADD_FILL_ENABLED)
+	return true
+
+
+static func _add_collision_object_type() -> ScalableVectorShape2D.CollisionObjectType:
+	if ProjectSettings.has_setting(SETTING_NAME_ADD_COLLISION_TYPE):
+		return ProjectSettings.get_setting(SETTING_NAME_ADD_COLLISION_TYPE)
+	return ScalableVectorShape2D.CollisionObjectType.NONE
+
+
+static func _get_default_paint_order() -> PaintOrder:
+	if ProjectSettings.has_setting(SETTING_NAME_PAINT_ORDER):
+		return ProjectSettings.get_setting(SETTING_NAME_PAINT_ORDER)
+	return PaintOrder.FILL_STROKE_MARKERS
+
+
+static func _is_setting_update_curve_at_runtime() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_CURVE_UPDATE_CURVE_AT_RUNTIME):
+		return ProjectSettings.get_setting(SETTING_NAME_CURVE_UPDATE_CURVE_AT_RUNTIME)
+	return true
+
+
+static func _is_making_curve_resources_local_to_scene() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_CURVE_RESOURCE_LOCAL_TO_SCENE):
+		return ProjectSettings.get_setting(SETTING_NAME_CURVE_RESOURCE_LOCAL_TO_SCENE)
+	return true
+
+
+static func _use_antialiased_line_2d() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_ANTIALIASED_LINE_2D):
+		return ProjectSettings.get_setting(SETTING_NAME_ANTIALIASED_LINE_2D)
+	return false
+
+
+static func _get_default_tolerance_degrees() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_CURVE_TOLERANCE_DEGREES):
+		return ProjectSettings.get_setting(SETTING_NAME_CURVE_TOLERANCE_DEGREES)
+	return 4.0
+
+
+static func _get_default_max_stages() -> int:
+	if ProjectSettings.has_setting(SETTING_NAME_CURVE_MAX_STAGES):
+		return ProjectSettings.get_setting(SETTING_NAME_CURVE_MAX_STAGES)
+	return 5
+
+
+static func _get_keep_drawing_behavior() -> KeepDrawingBehavior:
+	if ProjectSettings.has_setting(SETTING_NAME_KEEP_DRAWING):
+		return ProjectSettings.get_setting(SETTING_NAME_KEEP_DRAWING)
+	return KeepDrawingBehavior.KEEP_DRAWING_ON_SAME_PARENT
+
+
+static func _get_guarded_brush_granularity() -> float:
+	return min(
+		min(_get_freehand_draw_granularity(), float(_get_brush_size_x()) * (2.0/3.0)),
+		float(_get_brush_size_y()) * (2.0/3.0)
+	)
+
+
+static func _get_freehand_draw_granularity() -> int:
+	if ProjectSettings.has_setting(SETTING_NAME_FREEHAND_DRAW_GRANULARITY):
+		return ProjectSettings.get_setting(SETTING_NAME_FREEHAND_DRAW_GRANULARITY)
+	return 4
+
+
+static func _get_close_pencil_path() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_CLOSE_PENCIL_PATH):
+		return ProjectSettings.get_setting(SETTING_NAME_CLOSE_PENCIL_PATH)
+	return false
+
+
+static func _apply_curve_fitting() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_APPLY_CURVE_FITTING):
+		return ProjectSettings.get_setting(SETTING_NAME_APPLY_CURVE_FITTING)
+	return true
+
+
+static func _get_brush_size_x() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_BRUSH_SIZE_X):
+		return ProjectSettings.get_setting(SETTING_NAME_BRUSH_SIZE_X)
+	return 25.0
+
+
+static func _get_brush_size_y() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_BRUSH_SIZE_Y):
+		return ProjectSettings.get_setting(SETTING_NAME_BRUSH_SIZE_Y)
+	return 25.0
+
+
+static func _get_brush_rotation() -> float:
+	if ProjectSettings.has_setting(SETTING_NAME_BRUSH_ROTATION):
+		return ProjectSettings.get_setting(SETTING_NAME_BRUSH_ROTATION)
+	return 0.0
+
+
+static func _get_brush_shape() -> BrushShape:
+	if ProjectSettings.has_setting(SETTING_NAME_BRUSH_SHAPE):
+		return ProjectSettings.get_setting(SETTING_NAME_BRUSH_SHAPE)
+	return BrushShape.ELLIPSE
+
+
+static func _get_brush_fill_in_parent_shape() -> bool:
+	if ProjectSettings.has_setting(SETTING_NAME_BRUSH_FILL_IN_PARENT_SHAPE):
+		return ProjectSettings.get_setting(SETTING_NAME_BRUSH_FILL_IN_PARENT_SHAPE)
+	return false
+
+func _exit_tree():
+	if _get_select_mode_button().toggled.is_connected(_on_select_mode_toggled):
+		_get_select_mode_button().toggled.disconnect(_on_select_mode_toggled)
+
+	if is_instance_valid(_snap_dialog) and _snap_dialog.confirmed.is_connected(_on_confirm_grid_snap_settings):
+		_snap_dialog.confirmed.disconnect(_on_confirm_grid_snap_settings)
+
+	svs_edit_buttons.queue_free()
+	remove_inspector_plugin(plugin)
+	remove_custom_type("DrawablePath2D")
+	remove_custom_type("ScalableVectorShape2D")
+	remove_control_from_bottom_panel(scalable_vector_shapes_2d_dock)
+	scalable_vector_shapes_2d_dock.free()
+	set_global_position_popup_panel.free()

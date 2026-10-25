@@ -7,6 +7,7 @@ signal light_broken(room_index, lamp_id)
 var current_room_index: int = 0
 var max_room_reached: int = 0
 var invincible: bool = false
+var is_dying = false
 
 # ---------- ENTITY STATE ----------
 var entity_active: bool = false

@@ -219,6 +219,7 @@ func trigger_jumpscare(killer: String):
 	if is_dying:
 		return   # already caught by something else
 	is_dying = true
+	gameManager.is_dying = true
 	is_transitioning = true
 	murk_countdown = -1.0
 	remove_murk()
@@ -321,7 +322,7 @@ func update_darkness(index: int, instant: bool):
 	var target = get_darkness_color(index)
 	if instant:
 		darkness.color = target
-		murk_darkness.color = target.lerp(Color.WHITE, 0.15)
+		murk_darkness.color = target.lerp(Color.WHITE, 0.35)
 		return
 	var tween = create_tween()
 	tween.tween_property(darkness, "color", target, 0.2)

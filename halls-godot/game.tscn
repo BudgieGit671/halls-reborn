@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://bbn00yoer6d5o" path="res://world.gd" id="1_ryrav"]
 [ext_resource type="PackedScene" uid="uid://er558qr0gt0j" path="res://rooms/room_entrance.tscn" id="2_j5wjh"]
 [ext_resource type="PackedScene" uid="uid://ccqg4yf7tc765" path="res://rooms/room_waiting.tscn" id="3_vef74"]
+[ext_resource type="PackedScene" uid="uid://bh7xwtkmb4442" path="res://rooms/Yroom1.tscn" id="4_hve3p"]
 [ext_resource type="Texture2D" uid="uid://5bkhncij3oog" path="res://raw_assets/textures/sprites/entities/whisk/jums.png" id="5_ryrav"]
 [ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="6_eow3j"]
 [ext_resource type="Texture2D" uid="uid://cuj0kk1uuadtk" path="res://raw_assets/textures/sprites/entities/whisk/Idle.png" id="6_j5wjh"]
@@ -27,7 +28,7 @@ func _process(delta: float) -> void:
 script = ExtResource("1_ryrav")
 murk_jumpscare_sound = NodePath("Player/Camera2D/JumpscareOverlay/MurkJumpscareSound")
 start_room = ExtResource("2_j5wjh")
-room_scenes = Array[PackedScene]([ExtResource("3_vef74")])
+room_scenes = Array[PackedScene]([ExtResource("3_vef74"), ExtResource("4_hve3p")])
 
 [node name="Darkness" type="CanvasModulate" parent="." unique_id=1293311830]
 z_index = 100

@@ -1,0 +1,162 @@
+@tool
+extends HBoxContainer
+
+signal mode_changed(mode : CurvedLines2D.SVSEditMode)
+signal flip_horizontal()
+signal flip_vertical()
+signal convert_to_svs()
+
+func show_svs_editors() -> void:
+	%UniformRotate.show()
+	%UniformTranslate.show()
+	%UniformScale.show()
+	%FlipHorizontal.show()
+	%FlipVertical.show()
+	%PaintBone.show()
+	%VSeparator1.show()
+	%VSeparator2.show()
+
+
+func hide_svs_editors() -> void:
+	%UniformRotate.hide()
+	%UniformTranslate.hide()
+	%UniformScale.hide()
+	%FlipHorizontal.hide()
+	%FlipVertical.hide()
+	%PaintBone.hide()
+	%VSeparator1.hide()
+	%VSeparator2.hide()
+
+
+func show_convert_to_svs() -> void:
+	%ConvertToSVS.show()
+
+
+func hide_convert_to_svs() -> void:
+	%ConvertToSVS.hide()
+
+
+func show_knife() -> void:
+	%Knife.show()
+
+
+func hide_knife() -> void:
+	%Knife.hide()
+
+
+func set_default_mode(svs_is_selected := false) -> void:
+	%DefaultEdit.button_pressed = true
+
+
+func _on_default_edit_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.NONE)
+
+
+func _on_uniform_translate_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.TRANSLATE)
+
+
+func _on_uniform_rotate_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.ROTATE)
+
+
+func _on_uniform_scale_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.SCALE)
+
+
+
+func _on_brush_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.BRUSH)
+
+
+func _on_pencil_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.PENCIL)
+
+
+func _on_knife_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.KNIFE)
+
+
+func _on_merge_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.MERGE)
+
+
+func _on_paint_bone_toggled(toggled_on: bool) -> void:
+	if toggled_on:
+		mode_changed.emit(CurvedLines2D.SVSEditMode.PAINT_BONE)
+
+
+func _on_flip_horizontal_pressed() -> void:
+	flip_horizontal.emit()
+
+
+func _on_flip_vertical_pressed() -> void:
+	flip_vertical.emit()
+
+
+func _on_convert_to_svs_pressed() -> void:
+	convert_to_svs.emit()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventKey and (event as InputEventKey).pressed:
+		if (event as InputEventKey).is_command_or_control_pressed():
+			return
+		if (event as InputEventKey).keycode == KEY_Z:
+			%UniformTranslate.button_pressed = true
+		if (event as InputEventKey).keycode == KEY_X:
+			%UniformRotate.button_pressed = true
+		if (event as InputEventKey).keycode == KEY_C:
+			%UniformScale.button_pressed = true
+		if (event as InputEventKey).keycode == KEY_M and Input.is_key_pressed(KEY_SHIFT):
+			%Merge.button_pressed = true
+		if (event as InputEventKey).keycode == KEY_N and Input.is_key_pressed(KEY_SHIFT):
+			%Pencil.button_pressed = true
+		if (event as InputEventKey).keycode == KEY_B and Input.is_key_pressed(KEY_SHIFT):
+			%Brush.button_pressed = true
+		if (event as InputEventKey).keycode == KEY_K and %Knife.visible:
+			%Knife.button_pressed = true
+
+
+func set_edit_mode_toggle_button(mode : CurvedLines2D.SVSEditMode) -> void:
+	match mode:
+		CurvedLines2D.SVSEditMode.NONE:
+			if not %DefaultEdit.button_pressed:
+				%DefaultEdit.button_pressed = true
+		CurvedLines2D.SVSEditMode.TRANSLATE:
+			if not %UniformTranslate.button_pressed:
+				%UniformTranslate.button_pressed = true
+		CurvedLines2D.SVSEditMode.SCALE:
+			if not %UniformScale.button_pressed:
+				%UniformScale.button_pressed = true
+		CurvedLines2D.SVSEditMode.ROTATE:
+			if not %UniformRotate.button_pressed:
+				%UniformRotate.button_pressed = true
+		CurvedLines2D.SVSEditMode.BRUSH:
+			if not %Brush.button_pressed:
+				%Brush.button_pressed = true
+		CurvedLines2D.SVSEditMode.PENCIL:
+			if not %Pencil.button_pressed:
+				%Pencil.button_pressed = true
+		CurvedLines2D.SVSEditMode.KNIFE:
+			if not %Knife.button_pressed:
+				%Knife.button_pressed = true
+		CurvedLines2D.SVSEditMode.PAINT_BONE:
+			if not %PaintBone.button_pressed:
+				%PaintBone.button_pressed = true
+		CurvedLines2D.SVSEditMode.MERGE:
+			if not %Merge.button_pressed:
+				%Merge.button_pressed = true
+		_:
+			for b in find_children("*", "Button"):
+				b.button_pressed = false
