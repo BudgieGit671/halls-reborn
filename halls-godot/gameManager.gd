@@ -1,5 +1,6 @@
 extends Node
 
+signal fake_door_opened
 signal door_opened(direction)   # a door was used (door.gd emits, main.gd listens)
 signal entity_started           # Whisk's event begins (gameManager emits, main.gd listens)
 signal light_broken(room_index, lamp_id)
@@ -7,7 +8,10 @@ signal light_broken(room_index, lamp_id)
 var current_room_index: int = 0
 var max_room_reached: int = 0
 var invincible: bool = false
+var jumpscares_disabled: bool = false
 var is_dying = false
+var FAKE_DOOR_CHANCE := 0.5
+var fork_choice := {} 
 
 # ---------- ENTITY STATE ----------
 var entity_active: bool = false
@@ -42,8 +46,13 @@ func generate_events():
 	events.resize(100)
 	place_events(3, 10)    # one Whisk somewhere in rooms 3-10
 	place_events(11, 17)   # one Whisk somewhere in rooms 11-17
-	events[3] = "Whisk"  # <- uncomment to test, then delete
-	events[2] = "Dark"
+	place_events(18,24)
+	place_events(25,35)
+	place_events(36,40)
+	place_events(41,44)
+	place_events(45,47)
+	#events[3] = "Whisk"  # <- uncomment to test, then delete
+	#events[2] = "Dark"
 
 func _process(delta):
 	if flicker_time_left > 0.0:
@@ -70,7 +79,7 @@ func place_events(from_room: int, to_room: int):
 	for i in range(from_room, to_room):
 		# Dark rooms only go on empty slots whose neighbours are also empty
 		if events[i] == "" and events[i - 1] == "" and events[i + 1] == "":
-			if randi() % 5 == 1:   # 1 in 5 chance
+			if randi() % 3 == 1:   # 1 in 5 chance
 				events[i] = "Dark"
 
 # Safe lookup: returns "" outside the list instead of crashing
@@ -109,6 +118,7 @@ func reset_run():
 	flicker_time_left = 0.0
 	entity_room_index = -ENTITY_SPAWN_DELAY
 	broken_lights.clear()
+	fork_choice.clear()
 	run_seed = randi()
 	generate_events()
 
@@ -129,6 +139,23 @@ func load_paintings():
 	for n in names:
 		paintings.append(load(PAINTING_FOLDER + n))
 	print("Loaded ", paintings.size(), " paintings")
+
+func fork_rng(room: int) -> RandomNumberGenerator:
+	var rng = RandomNumberGenerator.new()
+	rng.seed = hash([run_seed, room, "fork"])
+	return rng
+
+func room_has_fake_door(room: int) -> bool:
+	return fork_rng(room).randf() < FAKE_DOOR_CHANCE
+
+# Which path leads to the REAL door
+func get_real_path(room: int) -> String:
+	var rng = RandomNumberGenerator.new()
+	rng.seed = hash([run_seed, room, "real_path"])
+	return "up" if rng.randf() < 0.5 else "down"
+
+func get_whisk_branch(room: int) -> String:
+	return get_real_path(room)
 
 func play_music(stream: AudioStream, volume_db: float = 0.0) -> void:
 	if music_player.playing and music_player.stream == stream:

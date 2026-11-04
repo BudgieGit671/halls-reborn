@@ -4,11 +4,14 @@ extends Node2D
 @export var max_size := Vector2(110, 110)
 # Chance that a spot is left empty (0.0 = every spot filled, 0.2 = about 1 in 5 is bare)
 @export_range(0.0, 1.0) var empty_chance := 0.15
-
+var is_visible = true
 func _ready():
 	if gameManager.paintings.is_empty():
 		return
-
+	if randi_range(1,5) < 5:
+		is_visible = true
+	else:
+		is_visible = false
 	# Random generator that gives the same results for the same room in the same run
 	var rng = RandomNumberGenerator.new()
 	rng.seed = hash([gameManager.run_seed, gameManager.current_room_index])
@@ -28,6 +31,12 @@ func _ready():
 		available.remove_at(slot)
 
 		var painting = Sprite2D.new()
+		if is_visible:
+			painting.visible = true
+			print("Painting is visible")
+		else:
+			painting.visible = false
+			print("Painting is NOT visible")
 		painting.texture = texture
 		# scale to fit the box without stretching
 		var fit = min(max_size.x / texture.get_width(), max_size.y / texture.get_height())

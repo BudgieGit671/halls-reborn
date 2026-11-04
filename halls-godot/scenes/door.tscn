@@ -9,9 +9,10 @@ size = Vector2(18.984375, 15.676094)
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_rr1h5"]
 
-[node name="Door" type="Node2D" unique_id=1920532332]
+[node name="Door" type="Node2D" unique_id=1920532332 node_paths=PackedStringArray("sprite")]
 scale = Vector2(1.587, 1.587)
 script = ExtResource("1_18pbm")
+sprite = NodePath("Door")
 
 [node name="InteractZone" type="Area2D" parent="." unique_id=469220678]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cpeqwpa76xcdu"
-path="res://.godot/imported/MAIN-DARK(1).png-55cadfdc07861f2bc8025ebc353fb019.ctex"
+uid="uid://d4fuct6uatl2v"
+path="res://.godot/imported/yellowbg.png-24e81deaf1d89d5fbb7e0f005bab7cdb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://raw_assets/textures/environment/backgrounds/MAIN-DARK(1).png"
-dest_files=["res://.godot/imported/MAIN-DARK(1).png-55cadfdc07861f2bc8025ebc353fb019.ctex"]
+source_file="res://raw_assets/textures/environment/backgrounds/yellowbg.png"
+dest_files=["res://.godot/imported/yellowbg.png-24e81deaf1d89d5fbb7e0f005bab7cdb.ctex"]
 
 [params]
 

@@ -1,0 +1,218 @@
+[gd_scene format=3 uid="uid://cqgri1thpvkjv"]
+
+[ext_resource type="Script" uid="uid://gsfnlho78ew3" path="res://rooms/graphics.gd" id="1_i0vv1"]
+[ext_resource type="Texture2D" uid="uid://dsg5u0fmyw40r" path="res://raw_assets/textures/environment/backgrounds/bluebg.png" id="2_nrfi8"]
+[ext_resource type="Texture2D" uid="uid://dbxofk7fimv1o" path="res://raw_assets/textures/environment/backgrounds/cyanbg.png" id="3_c718c"]
+[ext_resource type="Texture2D" uid="uid://ciycix33cj5yo" path="res://raw_assets/textures/environment/backgrounds/greenbg.png" id="4_8wbis"]
+[ext_resource type="Texture2D" uid="uid://ca0sbuligroj" path="res://raw_assets/textures/environment/backgrounds/redbg.png" id="5_vjlql"]
+[ext_resource type="Texture2D" uid="uid://d4fuct6uatl2v" path="res://raw_assets/textures/environment/backgrounds/yellowbg.png" id="6_8teon"]
+[ext_resource type="Texture2D" uid="uid://dv73ujca5cmr6" path="res://raw_assets/textures/environment/special rooms/Entrance/greenbg.png" id="7_4j0e0"]
+[ext_resource type="Texture2D" uid="uid://5enh38x4qwjw" path="res://raw_assets/textures/environment/room layouts/FlatRoom1_nobg.png" id="8_i0vv1"]
+[ext_resource type="PackedScene" uid="uid://co0yfrlg2sncx" path="res://scenes/door.tscn" id="9_8hppk"]
+[ext_resource type="Script" uid="uid://d2vi61ohklxor" path="res://scripts/lights.gd" id="10_knrxa"]
+[ext_resource type="AudioStream" uid="uid://bg47ue871g01e" path="res://raw_assets/audio/1.wav" id="11_ehybi"]
+[ext_resource type="AudioStream" uid="uid://c6h3ijoeayhu6" path="res://raw_assets/audio/2.wav" id="12_1mxkv"]
+[ext_resource type="AudioStream" uid="uid://chws7tufnrkwc" path="res://raw_assets/audio/3.wav" id="13_21jxr"]
+[ext_resource type="AudioStream" uid="uid://oweaabdxtutd" path="res://raw_assets/audio/4.wav" id="14_hwpb7"]
+[ext_resource type="Texture2D" uid="uid://btqf263qyvttn" path="res://raw_assets/textures/environment/props/Destroyed2.png" id="15_xa5cw"]
+[ext_resource type="Texture2D" uid="uid://dyc8hllc244gr" path="res://raw_assets/textures/environment/props/Destroyed3.png" id="16_vlxr1"]
+[ext_resource type="AudioStream" uid="uid://dtex2dh26qk4e" path="res://raw_assets/audio/sfx/ambient/Flicker3.wav" id="17_0yvgs"]
+[ext_resource type="Texture2D" uid="uid://djl2wfrhu86we" path="res://raw_assets/textures/environment/props/Destroyed1.png" id="18_q6145"]
+[ext_resource type="Texture2D" uid="uid://cyf6yn4gynay8" path="res://raw_assets/textures/environment/props/On.png" id="19_cvmfb"]
+[ext_resource type="Texture2D" uid="uid://bexpo2fwsnvw3" path="res://raw_assets/textures/environment/lighting/2d_lights_and_shadows_neutral_point_light.webp" id="20_hxn5t"]
+[ext_resource type="PackedScene" uid="uid://bm2vylofarnwt" path="res://scenes/closet.tscn" id="21_2t7j3"]
+[ext_resource type="Script" uid="uid://b7uoli688t2lj" path="res://scripts/paintings.gd" id="22_idugv"]
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_fkdx4"]
+normal = Vector2(1, 0)
+distance = -2.0
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_rr1h5"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("18_q6145")
+}],
+"loop": 1,
+"name": &"off",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("19_cvmfb")
+}],
+"loop": 1,
+"name": &"on",
+"speed": 5.0
+}]
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_rr1h5"]
+polygon = PackedVector2Array(-1640, 0, 1640, 0, 1640, -540, -1640, -540)
+
+[sub_resource type="Curve2D" id="Curve2D_6dn81"]
+bake_interval = 100.0
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -626.6666, 128.33333, 0, 0, 0, 0, 625, 128.33333)
+}
+point_count = 2
+
+[node name="Room" type="Node2D" unique_id=1865269991]
+scale = Vector2(0.6, 0.6)
+
+[node name="Graphics" type="Node2D" parent="." unique_id=1326794788]
+modulate = Color(0.86, 0.86, 0.86, 1)
+script = ExtResource("1_i0vv1")
+palette = Array[Texture2D]([ExtResource("2_nrfi8"), ExtResource("3_c718c"), ExtResource("4_8wbis"), ExtResource("5_vjlql"), ExtResource("6_8teon")])
+
+[node name="BG" type="Sprite2D" parent="Graphics" unique_id=1977993705]
+modulate = Color(0.85814106, 0.85814106, 0.85814106, 1)
+position = Vector2(0, 274)
+texture = ExtResource("7_4j0e0")
+
+[node name="NoBG" type="Sprite2D" parent="Graphics" unique_id=823277888]
+position = Vector2(0, 345)
+scale = Vector2(0.8288794, 0.8288794)
+texture = ExtResource("8_i0vv1")
+offset = Vector2(0, -256.71417)
+
+[node name="Prev Door" parent="." unique_id=1920532332 instance=ExtResource("9_8hppk")]
+position = Vector2(-613.3333, 345)
+direction = "left"
+
+[node name="Next Door" parent="." unique_id=1270001712 instance=ExtResource("9_8hppk")]
+position = Vector2(610, 345.00003)
+
+[node name="Boundaries" type="StaticBody2D" parent="." unique_id=1388457249]
+
+[node name="Bottom" type="CollisionShape2D" parent="Boundaries" unique_id=1814078151]
+position = Vector2(0, 344)
+rotation = 4.712389
+shape = SubResource("WorldBoundaryShape2D_fkdx4")
+
+[node name="Left" type="CollisionShape2D" parent="Boundaries" unique_id=43934143]
+position = Vector2(-671.6666, 179)
+shape = SubResource("WorldBoundaryShape2D_fkdx4")
+
+[node name="Right" type="CollisionShape2D" parent="Boundaries" unique_id=1072655172]
+position = Vector2(668.3333, 147)
+rotation = 4.712389
+shape = SubResource("WorldBoundaryShape2D_rr1h5")
+
+[node name="Lights" type="Node2D" parent="." unique_id=2054569704]
+position = Vector2(-4, 0)
+script = ExtResource("10_knrxa")
+break_sounds = Array[AudioStream]([ExtResource("11_ehybi"), ExtResource("12_1mxkv"), ExtResource("13_21jxr"), ExtResource("14_hwpb7")])
+broken_texture = Array[Texture2D]([ExtResource("15_xa5cw"), ExtResource("16_vlxr1")])
+sounds_off = Array[AudioStream]([ExtResource("17_0yvgs")])
+sounds_on = Array[AudioStream]([ExtResource("17_0yvgs")])
+
+[node name="Light 1" type="AnimatedSprite2D" parent="Lights" unique_id=1588415689 groups=["lights"]]
+position = Vector2(-403.3, 114)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+
+[node name="PointLight2D" type="PointLight2D" parent="Lights/Light 1" unique_id=834160622 groups=["lights"]]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("20_hxn5t")
+
+[node name="Flicker" type="AudioStreamPlayer2D" parent="Lights/Light 1" unique_id=1288018233]
+stream = ExtResource("17_0yvgs")
+
+[node name="Light 2" type="AnimatedSprite2D" parent="Lights" unique_id=1366874379 groups=["lights"]]
+position = Vector2(-133.2456, 114)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+
+[node name="PointLight2D" type="PointLight2D" parent="Lights/Light 2" unique_id=790771173 groups=["lights"]]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("20_hxn5t")
+
+[node name="Flicker" type="AudioStreamPlayer2D" parent="Lights/Light 2" unique_id=19598624]
+position = Vector2(-4.4504395, 0)
+stream = ExtResource("17_0yvgs")
+
+[node name="Light 3" type="AnimatedSprite2D" parent="Lights" unique_id=153973337 groups=["lights"]]
+position = Vector2(140.75447, 114)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+
+[node name="PointLight2D" type="PointLight2D" parent="Lights/Light 3" unique_id=1833515116 groups=["lights"]]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("20_hxn5t")
+
+[node name="Flicker" type="AudioStreamPlayer2D" parent="Lights/Light 3" unique_id=1202221833]
+position = Vector2(-1.9138737, 0)
+stream = ExtResource("17_0yvgs")
+
+[node name="Light 4" type="AnimatedSprite2D" parent="Lights" unique_id=1100297840 groups=["lights"]]
+position = Vector2(406.6, 114)
+scale = Vector2(0.3942102, 0.3942102)
+sprite_frames = SubResource("SpriteFrames_fkdx4")
+animation = &"on"
+
+[node name="PointLight2D" type="PointLight2D" parent="Lights/Light 4" unique_id=884098859 groups=["lights"]]
+scale = Vector2(6.9364624, 6.9364624)
+color = Color(1, 0.7166667, 0, 1)
+texture = ExtResource("20_hxn5t")
+
+[node name="Flicker" type="AudioStreamPlayer2D" parent="Lights/Light 4" unique_id=1799413315]
+position = Vector2(-0.00012207031, 0)
+stream = ExtResource("17_0yvgs")
+
+[node name="LightOccluder2D" type="LightOccluder2D" parent="." unique_id=1673795925]
+position = Vector2(0, -201.66666)
+occluder = SubResource("OccluderPolygon2D_rr1h5")
+
+[node name="SpawnLeft" type="Marker2D" parent="." unique_id=1992166050]
+position = Vector2(-535, 271.66666)
+
+[node name="SpawnRight" type="Marker2D" parent="." unique_id=1196148564]
+position = Vector2(533.3333, 271.66666)
+
+[node name="CameraBounds" type="Node2D" parent="." unique_id=677824290]
+
+[node name="TopLeft" type="Marker2D" parent="CameraBounds" unique_id=1428677843]
+position = Vector2(-671.6666, -201.66666)
+
+[node name="BotRight" type="Marker2D" parent="CameraBounds" unique_id=1151464045]
+position = Vector2(668.3333, 546.6666)
+
+[node name="Closet" parent="." unique_id=1821081330 instance=ExtResource("21_2t7j3")]
+position = Vector2(-138.33334, 254.99994)
+scale = Vector2(1.6107279, 1.5753323)
+
+[node name="Closet2" parent="." unique_id=150908730 instance=ExtResource("21_2t7j3")]
+position = Vector2(136.66666, 254.99994)
+scale = Vector2(1.6107279, 1.5753323)
+
+[node name="Closet3" parent="." unique_id=437935071 instance=ExtResource("21_2t7j3")]
+position = Vector2(403.33334, 254.99994)
+scale = Vector2(1.6107279, 1.5753323)
+
+[node name="Closet4" parent="." unique_id=1820621408 instance=ExtResource("21_2t7j3")]
+position = Vector2(-406.66672, 254.99994)
+scale = Vector2(1.6107279, 1.5753323)
+
+[node name="EntityPath" type="Path2D" parent="." unique_id=369148278]
+position = Vector2(0, 16.666666)
+curve = SubResource("Curve2D_6dn81")
+
+[node name="Paintings" type="Node2D" parent="." unique_id=2122332750]
+script = ExtResource("22_idugv")
+
+[node name="PaintingSpot1" type="Marker2D" parent="Paintings" unique_id=294243291]
+position = Vector2(274.99997, 158.33333)
+
+[node name="PaintingSpot2" type="Marker2D" parent="Paintings" unique_id=446650634]
+position = Vector2(0, 158.33333)
+
+[node name="PaintingSpot3" type="Marker2D" parent="Paintings" unique_id=2066327817]
+position = Vector2(-275, 158.33333)

@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://c2hthtb5skvq8"]
+
+[ext_resource type="Texture2D" uid="uid://1ic13rty2oer" path="res://raw_assets/textures/environment/props/Elevator1.png" id="1_uuuf0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4346g"]
+size = Vector2(313, 7)
+
+[node name="Node2D" type="AnimatableBody2D" unique_id=1147364636]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1964040379]
+position = Vector2(0, -188)
+texture = ExtResource("1_uuuf0")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=286491652]
+position = Vector2(0, 4.5)
+shape = SubResource("RectangleShape2D_4346g")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=1298778469]
+position = Vector2(0, -3)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=397067559]

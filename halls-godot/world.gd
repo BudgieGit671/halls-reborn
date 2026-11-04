@@ -32,6 +32,7 @@ var whisk_jumpscare_sound: AudioStreamPlayer
 @export var dark_room_color := Color(0.04, 0.04, 0.07)   # "Dark" event rooms
 # ---------- ROOM GENERATION ----------
 @export var start_room: PackedScene                 # room 000, always the same
+@export var waiting_room: PackedScene
 @export var room_scenes: Array[PackedScene] = []    # pool of random rooms
 
 # Remembers which room scene belongs to which room number, e.g. { 1: room_a, 2: room_c }
@@ -65,8 +66,8 @@ func _ready():
 	gameManager.door_opened.connect(on_door_opened)
 	gameManager.entity_started.connect(spawn_entity)
 	gameManager.light_broken.connect(_on_light_broken_dark)
+	gameManager.fake_door_opened.connect(func(): trigger_jumpscare("Dupe"))
 	if start_room == null or room_scenes.is_empty():
-		push_error("Fill in start_room and room_scenes in the Inspector!")
 		return
 
 	load_room(0, "SpawnLeft")
@@ -80,6 +81,8 @@ func ambient_sound(index):
 func get_room_scene(index: int) -> PackedScene:
 	if index == 0:
 		return start_room
+	if index == 1:
+		return waiting_room
 	if not room_layout.has(index):
 		room_layout[index] = pick_new_room(index)
 	return room_layout[index]
@@ -136,7 +139,7 @@ func load_room(index: int, spawn_name: String):
 	current_instance = get_room_scene(index).instantiate()
 	current_instance.position = get_room_offset(index)   # NEW: place the room in the world
 	add_child(current_instance)
-	var spawn = current_instance.get_node_or_null(spawn_name)
+	var spawn = find_spawn(index, spawn_name)
 	if spawn:
 		player.global_position = spawn.global_position
 	var bounds = current_instance.get_node_or_null("CameraBounds")
@@ -159,6 +162,15 @@ func load_room(index: int, spawn_name: String):
 	await fade_in()
 	camera.position_smoothing_enabled = true
 	is_transitioning = false
+
+# Coming back from the right? Spawn at the door on the path the player committed to.
+func find_spawn(index: int, spawn_name: String) -> Node2D:
+	if spawn_name == "SpawnRight" and gameManager.fork_choice.has(index):
+		var variant = "SpawnRight" + gameManager.fork_choice[index].capitalize()
+		var marker = current_instance.get_node_or_null(variant)
+		if marker:
+			return marker
+	return current_instance.get_node_or_null(spawn_name)
 
 # Called by gameManager.door_opened (emitted from door.gd)
 func on_door_opened(direction: String):
@@ -193,23 +205,38 @@ func spawn_entity():
 	entity_instance.begin()
 
 # Returns the path points of ANY room, even one that isn't loaded
+# Reads the baked points of a Path2D (empty if the node doesn't exist)
+func read_path(path: Path2D) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	if path:
+		for p in path.curve.get_baked_points():
+			points.append(path.transform * p)
+	return points
+
 func get_entity_path(index: int) -> PackedVector2Array:
 	var scene = get_room_scene(index)
-	# the cache holds the room's own (local) points; they never change
-	if not path_cache.has(scene):
-		var points := PackedVector2Array()
-		var temp = scene.instantiate()   # temporary copy, never added to the game
-		var path = temp.get_node_or_null("EntityPath")
-		if path:
-			for p in path.curve.get_baked_points():
-				points.append(path.transform * p)
-		temp.free()
-		path_cache[scene] = points
 
-	# move the points to where this room sits in the world
+	# read every variant of this room's path once and remember them
+	if not path_cache.has(scene):
+		var temp = scene.instantiate()   # temporary copy, never added to the game
+		path_cache[scene] = {
+			"main": read_path(temp.get_node_or_null("EntityPath")),
+			"up": read_path(temp.get_node_or_null("EntityPathUp")),
+			"down": read_path(temp.get_node_or_null("EntityPathDown")),
+		}
+		temp.free()
+
+	# the branch Whisk takes; rooms without a fork fall back to the normal path
+	var variants = path_cache[scene]
+	var branch = gameManager.get_whisk_branch(index)
+	#print("room ", index, " branch ", branch, " points: ", variants[branch].size(), " main: ", variants["main"].size())
+	var chosen: PackedVector2Array = variants[branch]
+	if chosen.is_empty():
+		chosen = variants["main"]
+
 	var offset = get_room_offset(index)
 	var result := PackedVector2Array()
-	for p in path_cache[scene]:
+	for p in chosen:
 		result.append(p + offset)
 	return result
 
@@ -224,18 +251,18 @@ func trigger_jumpscare(killer: String):
 	murk_countdown = -1.0
 	remove_murk()
 	player.set_physics_process(false)
+	if not gameManager.jumpscares_disabled:
+		# use this entity's own jumpscare image and sound
+		if killer == "Murk":
+			#jumpscare_overlay.texture = murk_jumpscare_texture
+			jumpscare_sound = $Player/Camera2D/JumpscareOverlay/MurkJumpscareSound
+		else:
+			#jumpscare_overlay.texture = whisk_jumpscare_texture
+			jumpscare_sound = whisk_jumpscare_sound
 
-	# use this entity's own jumpscare image and sound
-	if killer == "Murk":
-		#jumpscare_overlay.texture = murk_jumpscare_texture
-		jumpscare_sound = $Player/Camera2D/JumpscareOverlay/MurkJumpscareSound
-	else:
-		#jumpscare_overlay.texture = whisk_jumpscare_texture
-		jumpscare_sound = whisk_jumpscare_sound
-
-	get_tree().paused = true
-	await play_jumpscare(killer)
-	get_tree().paused = false
+		get_tree().paused = true
+		await play_jumpscare(killer)
+		get_tree().paused = false
 
 	var screen = DEATH_SCREEN.instantiate()
 	add_child(screen)
@@ -264,6 +291,8 @@ func trigger_jumpscare(killer: String):
 			get_tree().quit()
 
 func play_jumpscare(killer: String):
+	if gameManager.jumpscares_disabled:
+		return
 	match killer:
 		"Whisk":
 			jumpscare_idle.scale = Vector2(0.5, 0.5)

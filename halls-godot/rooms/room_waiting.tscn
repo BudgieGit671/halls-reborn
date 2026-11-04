@@ -1,14 +1,20 @@
 [gd_scene format=3 uid="uid://ccqg4yf7tc765"]
 
 [ext_resource type="Texture2D" uid="uid://dv73ujca5cmr6" path="res://raw_assets/textures/environment/special rooms/Entrance/greenbg.png" id="1_6g3i5"]
+[ext_resource type="Script" uid="uid://gsfnlho78ew3" path="res://rooms/graphics.gd" id="1_xlukw"]
 [ext_resource type="Texture2D" uid="uid://b4dyde63mmt14" path="res://raw_assets/textures/environment/special rooms/Waiting/nobg.png" id="2_6g3i5"]
+[ext_resource type="Texture2D" uid="uid://dsg5u0fmyw40r" path="res://raw_assets/textures/environment/backgrounds/bluebg.png" id="2_gnj7g"]
+[ext_resource type="Texture2D" uid="uid://dbxofk7fimv1o" path="res://raw_assets/textures/environment/backgrounds/cyanbg.png" id="3_5xqw1"]
 [ext_resource type="Texture2D" uid="uid://cyf6yn4gynay8" path="res://raw_assets/textures/environment/props/On.png" id="3_6dn81"]
 [ext_resource type="PackedScene" uid="uid://co0yfrlg2sncx" path="res://scenes/door.tscn" id="3_haorg"]
 [ext_resource type="Script" uid="uid://d2vi61ohklxor" path="res://scripts/lights.gd" id="4_4bk1w"]
 [ext_resource type="Texture2D" uid="uid://djl2wfrhu86we" path="res://raw_assets/textures/environment/props/Destroyed1.png" id="4_4hax7"]
+[ext_resource type="Texture2D" uid="uid://ciycix33cj5yo" path="res://raw_assets/textures/environment/backgrounds/greenbg.png" id="4_81emb"]
 [ext_resource type="Texture2D" uid="uid://bexpo2fwsnvw3" path="res://raw_assets/textures/environment/lighting/2d_lights_and_shadows_neutral_point_light.webp" id="4_awqrh"]
 [ext_resource type="AudioStream" uid="uid://bg47ue871g01e" path="res://raw_assets/audio/1.wav" id="5_1ishn"]
+[ext_resource type="Texture2D" uid="uid://ca0sbuligroj" path="res://raw_assets/textures/environment/backgrounds/redbg.png" id="5_6o1wf"]
 [ext_resource type="PackedScene" uid="uid://bm2vylofarnwt" path="res://scenes/closet.tscn" id="6_6dn81"]
+[ext_resource type="Texture2D" uid="uid://d4fuct6uatl2v" path="res://raw_assets/textures/environment/backgrounds/yellowbg.png" id="6_siils"]
 [ext_resource type="AudioStream" uid="uid://c6h3ijoeayhu6" path="res://raw_assets/audio/2.wav" id="6_viepj"]
 [ext_resource type="AudioStream" uid="uid://chws7tufnrkwc" path="res://raw_assets/audio/3.wav" id="7_xlukw"]
 [ext_resource type="AudioStream" uid="uid://oweaabdxtutd" path="res://raw_assets/audio/4.wav" id="8_qlvi1"]
@@ -57,9 +63,11 @@ scale = Vector2(0.6, 0.6)
 
 [node name="Graphics" type="Node2D" parent="." unique_id=1326794788]
 modulate = Color(0.86, 0.86, 0.86, 1)
+script = ExtResource("1_xlukw")
+palette = Array[Texture2D]([ExtResource("2_gnj7g"), ExtResource("3_5xqw1"), ExtResource("4_81emb"), ExtResource("5_6o1wf"), ExtResource("6_siils")])
 
 [node name="BG" type="Sprite2D" parent="Graphics" unique_id=1977993705]
-modulate = Color(0.84000003, 1, 0.8693333, 1)
+modulate = Color(0.85814106, 0.85814106, 0.85814106, 1)
 position = Vector2(0, 274)
 texture = ExtResource("1_6g3i5")
 

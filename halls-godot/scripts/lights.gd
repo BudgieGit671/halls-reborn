@@ -126,8 +126,7 @@ func break_lamp(lamp: Dictionary, with_sound: bool):
 		var sprite = lamp["sprite"]
 		var base: Color = lamp["base_modulate"]
 
-		if sprite is AnimatedSprite2D and sprite.sprite_frames \
-				and sprite.sprite_frames.has_animation("off"):
+		if sprite is AnimatedSprite2D and sprite.sprite_frames and sprite.sprite_frames.has_animation("off"):
 			# your own design: play the "broken" animation, keep the original color
 			sprite.play("off")
 			sprite.modulate = base

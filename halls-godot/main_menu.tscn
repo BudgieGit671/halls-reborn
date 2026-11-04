@@ -15,6 +15,8 @@
 [ext_resource type="AudioStream" uid="uid://otd3mveidf0t" path="res://raw_assets/audio/sfx/ambient/thunderstorm-4.wav" id="5_oiatc"]
 [ext_resource type="Texture2D" uid="uid://by42mlqnvqaok" path="res://raw_assets/textures/gui/buttons/credit clicked3.png" id="7_iotk1"]
 [ext_resource type="Texture2D" uid="uid://bfnnsnkwnrkfv" path="res://raw_assets/textures/gui/buttons/credit Hovered.png" id="8_w44g7"]
+[ext_resource type="Texture2D" uid="uid://cb3qb7ion2png" path="res://raw_assets/textures/gui/buttons/quit.png" id="15_8u0te"]
+[ext_resource type="Texture2D" uid="uid://cqlugsd4u7q2b" path="res://raw_assets/textures/gui/buttons/quit hovered.png" id="16_oiatc"]
 
 [node name="Main Menu" type="Node2D" unique_id=346284895]
 script = ExtResource("1_06t4h")
@@ -32,6 +34,7 @@ pivot_offset = Vector2(0.031373978, -0.02133751)
 texture = ExtResource("2_0o4t1")
 
 [node name="Flash" type="ColorRect" parent="." unique_id=2080142029]
+visible = false
 offset_left = -576.0
 offset_top = -325.0
 offset_right = -536.0
@@ -70,6 +73,7 @@ texture_pressed = ExtResource("4_0k4wn")
 texture_hover = ExtResource("5_j5v2v")
 
 [node name="Credits" type="TextureButton" parent="Button Manager" unique_id=175269045]
+visible = false
 layout_mode = 0
 offset_left = -376.00003
 offset_top = 297.68976
@@ -81,13 +85,14 @@ texture_normal = ExtResource("3_jix8l")
 texture_pressed = ExtResource("7_iotk1")
 texture_hover = ExtResource("8_w44g7")
 
-[node name="Quit" type="Button" parent="Button Manager" unique_id=989956900]
+[node name="Quit" type="TextureButton" parent="Button Manager" unique_id=1048463352]
 layout_mode = 0
 offset_left = -327.0
-offset_top = 393.68976
-offset_right = -239.0
-offset_bottom = 434.68976
-text = "Quit"
+offset_top = 328.0
+offset_right = -143.0
+offset_bottom = 400.0
+texture_normal = ExtResource("15_8u0te")
+texture_hover = ExtResource("16_oiatc")
 
 [node name="Invincible" type="CheckButton" parent="Button Manager" unique_id=974093120]
 layout_mode = 0
@@ -98,6 +103,16 @@ offset_bottom = -94.0
 scale = Vector2(1.848992, 1.848992)
 offset_transform_enabled = true
 text = "Invincibility"
+alignment = 1
+
+[node name="Jumpscares" type="CheckButton" parent="Button Manager" unique_id=1034916468]
+layout_mode = 0
+offset_left = 439.99997
+offset_top = -68.0
+offset_right = 639.0
+offset_bottom = -37.0
+scale = Vector2(1.8207457, 1.8207457)
+text = "Disable Jumpscares"
 alignment = 1
 
 [node name="ButtonPress" type="AudioStreamPlayer" parent="." unique_id=1004164391]
@@ -113,3 +128,5 @@ scale = Vector2(33.844795, 8.284469)
 [connection signal="pressed" from="Button Manager/Quit" to="." method="_on_quit_pressed"]
 [connection signal="pressed" from="Button Manager/Invincible" to="." method="_on_invincible_pressed"]
 [connection signal="toggled" from="Button Manager/Invincible" to="." method="_on_invincible_toggled"]
+[connection signal="pressed" from="Button Manager/Jumpscares" to="." method="_on_jumpscares_pressed"]
+[connection signal="toggled" from="Button Manager/Jumpscares" to="." method="_on_jumpscares_toggled"]

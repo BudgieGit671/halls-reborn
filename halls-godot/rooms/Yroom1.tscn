@@ -1,11 +1,18 @@
 [gd_scene format=3 uid="uid://bh7xwtkmb4442"]
 
 [ext_resource type="Texture2D" uid="uid://dv73ujca5cmr6" path="res://raw_assets/textures/environment/special rooms/Entrance/greenbg.png" id="1_461m4"]
+[ext_resource type="Script" uid="uid://gsfnlho78ew3" path="res://rooms/graphics.gd" id="1_cdhnq"]
 [ext_resource type="Texture2D" uid="uid://cmnujbl7aybc4" path="res://raw_assets/textures/environment/room layouts/Yshape1_nobg.png" id="2_avgt6"]
+[ext_resource type="Texture2D" uid="uid://dsg5u0fmyw40r" path="res://raw_assets/textures/environment/backgrounds/bluebg.png" id="2_fu45e"]
+[ext_resource type="Texture2D" uid="uid://dbxofk7fimv1o" path="res://raw_assets/textures/environment/backgrounds/cyanbg.png" id="3_8mq7d"]
 [ext_resource type="PackedScene" uid="uid://co0yfrlg2sncx" path="res://scenes/door.tscn" id="3_cdhnq"]
+[ext_resource type="Script" uid="uid://dlep44r7hbpnl" path="res://scripts/stair_fork.gd" id="4_avgt6"]
 [ext_resource type="Script" uid="uid://d2vi61ohklxor" path="res://scripts/lights.gd" id="4_dd3ox"]
+[ext_resource type="Texture2D" uid="uid://ciycix33cj5yo" path="res://raw_assets/textures/environment/backgrounds/greenbg.png" id="4_epkxr"]
+[ext_resource type="Texture2D" uid="uid://ca0sbuligroj" path="res://raw_assets/textures/environment/backgrounds/redbg.png" id="5_e18qt"]
 [ext_resource type="AudioStream" uid="uid://bg47ue871g01e" path="res://raw_assets/audio/1.wav" id="5_ld1yr"]
 [ext_resource type="AudioStream" uid="uid://c6h3ijoeayhu6" path="res://raw_assets/audio/2.wav" id="6_6dq8y"]
+[ext_resource type="Texture2D" uid="uid://d4fuct6uatl2v" path="res://raw_assets/textures/environment/backgrounds/yellowbg.png" id="6_kxjxe"]
 [ext_resource type="AudioStream" uid="uid://chws7tufnrkwc" path="res://raw_assets/audio/3.wav" id="7_b6war"]
 [ext_resource type="AudioStream" uid="uid://oweaabdxtutd" path="res://raw_assets/audio/4.wav" id="8_fu45e"]
 [ext_resource type="Texture2D" uid="uid://btqf263qyvttn" path="res://raw_assets/textures/environment/props/Destroyed2.png" id="9_8mq7d"]
@@ -22,6 +29,19 @@ normal = Vector2(1, 0)
 distance = -2.0
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_rr1h5"]
+
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_dqeay"]
+a = Vector2(201.66666, -415)
+b = Vector2(-255, 41.666664)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rr1h5"]
+size = Vector2(598.3334, 50)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_avgt6"]
+size = Vector2(1104.1667, 50)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
+size = Vector2(69.999916, 276.6667)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
 animations = [{
@@ -45,21 +65,28 @@ animations = [{
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_rr1h5"]
 polygon = PackedVector2Array(-1640, 0, -1051.6666, 0, -594.99994, -456.66666, 6.666748, -456.66666, 6.666748, -511.66666, -1633.3333, -506.66666)
 
+[sub_resource type="Curve2D" id="Curve2D_avgt6"]
+bake_interval = 100.0
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -1588.3333, 128.33333, 0, 0, 0, 0, -988.3333, 128.33333, 0, 0, 0, 0, -720, -136.66667, 0, 0, 0, 0, 58.333313, -136.66667)
+}
+point_count = 4
+
 [sub_resource type="Curve2D" id="Curve2D_6dn81"]
 bake_interval = 100.0
 _data = {
-"points": PackedVector2Array(0, 0, 0, 0, -1588.3333, 128.33333, 0, 0, 0, 0, -1006.9182, 124.387634, 0, 0, 0, 0, -540, -314.99997, 0, 0, 0, 0, 43.333313, -316.66666)
+"points": PackedVector2Array(0, 0, 0, 0, -1588.3333, 128.33333, 0, 0, 0, 0, 55, 128.33333)
 }
-point_count = 4
+point_count = 2
 
 [node name="Room" type="Node2D" unique_id=1865269991]
 scale = Vector2(0.6, 0.6)
 
 [node name="Graphics" type="Node2D" parent="." unique_id=1326794788]
-modulate = Color(0.86, 0.86, 0.86, 1)
+script = ExtResource("1_cdhnq")
+palette = Array[Texture2D]([ExtResource("2_fu45e"), ExtResource("3_8mq7d"), ExtResource("4_epkxr"), ExtResource("5_e18qt"), ExtResource("6_kxjxe")])
 
 [node name="BG" type="Sprite2D" parent="Graphics" unique_id=1977993705]
-modulate = Color(0.84000003, 1, 0.8693333, 1)
 position = Vector2(0, 274)
 texture = ExtResource("1_461m4")
 
@@ -72,8 +99,11 @@ texture = ExtResource("2_avgt6")
 position = Vector2(-745, 345)
 direction = "left"
 
-[node name="Next Door" parent="." unique_id=1270001712 instance=ExtResource("3_cdhnq")]
-position = Vector2(725, -92.4)
+[node name="NextDoorUp" parent="." unique_id=1270001712 instance=ExtResource("3_cdhnq")]
+position = Vector2(738.33325, -92.4)
+
+[node name="NextDoorDown" parent="." unique_id=2068083129 instance=ExtResource("3_cdhnq")]
+position = Vector2(738.33325, 345)
 
 [node name="Collision" type="StaticBody2D" parent="." unique_id=1388457249]
 
@@ -91,8 +121,47 @@ position = Vector2(804.99994, 147)
 rotation = 4.712389
 shape = SubResource("WorldBoundaryShape2D_rr1h5")
 
-[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Collision" unique_id=2089306940]
-polygon = PackedVector2Array(-231.66666, 346.66666, -196.66666, 346.66666, 225, -73.33333, 805, -73.33333, 805, -91.666664, 206.66666, -91.666664)
+[node name="Ceiling" type="CollisionShape2D" parent="Collision" unique_id=1668922656]
+shape = SubResource("SegmentShape2D_dqeay")
+
+[node name="Stairs" type="StaticBody2D" parent="Collision" unique_id=213319281]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Collision/Stairs" unique_id=2089306940]
+position = Vector2(5.0000205, 127.499985)
+polygon = PackedVector2Array(-236.66667, 219.16667, -201.66667, 219.16667, 236.66664, -219.16666, 201.66664, -219.16666)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Collision/Stairs" unique_id=59030237]
+position = Vector2(505.8333, -66.666664)
+shape = SubResource("RectangleShape2D_rr1h5")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Collision/Stairs" unique_id=1467282872]
+position = Vector2(759.5833, 13.333336)
+shape = SubResource("RectangleShape2D_avgt6")
+
+[node name="StairFork" type="Node2D" parent="." unique_id=1456427977 node_paths=PackedStringArray("stairs", "door_up", "door_down")]
+script = ExtResource("4_avgt6")
+stairs = NodePath("../Collision/Stairs")
+door_up = NodePath("../NextDoorUp")
+door_down = NodePath("../NextDoorDown")
+
+[node name="DecisionZone" type="Area2D" parent="StairFork" unique_id=2119145740]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StairFork/DecisionZone" unique_id=370685401]
+position = Vector2(-268.33337, 206.66667)
+shape = SubResource("RectangleShape2D_fkdx4")
+
+[node name="CommitPoint" type="Marker2D" parent="StairFork" unique_id=1455920974]
+position = Vector2(-233.33333, 273.33334)
+
+[node name="UpPath" type="Polygon2D" parent="StairFork" unique_id=615701766]
+z_index = 99
+color = Color(1, 0, 0, 0.1882353)
+polygon = PackedVector2Array(-255, 345, -255, 41.666664, -253.33333, 41.666664, 203.33333, -415, 805, -415, 805, 41.666664, 140, 41.666664, -163.33333, 345)
+
+[node name="DownPath" type="Polygon2D" parent="StairFork" unique_id=1703320609]
+z_index = 99
+color = Color(0, 0.2166667, 1, 0.39607844)
+polygon = PackedVector2Array(-163.33333, 345, 805, 345, 805, 41.666664, 140, 41.666664)
 
 [node name="Lights" type="Node2D" parent="." unique_id=2054569704]
 position = Vector2(913.3333, 0)
@@ -132,6 +201,7 @@ position = Vector2(-682.37744, 0)
 stream = ExtResource("11_e18qt")
 
 [node name="Light 3" type="AnimatedSprite2D" parent="Lights" unique_id=153973337 groups=["lights"]]
+visible = false
 position = Vector2(-913.3333, -91.66666)
 scale = Vector2(0.3942102, 0.3942102)
 sprite_frames = SubResource("SpriteFrames_fkdx4")
@@ -216,8 +286,11 @@ occluder = SubResource("OccluderPolygon2D_rr1h5")
 [node name="SpawnLeft" type="Marker2D" parent="." unique_id=1992166050]
 position = Vector2(-666, 271.667)
 
-[node name="SpawnRight" type="Marker2D" parent="." unique_id=1196148564]
+[node name="SpawnRightUp" type="Marker2D" parent="." unique_id=1196148564]
 position = Vector2(645, -161.66666)
+
+[node name="SpawnRightDown" type="Marker2D" parent="." unique_id=600036627]
+position = Vector2(644.99994, 271.66666)
 
 [node name="CameraBounds" type="Node2D" parent="." unique_id=677824290]
 
@@ -227,11 +300,23 @@ position = Vector2(-804.99994, -421.66666)
 [node name="BotRight" type="Marker2D" parent="CameraBounds" unique_id=1151464045]
 position = Vector2(804.99994, 523.3333)
 
-[node name="Closet" parent="." unique_id=1821081330 instance=ExtResource("15_i3myw")]
+[node name="Closet1" parent="." unique_id=1821081330 instance=ExtResource("15_i3myw")]
 position = Vector2(-480.00003, 254.99998)
 scale = Vector2(1.6107279, 1.5753323)
 
-[node name="EntityPath" type="Path2D" parent="." unique_id=369148278]
+[node name="Closet2" parent="." unique_id=1324459822 instance=ExtResource("15_i3myw")]
+position = Vector2(445.00003, 254.99998)
+scale = Vector2(1.6107279, 1.5753323)
+
+[node name="Closet3" parent="." unique_id=1704766210 instance=ExtResource("15_i3myw")]
+position = Vector2(445, -181)
+scale = Vector2(1.6107279, 1.5753323)
+
+[node name="EntityPathUp" type="Path2D" parent="." unique_id=369148278]
+position = Vector2(768.3333, 16.666666)
+curve = SubResource("Curve2D_avgt6")
+
+[node name="EntityPathDown" type="Path2D" parent="." unique_id=1411148151]
 position = Vector2(768.3333, 16.666666)
 curve = SubResource("Curve2D_6dn81")
 
@@ -239,4 +324,4 @@ curve = SubResource("Curve2D_6dn81")
 script = ExtResource("16_08fpv")
 
 [node name="PaintingSpot1" type="Marker2D" parent="Paintings" unique_id=294243291]
-position = Vector2(444.99997, 164.99998)
+position = Vector2(133.33331, 164.99998)

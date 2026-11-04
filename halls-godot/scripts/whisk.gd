@@ -12,7 +12,7 @@ signal caught_player
 @export var muffled_hz: float = 4000.0   # Whisk is in another room
 const CLEAR_HZ := 20500.0                # Whisk is in the player's room
 const MUFFLE_BUS := "WhiskMuffle"
-
+const SIGHT_LAYER := 128
 # The main scene fills this in: a function that takes a room number and returns its path points
 var path_provider: Callable
 @export var break_radius: float = 1000.0   # horizontal distance at which a lamp breaks
@@ -20,7 +20,7 @@ var lamp_provider: Callable
 var path_points: PackedVector2Array = []
 var current_point: int = 0
 var is_jumpscaring: bool = false
-
+var started := false
 var loaded_room: int = -1            # the room on screen (-1 = swapping)
 var is_in_player_room: bool = false  # true when Whisk is in that room
 
@@ -67,6 +67,7 @@ func set_muffled(muffled: bool):
 # Called once by the main scene right after Whisk is created
 func begin():
 	await get_tree().create_timer(randi_range(2,5)).timeout
+	started = true
 	start_room_path()
 	refresh_visibility()
 
@@ -80,7 +81,7 @@ func start_room_path():
 # ---------- MOVEMENT ----------
 
 func _physics_process(delta):
-	if is_jumpscaring:
+	if is_jumpscaring or not started:
 		return
 
 	# finished this room's path (or the room has no path): move on
@@ -93,7 +94,7 @@ func _physics_process(delta):
 	var direction = (target - global_position).normalized()
 	global_position += direction * speed * delta
 	break_nearby_lights()
-	if global_position.distance_to(target) < 100.0:
+	if global_position.distance_to(target) < 30.0:
 		current_point += 1
 
 	# only look for the player if they can actually see this room
@@ -131,8 +132,27 @@ func check_for_player():
 	if raycast.is_colliding():
 		var hit = raycast.get_collider()
 		if hit and hit.is_in_group("player"):
-			if not hit.is_hiding and global_position.distance_to(raycast.get_collision_point()) < 800:
+			if not hit.is_hiding and global_position.distance_to(raycast.get_collision_point()) < 800 \
+					and not sight_blocked(hit.global_position):
 				trigger_jumpscare(hit)
+	if raycast.is_colliding():
+		print("ray hit: ", raycast.get_collider().name, " | whisk at ", global_position)
+	else:
+		print("ray hit nothing | whisk at ", global_position)
+
+func sight_blocked(to: Vector2) -> bool:
+	var space = get_world_2d().direct_space_state
+
+	# Whisk -> player (catches blockers between them, and ones Whisk stands inside)
+	var forward = PhysicsRayQueryParameters2D.create(global_position, to, SIGHT_LAYER)
+	forward.hit_from_inside = true
+
+	# player -> Whisk (the ray enters the blocker from outside, so any shape type works)
+	var backward = PhysicsRayQueryParameters2D.create(to, global_position, SIGHT_LAYER)
+	backward.hit_from_inside = true
+
+	return not space.intersect_ray(forward).is_empty() \
+			or not space.intersect_ray(backward).is_empty()
 
 # ---------- VISIBILITY ----------
 
@@ -165,14 +185,15 @@ func set_visual(show_it: bool):
 func trigger_jumpscare(player):
 	if gameManager.is_dying == true:
 		return
-	is_jumpscaring = true
 	idle_sound_far.stop()
 	idle_sound_close.stop()
 	player.set_physics_process(false)
-	$JumpscareSoundIdle.play()
-	var tween = create_tween()
-	tween.tween_property(self, "global_position", player.global_position, 0.15)
-	await tween.finished
+	if not gameManager.jumpscares_disabled:
+		is_jumpscaring = true
+		$JumpscareSoundIdle.play()
+		var tween = create_tween()
+		tween.tween_property(self, "global_position", player.global_position, 0.15)
+		await tween.finished
 	caught_player.emit()
 
 # Whisk finished its rush: tell the game and remove itself

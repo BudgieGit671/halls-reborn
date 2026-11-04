@@ -3,6 +3,7 @@ extends CharacterBody2D
 const SPEED = 250
 const JUMP_VELOCITY = -500.0
 @export var sfx_door_open: AudioStreamPlayer
+
 # Hiding
 	
 var is_hiding = false

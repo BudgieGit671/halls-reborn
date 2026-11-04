@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://bvgjdqegeuse0" path="res://raw_assets/textures/sprites/entities/whisk/Effect2.png" id="4_mxcvj"]
 [ext_resource type="Texture2D" uid="uid://duv5sqcylhws5" path="res://raw_assets/textures/sprites/entities/whisk/Effect3.png" id="5_dchxn"]
 [ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="5_lsjor"]
-[ext_resource type="AudioStream" uid="uid://u5rdg2btan26" path="res://raw_assets/audio/sfx/entities/whisk/WhiskIdleLoopREV.wav" id="6_mxcvj"]
+[ext_resource type="AudioStream" uid="uid://dns7wij1rv2gp" path="res://raw_assets/audio/sfx/entities/whisk/whiskIdleLoop2.wav" id="6_mxcvj"]
 [ext_resource type="AudioStream" uid="uid://bqti70d1m6cdj" path="res://raw_assets/audio/sfx/entities/whisk/bad_to_the_bone_riff.wav" id="9_mxcvj"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
@@ -31,6 +31,11 @@ animations = [{
 scale = Vector2(0.9, 0.9)
 script = ExtResource("1_rd5v3")
 far_sound_range = 5000.0
+
+[node name="RayCast2D" type="RayCast2D" parent="." unique_id=1634481798]
+z_index = 4
+target_position = Vector2(0, 3.3333335)
+collision_mask = 129
 
 [node name="WhiskFace" type="Sprite2D" parent="." unique_id=1050512116]
 light_mask = 512
@@ -145,9 +150,6 @@ sprite_frames = SubResource("SpriteFrames_fkdx4")
 animation = &"idle"
 frame_progress = 0.40155122
 speed_scale = 0.9
-
-[node name="RayCast2D" type="RayCast2D" parent="." unique_id=1634481798]
-z_index = 4
 
 [node name="IdleSoundFar" type="AudioStreamPlayer2D" parent="." unique_id=1807583090]
 stream = ExtResource("6_mxcvj")

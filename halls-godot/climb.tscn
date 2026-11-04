@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://cshgjk46fu1eh"]
+
+[node name="Climb" type="Node2D" unique_id=509839007]
+
+[node name="Body" type="Sprite2D" parent="." unique_id=1391728200]
+
+[node name="Eye" type="Node2D" parent="." unique_id=2106495393]
+
+[node name="Sclera" type="Sprite2D" parent="Eye" unique_id=1969464102]
+
+[node name="Pupil" type="Sprite2D" parent="Eye" unique_id=2049283051]
+
+[node name="Tentacles" type="Node2D" parent="." unique_id=1408528375]
+
+[node name="Tentacle1" type="Line2D" parent="Tentacles" unique_id=1631751587]
+
+[node name="Tentacle2" type="Line2D" parent="Tentacles" unique_id=2089404174]
+
+[node name="Tentacle3" type="Line2D" parent="Tentacles" unique_id=1660002873]

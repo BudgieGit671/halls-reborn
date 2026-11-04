@@ -61,3 +61,6 @@ func _on_quit_pressed() -> void:
 
 func _on_invincible_toggled(toggled_on: bool) -> void:
 	gameManager.invincible = toggled_on
+
+func _on_jumpscares_toggled(toggled_on: bool) -> void:
+	gameManager.jumpscares_disabled = toggled_on
