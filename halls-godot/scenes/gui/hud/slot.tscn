@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://dr4txwdnd0ygs"]
+
+[ext_resource type="Script" uid="uid://1fnc46gyq6kp" path="res://scenes/gui/hud/slot.gd" id="1_kpopo"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_kpopo"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_nnykb"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2uh4n"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_w8xgv"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_l4dlj"]
+
+[node name="Slot" type="Button" unique_id=1710026332]
+custom_minimum_size = Vector2(96, 96)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.15135765, 0.25423136)
+focus_mode = 0
+theme_override_colors/icon_pressed_color = Color(0.43, 0.43, 0.43, 1)
+theme_override_colors/icon_hover_color = Color(1.8247963, 1.8247963, 1.8247963, 1)
+theme_override_styles/normal = SubResource("StyleBoxEmpty_kpopo")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_nnykb")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_2uh4n")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_w8xgv")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_l4dlj")
+expand_icon = true
+script = ExtResource("1_kpopo")

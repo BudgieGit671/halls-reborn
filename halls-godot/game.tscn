@@ -2,14 +2,15 @@
 
 [ext_resource type="PackedScene" uid="uid://conw3tuy85t5o" path="res://player.tscn" id="1_80nbo"]
 [ext_resource type="Script" uid="uid://bbn00yoer6d5o" path="res://world.gd" id="1_ryrav"]
-[ext_resource type="PackedScene" uid="uid://er558qr0gt0j" path="res://rooms/room_entrance.tscn" id="2_j5wjh"]
-[ext_resource type="PackedScene" uid="uid://ccqg4yf7tc765" path="res://rooms/room_waiting.tscn" id="3_vef74"]
-[ext_resource type="PackedScene" uid="uid://bh7xwtkmb4442" path="res://rooms/Yroom1.tscn" id="4_hve3p"]
-[ext_resource type="PackedScene" uid="uid://cqgri1thpvkjv" path="res://rooms/flatroom1.tscn" id="5_mfdv2"]
+[ext_resource type="PackedScene" uid="uid://er558qr0gt0j" path="res://scenes/rooms/room_entrance.tscn" id="2_j5wjh"]
+[ext_resource type="PackedScene" uid="uid://ccqg4yf7tc765" path="res://scenes/rooms/room_waiting.tscn" id="3_vef74"]
+[ext_resource type="PackedScene" uid="uid://bh7xwtkmb4442" path="res://scenes/rooms/Yroom1.tscn" id="4_hve3p"]
+[ext_resource type="PackedScene" uid="uid://cqgri1thpvkjv" path="res://scenes/rooms/flatroom1.tscn" id="5_mfdv2"]
 [ext_resource type="Texture2D" uid="uid://5bkhncij3oog" path="res://raw_assets/textures/sprites/entities/whisk/jums.png" id="5_ryrav"]
 [ext_resource type="AudioStream" uid="uid://v6rqjeieuuo2" path="res://raw_assets/audio/sfx/entities/whisk/jumposcareyo.wav" id="6_eow3j"]
-[ext_resource type="PackedScene" uid="uid://crcmnkr1whpwc" path="res://rooms/flatlongroom1.tscn" id="6_iotsf"]
+[ext_resource type="PackedScene" uid="uid://crcmnkr1whpwc" path="res://scenes/rooms/flatlongroom1.tscn" id="6_iotsf"]
 [ext_resource type="Texture2D" uid="uid://cuj0kk1uuadtk" path="res://raw_assets/textures/sprites/entities/whisk/Idle.png" id="6_j5wjh"]
+[ext_resource type="PackedScene" uid="uid://btgg7c2lb4fya" path="res://scenes/gui/hud/hotbar.tscn" id="7_lc2xo"]
 [ext_resource type="Texture2D" uid="uid://b54pbp7fd4333" path="res://raw_assets/textures/sprites/entities/murk/MurkScare.png" id="8_j5wjh"]
 [ext_resource type="AudioStream" uid="uid://ixa3dydgms88" path="res://raw_assets/audio/sfx/entities/murk/murk jumpscare.wav" id="9_vef74"]
 
@@ -38,6 +39,10 @@ z_index = 100
 
 [node name="EntityLayer" type="CanvasLayer" parent="." unique_id=1773218148]
 follow_viewport_enabled = true
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1415802256]
+
+[node name="Hotbar" parent="HUD" unique_id=760275513 instance=ExtResource("7_lc2xo")]
 
 [node name="Player" parent="." unique_id=1038246796 instance=ExtResource("1_80nbo")]
 position = Vector2(-0.99998474, 167)
@@ -134,23 +139,6 @@ volume_db = 2.145
 [node name="MurkDarkness" type="CanvasModulate" parent="Player/Camera2D/MurkLayer" unique_id=76473234]
 z_index = 100
 
-[node name="HUD" type="CanvasLayer" parent="Player/Camera2D" unique_id=1415802256]
-visible = false
-
-[node name="Hotbar" type="HBoxContainer" parent="Player/Camera2D/HUD" unique_id=894128706]
-offset_left = -12.0
-offset_top = 167.0
-offset_right = 28.0
-offset_bottom = 207.0
-
-[node name="FlashlightSlot" type="TextureButton" parent="Player/Camera2D/HUD/Hotbar" unique_id=1044919662]
-layout_mode = 2
-
-[node name="ProgressBar" type="ProgressBar" parent="Player/Camera2D/HUD/Hotbar/FlashlightSlot" unique_id=1460109364]
-layout_mode = 0
-offset_right = 102.0
-offset_bottom = 27.0
-
 [node name="Room" type="Node2D" parent="." unique_id=808137005]
 scale = Vector2(0.99999994, 0.99999994)
 script = SubResource("GDScript_eow3j")
@@ -159,6 +147,7 @@ script = SubResource("GDScript_eow3j")
 layer = 2
 
 [node name="FadeRect" type="ColorRect" parent="FadeOverlay" unique_id=851356703]
+visible = false
 offset_left = -8334.0
 offset_top = -7748.0005
 offset_right = -8012.7217

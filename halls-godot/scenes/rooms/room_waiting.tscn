@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ccqg4yf7tc765"]
 
 [ext_resource type="Texture2D" uid="uid://dv73ujca5cmr6" path="res://raw_assets/textures/environment/special rooms/Entrance/greenbg.png" id="1_6g3i5"]
-[ext_resource type="Script" uid="uid://gsfnlho78ew3" path="res://rooms/graphics.gd" id="1_xlukw"]
+[ext_resource type="Script" uid="uid://gsfnlho78ew3" path="res://scenes/rooms/graphics.gd" id="1_xlukw"]
 [ext_resource type="Texture2D" uid="uid://b4dyde63mmt14" path="res://raw_assets/textures/environment/special rooms/Waiting/nobg.png" id="2_6g3i5"]
 [ext_resource type="Texture2D" uid="uid://dsg5u0fmyw40r" path="res://raw_assets/textures/environment/backgrounds/bluebg.png" id="2_gnj7g"]
 [ext_resource type="Texture2D" uid="uid://dbxofk7fimv1o" path="res://raw_assets/textures/environment/backgrounds/cyanbg.png" id="3_5xqw1"]

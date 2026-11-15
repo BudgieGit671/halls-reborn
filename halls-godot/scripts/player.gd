@@ -4,9 +4,24 @@ const SPEED = 250
 const JUMP_VELOCITY = -500.0
 @export var sfx_door_open: AudioStreamPlayer
 
+var inventory: Array = [
+	{"id": "flashlight", "icon": preload("res://raw_assets/textures/gui/slots/Flashlight.png")}
+]
+@onready var hotbar = $"../HUD/Hotbar"
 # Hiding
 	
 var is_hiding = false
+
+func _ready() -> void:
+	hotbar.refresh(inventory)
+
+func add_item(item: Dictionary) -> void:
+	inventory.append(item)
+	hotbar.refresh(inventory)
+
+func remove_item(item: Dictionary) -> void:
+	inventory.erase(item)
+	hotbar.refresh(inventory)
 
 func set_hidden(value: bool):
 	if !velocity.y:

@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://btgg7c2lb4fya"]
+
+[ext_resource type="Script" uid="uid://bxr1pttkjlba8" path="res://scenes/gui/hud/hotbar.gd" id="1_7kawd"]
+
+[node name="Hotbar" type="HBoxContainer" unique_id=760275513]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+script = ExtResource("1_7kawd")
