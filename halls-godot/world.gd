@@ -7,22 +7,19 @@ extends Node2D
 @onready var jumpscare_idle = $Player/Camera2D/JumpscareOverlay/WhiskIdle
 @onready var jumpscare_sound = $Player/Camera2D/JumpscareOverlay/WhiskJumpscareSound
 @onready var jumpscare_background = $Player/Camera2D/JumpscareOverlay/JumpscareBackground
-@onready var darkness = $Darkness   # the CanvasModulate
+@onready var darkness = $Darkness
 @onready var murk_darkness = $Player/Camera2D/MurkLayer/MurkDarkness
 # MURK
 
 const MURK_SCENE = preload("res://murk.tscn")
-@export var murk_jumpscare_texture: Texture2D   # drag Murk's jumpscare image here
-@export var murk_jumpscare_sound: AudioStreamPlayer   # and its sound
-
-# seconds after a dark room loads before Murk can appear
+@export var murk_jumpscare_texture: Texture2D 
+@export var murk_jumpscare_sound: AudioStreamPlayer
 const MURK_FIRST_DELAY := Vector2(2.0, 7.0)
-# seconds before the next Murk after you click one
 const MURK_REPEAT_DELAY := Vector2(10.0, 20.0)
-@export_range(0.0, 1.0) var murk_chance := 0.9   # chance a dark room gets a Murk at all
-
+@export_range(0.0, 1.0) var murk_chance := 0.9
 var murk_instance = null
 var murk_countdown := -1.0    # -1 = no Murk scheduled
+
 var is_dying := false         # true from the moment you're caught until you restart
 var whisk_jumpscare_texture: TextureRect
 var whisk_jumpscare_sound: AudioStreamPlayer

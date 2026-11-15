@@ -12,6 +12,8 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_l4dlj"]
 
+[sub_resource type="LabelSettings" id="LabelSettings_fkdx4"]
+
 [node name="Slot" type="Button" unique_id=1710026332]
 custom_minimum_size = Vector2(96, 96)
 anchors_preset = 15
@@ -30,3 +32,11 @@ theme_override_styles/disabled = SubResource("StyleBoxEmpty_w8xgv")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_l4dlj")
 expand_icon = true
 script = ExtResource("1_kpopo")
+
+[node name="NumberLabel" type="Label" parent="." unique_id=1221129452]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 52.0
+offset_bottom = 31.0
+label_settings = SubResource("LabelSettings_fkdx4")
