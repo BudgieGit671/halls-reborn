@@ -1,5 +1,4 @@
 extends Button
-
 var item
 @onready var number_label = $NumberLabel
 
@@ -11,4 +10,4 @@ func setup(new_item: Dictionary, number: int) -> void:
 func _pressed() -> void:
 	match item["id"]:
 		"flashlight":
-			print("Flash light")
+			gameManager.flashlight_pressed.emit()

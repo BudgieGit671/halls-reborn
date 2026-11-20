@@ -247,6 +247,7 @@ func trigger_jumpscare(killer: String):
 	is_transitioning = true
 	murk_countdown = -1.0
 	remove_murk()
+	gameManager.reset_items()
 	player.set_physics_process(false)
 	if not gameManager.jumpscares_disabled:
 		# use this entity's own jumpscare image and sound

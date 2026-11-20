@@ -11,6 +11,8 @@
 [ext_resource type="Texture2D" uid="uid://caacp3wwcr3ne" path="res://raw_assets/textures/sprites/player/player frames/right7.png" id="9_606se"]
 [ext_resource type="AudioStream" uid="uid://cc7hrlxg7ln7n" path="res://raw_assets/audio/sfx/interactions/mixkit-old-church-door-open-193.wav" id="10_n7ghd"]
 [ext_resource type="Texture2D" uid="uid://bexpo2fwsnvw3" path="res://raw_assets/textures/environment/lighting/2d_lights_and_shadows_neutral_point_light.webp" id="11_nvl01"]
+[ext_resource type="Script" uid="uid://cauwnu744tjy1" path="res://scripts/flashlight.gd" id="12_ivps1"]
+[ext_resource type="Texture2D" uid="uid://qlk6h3a3pe74" path="res://raw_assets/textures/gui/items/Poly Line.png" id="12_urp6f"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
 animations = [{
@@ -77,7 +79,15 @@ shape = SubResource("CapsuleShape2D_iotsf")
 [node name="DoorOpen" type="AudioStreamPlayer" parent="." unique_id=2087053406]
 stream = ExtResource("10_n7ghd")
 
-[node name="PointLight2D" type="PointLight2D" parent="." unique_id=1040319007]
+[node name="IdleGlow" type="PointLight2D" parent="." unique_id=1040319007]
 scale = Vector2(0.2867148, 0.5867153)
 energy = 0.35
 texture = ExtResource("11_nvl01")
+
+[node name="Flashlight" type="PointLight2D" parent="." unique_id=1144045944]
+position = Vector2(-7.6293945e-06, -1.92593e-34)
+enabled = false
+energy = 0.5
+texture = ExtResource("12_urp6f")
+offset = Vector2(913.7499, -5.421011e-20)
+script = ExtResource("12_ivps1")

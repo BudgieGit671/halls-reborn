@@ -4,6 +4,8 @@ signal fake_door_opened
 signal door_opened(direction)   # a door was used (door.gd emits, main.gd listens)
 signal entity_started           # Whisk's event begins (gameManager emits, main.gd listens)
 signal light_broken(room_index, lamp_id)
+signal flashlight_pressed                # hotbar -> flashlight
+signal flashlight_toggled(is_on: bool)   # flashlight -> everyone else
 
 var current_room_index: int = 0
 var max_room_reached: int = 0
@@ -12,6 +14,14 @@ var jumpscares_disabled: bool = false
 var is_dying = false
 var FAKE_DOOR_CHANCE := 0.5
 var fork_choice := {} 
+
+# --- items ---
+const FLASHLIGHT_MAX: float = 180.0
+var has_flashlight: bool = true
+var battery_count: int = 0
+var flashlight_charge: float = FLASHLIGHT_MAX
+# example key: "4_1" means room 4, slot 1
+var collected_pickups: Dictionary = {}
 
 # ---------- ENTITY STATE ----------
 var entity_active: bool = false
@@ -121,6 +131,12 @@ func reset_run():
 	fork_choice.clear()
 	run_seed = randi()
 	generate_events()
+
+func reset_items():
+	has_flashlight = false
+	battery_count = 0
+	flashlight_charge = FLASHLIGHT_MAX
+	collected_pickups.clear()
 
 func is_entity_in_player_room() -> bool:
 	return entity_active and entity_room_index == current_room_index

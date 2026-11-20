@@ -26,7 +26,7 @@ func remove_item(item: Dictionary) -> void:
 func set_hidden(value: bool):
 	if !velocity.y:
 		is_hiding = value
-		$PointLight2D.visible = !value
+		$Flashlight.visible = !value
 		$AnimatedSprite2D.visible = !value
 		$CollisionShape2D.disabled = value
 		set_physics_process(!value)
