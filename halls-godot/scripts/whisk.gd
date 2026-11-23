@@ -200,3 +200,12 @@ func trigger_jumpscare(player):
 func finish_event():
 	gameManager.end_entity_event()
 	queue_free()
+
+func reset():
+	is_jumpscaring = false
+	is_in_player_room = false
+	path_points = PackedVector2Array()
+	current_point = 0
+	sprite.visible = false
+	raycast.enabled = false
+	global_position = Vector2(-99999, -99999)

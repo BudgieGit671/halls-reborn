@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dlehsdqk3u5l5" path="res://scripts/closet.gd" id="1_l4o33"]
 [ext_resource type="Texture2D" uid="uid://bcgptbnuk0nrv" path="res://raw_assets/textures/environment/props/Closet.png" id="2_uj11n"]
-[ext_resource type="Texture2D" uid="uid://tmxy8m3a54t" path="res://raw_assets/textures/gui/buttons/E.png" id="3_uj11n"]
+[ext_resource type="Texture2D" uid="uid://bl5752d2qwy1y" path="res://raw_assets/textures/gui/buttons/Interact.png" id="3_cgwhh"]
 [ext_resource type="AudioStream" uid="uid://b832lp10plj7n" path="res://raw_assets/audio/sfx/interactions/ClosetIn.wav" id="4_71km3"]
 [ext_resource type="AudioStream" uid="uid://cmltfuvq0c8mk" path="res://raw_assets/audio/sfx/interactions/ClosetOut.wav" id="5_cgwhh"]
 
@@ -28,9 +28,9 @@ shape = SubResource("RectangleShape2D_fkdx4")
 [node name="Prompt" type="Sprite2D" parent="." unique_id=351685144]
 light_mask = 2
 z_index = 1000
-position = Vector2(0, -63)
+position = Vector2(0, -71.746025)
 scale = Vector2(0.2002343, 0.2002343)
-texture = ExtResource("3_uj11n")
+texture = ExtResource("3_cgwhh")
 
 [node name="ClosetIn" type="AudioStreamPlayer" parent="." unique_id=1223100392]
 stream = ExtResource("4_71km3")

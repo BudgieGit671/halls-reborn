@@ -34,7 +34,6 @@ pivot_offset = Vector2(0.031373978, -0.02133751)
 texture = ExtResource("2_0o4t1")
 
 [node name="Flash" type="ColorRect" parent="." unique_id=2080142029]
-visible = false
 offset_left = -576.0
 offset_top = -325.0
 offset_right = -536.0

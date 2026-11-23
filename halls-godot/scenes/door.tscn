@@ -2,10 +2,10 @@
 
 [ext_resource type="Script" uid="uid://c73ljrblvo2sl" path="res://scripts/door.gd" id="1_18pbm"]
 [ext_resource type="Texture2D" uid="uid://dk6sw3wqtgdes" path="res://raw_assets/textures/environment/props/Next Door.png" id="2_18pbm"]
-[ext_resource type="Texture2D" uid="uid://tmxy8m3a54t" path="res://raw_assets/textures/gui/buttons/E.png" id="3_uj11n"]
+[ext_resource type="Texture2D" uid="uid://bl5752d2qwy1y" path="res://raw_assets/textures/gui/buttons/Interact.png" id="3_83dcw"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fkdx4"]
-size = Vector2(18.984375, 15.676094)
+size = Vector2(20.347122, 15.676094)
 
 [sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_rr1h5"]
 
@@ -17,7 +17,7 @@ sprite = NodePath("Door")
 [node name="InteractZone" type="Area2D" parent="." unique_id=469220678]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractZone" unique_id=487724458]
-position = Vector2(0, -44)
+position = Vector2(1.6612328, -44.000004)
 scale = Vector2(2.4380643, 5.613643)
 shape = SubResource("RectangleShape2D_fkdx4")
 
@@ -32,7 +32,7 @@ light_mask = 2
 z_index = 1000
 position = Vector2(0, -110)
 scale = Vector2(0.2002343, 0.2002343)
-texture = ExtResource("3_uj11n")
+texture = ExtResource("3_83dcw")
 
 [node name="Label" type="RichTextLabel" parent="." unique_id=368397221]
 modulate = Color(0.83, 0.7082667, 0.64739996, 1)

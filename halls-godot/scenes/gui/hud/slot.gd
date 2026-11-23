@@ -8,6 +8,10 @@ func setup(new_item: Dictionary, number: int) -> void:
 	number_label.text = str(number)
 
 func _pressed() -> void:
+	activate()
+
+func activate() -> void:
 	match item["id"]:
 		"flashlight":
 			gameManager.flashlight_pressed.emit()
+			

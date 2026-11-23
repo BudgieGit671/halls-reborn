@@ -13,6 +13,8 @@
 [ext_resource type="Texture2D" uid="uid://bexpo2fwsnvw3" path="res://raw_assets/textures/environment/lighting/2d_lights_and_shadows_neutral_point_light.webp" id="11_nvl01"]
 [ext_resource type="Script" uid="uid://cauwnu744tjy1" path="res://scripts/flashlight.gd" id="12_ivps1"]
 [ext_resource type="Texture2D" uid="uid://qlk6h3a3pe74" path="res://raw_assets/textures/gui/items/Poly Line.png" id="12_urp6f"]
+[ext_resource type="AudioStream" uid="uid://ba6jplq500eqk" path="res://raw_assets/audio/sfx/interactions/FLOn.wav" id="14_606se"]
+[ext_resource type="AudioStream" uid="uid://byoy65qvq2a1p" path="res://raw_assets/audio/sfx/interactions/FLOff.wav" id="15_u1c27"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_fkdx4"]
 animations = [{
@@ -62,6 +64,9 @@ height = 87.50002
 [node name="player" type="CharacterBody2D" unique_id=1038246796 node_paths=PackedStringArray("sfx_door_open") groups=["player"]]
 z_index = 100
 scale = Vector2(0.8, 0.8)
+floor_constant_speed = true
+floor_max_angle = 1.0471976
+floor_snap_length = 10.0
 script = ExtResource("1_onrkg")
 sfx_door_open = NodePath("DoorOpen")
 
@@ -85,9 +90,17 @@ energy = 0.35
 texture = ExtResource("11_nvl01")
 
 [node name="Flashlight" type="PointLight2D" parent="." unique_id=1144045944]
-position = Vector2(-7.6293945e-06, -1.92593e-34)
+position = Vector2(4.7683716e-07, 0)
 enabled = false
 energy = 0.5
 texture = ExtResource("12_urp6f")
-offset = Vector2(913.7499, -5.421011e-20)
+offset = Vector2(927.4999, -5.421011e-20)
 script = ExtResource("12_ivps1")
+
+[node name="FlashlightOn" type="AudioStreamPlayer" parent="." unique_id=538469]
+stream = ExtResource("14_606se")
+volume_db = -10.0
+
+[node name="FlashlightOff" type="AudioStreamPlayer" parent="." unique_id=620053506]
+stream = ExtResource("15_u1c27")
+volume_db = -10.0

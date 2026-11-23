@@ -43,6 +43,7 @@ func turn_on():
 	enabled = true
 	gameManager.flashlight_toggled.emit(true)
 	print("Flashlight ON")
+	$"../FlashlightOn".play()
 
 func turn_off():
 	if not is_on:
@@ -51,6 +52,7 @@ func turn_off():
 	enabled = false
 	gameManager.flashlight_toggled.emit(false)
 	print("Flashlight OFF")
+	$"../FlashlightOff".play()
 
 func use_battery():
 	if gameManager.battery_count > 0 and gameManager.flashlight_charge < gameManager.FLASHLIGHT_MAX:

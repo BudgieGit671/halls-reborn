@@ -3,12 +3,13 @@ extends Node2D
 @onready var player = $Player
 @onready var camera = $Player/Camera2D
 @onready var fade_rect = $FadeOverlay/FadeRect
-@onready var jumpscare_overlay = $Player/Camera2D/JumpscareOverlay
-@onready var jumpscare_idle = $Player/Camera2D/JumpscareOverlay/WhiskIdle
-@onready var jumpscare_sound = $Player/Camera2D/JumpscareOverlay/WhiskJumpscareSound
-@onready var jumpscare_background = $Player/Camera2D/JumpscareOverlay/JumpscareBackground
+@onready var jumpscare_overlay = $JumpscareOverlay
+@onready var jumpscare_idle = $JumpscareOverlay/WhiskIdle
+@onready var jumpscare_scare = $JumpscareOverlay/WhiskScare
+@onready var jumpscare_sound = $JumpscareOverlay/WhiskJumpscareSound
+@onready var jumpscare_background = $JumpscareOverlay/JumpscareBackground
 @onready var darkness = $Darkness
-@onready var murk_darkness = $Player/Camera2D/MurkLayer/MurkDarkness
+@onready var murk_darkness = $MurkLayer/MurkDarkness
 # MURK
 
 const MURK_SCENE = preload("res://murk.tscn")
@@ -54,10 +55,10 @@ func _ready():
 	whisk_jumpscare_texture = jumpscare_idle
 	whisk_jumpscare_sound = jumpscare_sound
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	$Player/Camera2D/JumpscareOverlay.process_mode = Node.PROCESS_MODE_ALWAYS
-	$Player/Camera2D/JumpscareOverlay/WhiskScare.process_mode = Node.PROCESS_MODE_ALWAYS
-	$Player/Camera2D/JumpscareOverlay/WhiskIdle.process_mode = Node.PROCESS_MODE_ALWAYS
-	$Player/Camera2D/JumpscareOverlay/WhiskJumpscareSound.process_mode = Node.PROCESS_MODE_ALWAYS
+	$JumpscareOverlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	$JumpscareOverlay/WhiskScare.process_mode = Node.PROCESS_MODE_ALWAYS
+	$JumpscareOverlay/WhiskIdle.process_mode = Node.PROCESS_MODE_ALWAYS
+	$JumpscareOverlay/WhiskJumpscareSound.process_mode = Node.PROCESS_MODE_ALWAYS
 	fade_rect.modulate.a = 0.0
 	jumpscare_idle.visible = false
 	gameManager.door_opened.connect(on_door_opened)
@@ -253,7 +254,7 @@ func trigger_jumpscare(killer: String):
 		# use this entity's own jumpscare image and sound
 		if killer == "Murk":
 			#jumpscare_overlay.texture = murk_jumpscare_texture
-			jumpscare_sound = $Player/Camera2D/JumpscareOverlay/MurkJumpscareSound
+			jumpscare_sound = $JumpscareOverlay/MurkJumpscareSound
 		else:
 			#jumpscare_overlay.texture = whisk_jumpscare_texture
 			jumpscare_sound = whisk_jumpscare_sound
@@ -280,9 +281,9 @@ func trigger_jumpscare(killer: String):
 	match choice:
 		"play_again":
 			player.set_physics_process(true)
-			is_dying = false          # NEW: you can die again
+			is_dying = false
 			is_transitioning = false
-			load_room(0, "SpawnLeft")
+			restart_game()
 		"main_menu":
 			get_tree().change_scene_to_file(main_menu_path)
 		"quit":
@@ -296,40 +297,40 @@ func play_jumpscare(killer: String):
 			jumpscare_idle.scale = Vector2(0.5, 0.5)
 			jumpscare_background.visible = true
 			await get_tree().create_timer(1).timeout
-			$Player/Camera2D/JumpscareOverlay/WhiskIdle.visible = true
+			jumpscare_idle.visible = true
 			await get_tree().create_timer(2).timeout
 			jumpscare_idle.scale = Vector2(1.0, 1.0)
 			await get_tree().create_timer(2).timeout
-			$Player/Camera2D/JumpscareOverlay/WhiskIdle.visible = false
-			$Player/Camera2D/JumpscareOverlay/WhiskScare.visible = true
+			jumpscare_idle.visible = false
+			jumpscare_scare.visible = true
 			print(jumpscare_sound)
 			jumpscare_sound.play()
 
 			var scare_tween = create_tween()
 			scare_tween.set_parallel(true)
-			scare_tween.tween_property($Player/Camera2D/JumpscareOverlay/WhiskScare, "scale", Vector2(100.0, 100.0), 0.3)
+			scare_tween.tween_property(jumpscare_scare, "scale", Vector2(100.0, 100.0), 0.3)
 			await scare_tween.finished
-			$Player/Camera2D/JumpscareOverlay/WhiskScare.visible = false
+			jumpscare_scare.visible = false
 			while jumpscare_sound.playing:
 				var wait = randf_range(0.01,0.04)
-				$Player/Camera2D/JumpscareOverlay/JumpscareBackground.color = Color(0.703, 0.62, 0.62, 1.0)
+				jumpscare_background.color = Color(0.703, 0.62, 0.62, 1.0)
 				await get_tree().create_timer(wait).timeout
-				$Player/Camera2D/JumpscareOverlay/JumpscareBackground.color = Color(0.0, 0.0, 0.0, 1.0)
+				jumpscare_background.color = Color(0.0, 0.0, 0.0, 1.0)
 				await get_tree().create_timer(wait).timeout
 		"Murk":
 			jumpscare_background.visible = true
-			var murk_scare_start_pos = $Player/Camera2D/JumpscareOverlay/MurkScare.position
+			var murk_scare_start_pos = $JumpscareOverlay/MurkScare.position
 			jumpscare_sound.play()
-			$Player/Camera2D/JumpscareOverlay/MurkScare.visible = true
+			$JumpscareOverlay/MurkScare.visible = true
 			var grow = create_tween()
-			grow.tween_property($Player/Camera2D/JumpscareOverlay/MurkScare, "scale", Vector2(35.0,35.0), 0.5)
+			grow.tween_property($JumpscareOverlay/MurkScare, "scale", Vector2(35.0,35.0), 0.5)
 			var shake = create_tween()
 			for i in 12:
 				var offset = Vector2(randf_range(-15, 15), randf_range(-15, 15))
-				shake.tween_property($Player/Camera2D/JumpscareOverlay/MurkScare, "position", murk_scare_start_pos + offset, 0.02)
-			shake.tween_property($Player/Camera2D/JumpscareOverlay/MurkScare, "position", murk_scare_start_pos, 0.02)
+				shake.tween_property($JumpscareOverlay/MurkScare, "position", murk_scare_start_pos + offset, 0.02)
+			shake.tween_property($JumpscareOverlay/MurkScare, "position", murk_scare_start_pos, 0.02)
 			await grow.finished
-			$Player/Camera2D/JumpscareOverlay/MurkScare.visible = false
+			$JumpscareOverlay/MurkScare.visible = false
 
 # Works out how dark a room should be
 func get_darkness_color(index: int) -> Color:
@@ -382,7 +383,7 @@ func _process(delta):
 func spawn_murk():
 	murk_countdown = -1.0
 	murk_instance = MURK_SCENE.instantiate()
-	$Player/Camera2D/MurkLayer.add_child(murk_instance)
+	$MurkLayer.add_child(murk_instance)
 	murk_instance.attacked.connect(func(): trigger_jumpscare("Murk"))
 	murk_instance.killed.connect(_on_murk_killed)
 
@@ -410,3 +411,24 @@ func fade_in() -> void:
 	tween.tween_property(fade_rect, "modulate:a", 0.0, 0.5)
 	await tween.finished
 	fade_rect.visible = false
+
+func restart_game():
+	# unpause in case anything left the tree paused
+	get_tree().paused = false
+	# clear the transition lock, otherwise load_room() returns immediately
+	is_transitioning = false
+	# hide the jumpscare visuals
+	jumpscare_idle.scale = Vector2(0.5, 0.5)
+	jumpscare_background.visible = false
+	jumpscare_background.modulate.a = 1.0
+	# reset game data
+	gameManager.current_room_index = 0
+	gameManager.entity_room_index = -3
+	gameManager.entity_active = false
+	# gameManager.reset_items()   # once the item system is in
+	# reset the player
+	player.set_hidden(false)
+	player.set_physics_process(true)
+	player.velocity = Vector2.ZERO
+	# load the first room (fades in from black)
+	load_room(gameManager.get_template_for_room(0), "SpawnLeft")
